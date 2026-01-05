@@ -1,4 +1,4 @@
-# sdk/.gitignore
+# backend/.gitignore
 
 # Python cache
 __pycache__/
@@ -30,3 +30,5 @@ htmlcov/
 # Temporary files
 *.tmp
 *.bak
+
+.env
