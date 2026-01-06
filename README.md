@@ -1,8 +1,16 @@
-# AgentLens
+# Kaizen
 
 **Multi-Agent AI Cost Optimization Platform**
 
-AgentLens is a performance profiler for multi-agent AI systems. It automatically captures AI workflow calls, uses Google Gemini to analyze patterns, and identifies where you're wasting 60-80% of your AI budget on redundant calls, model overkill, and prompt bloat.
+Kaizen is a performance profiler for multi-agent AI systems. It automatically captures AI workflow calls, uses Google Gemini to analyze patterns, and identifies where you're wasting 60-80% of your AI budget on redundant calls, model overkill, and prompt bloat.
+
+---
+
+## ⛩️ Why Kaizen?
+
+**Kaizen (改善)** is a Japanese philosophy meaning "change for the better" or "continuous improvement".
+
+In the context of AI engineering, **Muda (waste)** comes in the form of redundant tokens, oversized models, and repetitive prompts. Kaizen helps you continuously identify and eliminate this waste, ensuring your AI systems get faster, cheaper, and more efficient with every iteration.
 
 ---
 
@@ -21,25 +29,25 @@ When developers build multi-agent AI systems (using tools like LangChain, CrewAI
 
 ## 💡 The Solution
 
-AgentLens works in three steps:
+Kaizen works in three steps:
 
 ### 1. **Capture**
-Developers install our Python SDK and wrap their AI client. AgentLens silently captures every AI call in the background.
+Developers install our Python SDK and wrap their AI client. Kaizen silently captures every AI call in the background.
 ```python
-from agentlens import Lens
+from kaizen import Lens
 from openai import OpenAI
 
 lens = Lens(api_key="your-key")
 client = lens.wrap(OpenAI())
 
 lens.start_workflow("Process customer email")
-# Make AI calls normally - AgentLens captures everything
+# Make AI calls normally - Kaizen captures everything
 response = client.chat.completions.create(...)
 lens.end_workflow()
 ```
 
 ### 2. **Analyze**
-Developers open the AgentLens dashboard and click "Analyze". We send the entire workflow trace to Google Gemini 3, which uses its massive context window to spot waste patterns across all calls simultaneously.
+Developers open the Kaizen dashboard and click "Analyze". We send the entire workflow trace to Google Gemini 3, which uses its massive context window to spot waste patterns across all calls simultaneously.
 
 ### 3. **Optimize**
 The dashboard shows specific recommendations:
@@ -51,11 +59,11 @@ The dashboard shows specific recommendations:
 
 ## 🏗️ Architecture
 
-AgentLens consists of three components:
+Kaizen consists of three components:
 ```
 ┌─────────────────┐
 │  Python SDK     │  Captures AI calls, sends to backend
-│  (agentlens)    │  
+│  (kaizen)       │  
 └────────┬────────┘
          │ HTTP POST
          ▼
@@ -80,7 +88,7 @@ AgentLens consists of three components:
 
 ### **Component 1: Python SDK**
 - **Location**: `sdk/`
-- **Purpose**: Python package that developers install (`pip install agentlens`)
+- **Purpose**: Python package that developers install (`pip install kaizen`)
 - **Key Innovation**: Uses Python `ContextVars` for thread-safe trace ID storage, ensuring concurrent workflows don't get mixed up
 
 ### **Component 2: FastAPI Backend**
@@ -143,8 +151,8 @@ Gemini's **massive context window** (1M+ tokens) allows us to send the entire wo
 
 #### 1. Clone the repo
 ```bash
-git clone https://github.com/your-org/agentlens.git
-cd agentlens
+git clone https://github.com/your-org/kaizen.git
+cd kaizen
 ```
 
 #### 2. Set up Backend
@@ -199,9 +207,9 @@ Then open `http://localhost:5173` to see the captured workflow in the dashboard.
 
 ## 📁 Project Structure
 ```
-agentlens/
+kaizen/
 ├── sdk/                          # Python SDK
-│   ├── agentlens/
+│   ├── kaizen/
 │   │   ├── __init__.py          # Package exports
 │   │   ├── lens.py              # Main Lens class (start/end workflow)
 │   │   ├── wrapper.py           # OpenAI client wrapper
@@ -327,7 +335,7 @@ python test_workflow.py
 ## 🎨 Design Decisions
 
 ### **Why Separate SDK Package?**
-- ✅ Developers install with `pip install agentlens`
+- ✅ Developers install with `pip install kaizen`
 - ✅ Works in any Python environment
 - ✅ Can version independently from backend
 - ✅ Standard pattern for developer tools
@@ -366,7 +374,7 @@ LOG_LEVEL=INFO
 ### Dashboard (.env)
 ```bash
 # None needed - uses proxy in development
-# For production, set VITE_API_URL=https://api.agentlens.com
+# For production, set VITE_API_URL=https://api.kaizen.com
 ```
 
 ---
@@ -510,7 +518,7 @@ MIT License - see LICENSE file for details
 **Category:** Developer Tools / AI Infrastructure
 
 **Key Points:**
-- AgentLens uses Gemini's long context window to analyze entire multi-agent workflow traces
+- Kaizen uses Gemini's long context window to analyze entire multi-agent workflow traces
 - Identifies 60-80% cost savings through AI-powered pattern detection
 - Solves a real problem: invisible waste in AI agent systems
 - Demonstrates genuine technical innovation (not just API wrapper)

@@ -1,5 +1,5 @@
 # requirements.txt
-# AgentLens Backend Dependencies
+# Kaizen Backend Dependencies
 
 # Web Framework
 fastapi==0.109.0
