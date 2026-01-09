@@ -1,6 +1,6 @@
 # Web Framework (Loosened to allow negotiation)
 fastapi
-uvicorn
+uvicorn[standard]
 
 # Database (Latest version handles dependencies better)
 supabase
@@ -16,3 +16,6 @@ httpx
 # Data Validation
 pydantic
 pydantic-settings
+
+# Testing
+pytest
