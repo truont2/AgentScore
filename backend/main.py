@@ -1,15 +1,192 @@
-from typing import Union
+import os
+from typing import List
+from fastapi import FastAPI, HTTPException, Depends
+from google import genai
+from google.genai import types
+from datetime import datetime
+from uuid import UUID
+import traceback
+import json
 
-from fastapi import FastAPI
+from database import supabase
+from schemas import BatchEvents, Workflow, WorkflowDetail, AnalysisResult
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize Gemini Client
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+gemini_client = None
+if GEMINI_API_KEY:
+    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
+@app.post("/events")
+def receive_events(batch: BatchEvents):
+    """Receives batches of AI call events."""
+    if not batch.events:
+        return {"message": "No events received"}
+    
+    data = []
+    for event in batch.events:
+        event_dict = event.model_dump()
+        # Convert UUIDs to strings for JSON serialization/Supabase
+        for key, value in event_dict.items():
+            if isinstance(value, datetime):
+                event_dict[key] = value.isoformat()
+            if isinstance(value, UUID):
+                event_dict[key] = str(value)
+        data.append(event_dict)
+
+    try:
+        response = supabase.table("events").insert(data).execute()
+        return {"message": "Events logged successfully", "data": response.data}
+    except Exception as e:
+        print(f"Error inserting events: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/workflows", response_model=List[Workflow])
+def list_workflows():
+    """Returns list of workflows with basic stats."""
+    try:
+        # Assuming 'workflows' table exists. 
+        # If workflows are derived from events, we might need a different query.
+        # For now, assuming a dedicated workflows table or view.
+        response = supabase.table("workflows").select("*").execute()
+        return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/workflows/{id}", response_model=WorkflowDetail)
+def get_workflow_details(id: str):
+    """Returns full details of a specific workflow."""
+    try:
+        wf_response = supabase.table("workflows").select("*").eq("id", id).execute()
+        if not wf_response.data:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        workflow = wf_response.data[0]
+        
+        # Fetch related events
+        # Assuming 'session_id' in events maps to workflow 'id' or there's a workflow_id field
+        # Adjusting schema assumption: events have session_id. 
+        events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
+        
+        workflow["events"] = events_response.data
+        return workflow
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/workflows/{id}/analyze", response_model=AnalysisResult)
+def analyze_workflow(id: str):
+    """Triggers Gemini analysis on a workflow."""
+    if not gemini_client:
+        raise HTTPException(status_code=503, detail="Gemini API not configured")
+
+    try:
+        # 1. Fetch Workflow Data
+        wf_response = supabase.table("workflows").select("*").eq("id", id).execute()
+        if not wf_response.data:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
+        events = events_response.data
+        
+        if not events:
+             raise HTTPException(status_code=400, detail="No events found for this workflow to analyze")
+
+        # 2. Construct Prompt using new schema fields
+        events_str = ""
+        for e in events:
+            role = e.get('event_type', 'unknown')
+            prompt_data = e.get('prompt', '')
+            response_data = e.get('response', '')
+            model = e.get('model', 'unknown')
+            cost = e.get('cost', 0)
+            events_str += f"\n- [{role}] Model: {model}, Cost: ${cost}\n  Input: {prompt_data}\n  Output: {response_data}\n"
+
+        prompt = f"""Analyze the following AI workflow trace for cost inefficiencies, redundancies, and prompt bloat.
+        
+        Workflow Events:
+        {events_str}
+        
+        Return the analysis in JSON format with these keys: 
+        - original_cost (float)
+        - optimized_cost (float, estimated)
+        - redundancies (list of strings)
+        - model_overkill (list of strings)
+        - prompt_bloat (list of strings)
+        """
+
+        # 3. Call Gemini
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
+        )
+        
+        analysis_json = json.loads(response.text)
+
+        # 4. Store Analysis
+        analysis_entry = {
+            "workflow_id": id,
+            "original_cost": analysis_json.get("original_cost"),
+            "optimized_cost": analysis_json.get("optimized_cost"),
+            "redundancies": {"items": analysis_json.get("redundancies", [])},
+            "model_overkill": {"items": analysis_json.get("model_overkill", [])},
+            "prompt_bloat": {"items": analysis_json.get("prompt_bloat", [])},
+            # "created_at": datetime.now().isoformat() # defaulted in DB
+        }
+        
+        # Insert and return inserted data to get the ID and timestamp
+        res_insert = supabase.table("analyses").insert(analysis_entry).execute()
+        return res_insert.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Analysis failed: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/workflows/{id}/analysis")
+def get_workflow_analysis(id: str):
+    """Returns analysis results for a workflow."""
+    try:
+        response = supabase.table("analyses").select("*").eq("workflow_id", id).order("created_at", desc=True).execute()
+        return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
