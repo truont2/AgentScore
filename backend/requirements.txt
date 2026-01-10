@@ -1,20 +1,18 @@
-# requirements.txt
-# Kaizen Backend Dependencies
+# Web Framework (Loosened to allow negotiation)
+fastapi
+uvicorn
 
-# Web Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-
-# Database
-supabase==2.3.4
+# Database (Latest version handles dependencies better)
+supabase
 
 # AI Integration
-google-genai==0.2.0
+google-genai
+langchain
 
 # Utilities
-python-dotenv==1.0.0
-httpx==0.26.0
+python-dotenv
+httpx
 
 # Data Validation
-pydantic==2.5.3
-pydantic-settings==2.1.0
+pydantic
+pydantic-settings
