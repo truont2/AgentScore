@@ -48,6 +48,16 @@ def receive_event(event: EventCreate):
             event_dict[key] = value.isoformat()
         if isinstance(value, UUID):
             event_dict[key] = str(value)
+
+    # Ensure Workflow Exists (Fix for FK Constraint)
+    try:
+        supabase.table("workflows").upsert({
+            "id": event_dict["workflow_id"],
+            "name": "Untitled Workflow",
+            "status": "active"
+        }, on_conflict="id").execute()
+    except Exception as e:
+        print(f"Warning: Workflow upsert failed: {e}")
             
     # Calculate Cost if missing
     if event_dict.get("cost", 0) == 0 and event_dict.get("model") and event_dict.get("tokens_in") is not None:
