@@ -9,7 +9,8 @@ import traceback
 import json
 
 from database import supabase
-from schemas import BatchEvents, Workflow, WorkflowDetail, AnalysisResult
+from schemas import BatchEvents, Workflow, WorkflowDetail, AnalysisResult, EventCreate
+from pricing import calculate_cost
 
 app = FastAPI()
 
@@ -50,21 +51,30 @@ if GEMINI_API_KEY:
     gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 @app.post("/events")
-def receive_events(batch: BatchEvents):
-    """Receives batches of AI call events."""
-    if not batch.events:
-        return {"message": "No events received"}
+def receive_event(event: EventCreate):
+    """Receives a single AI call event."""
     
-    data = []
-    for event in batch.events:
-        event_dict = event.model_dump()
-        # Convert UUIDs to strings for JSON serialization/Supabase
-        for key, value in event_dict.items():
-            if isinstance(value, datetime):
-                event_dict[key] = value.isoformat()
-            if isinstance(value, UUID):
-                event_dict[key] = str(value)
-        data.append(event_dict)
+    event_dict = event.model_dump()
+    # Convert UUIDs to strings for JSON serialization/Supabase
+    for key, value in event_dict.items():
+        if isinstance(value, datetime):
+            event_dict[key] = value.isoformat()
+        if isinstance(value, UUID):
+            event_dict[key] = str(value)
+            
+    # Calculate Cost if missing
+    if event_dict.get("cost", 0) == 0 and event_dict.get("model") and event_dict.get("tokens_in") is not None:
+        try:
+            event_dict["cost"] = calculate_cost(
+                event_dict["model"], 
+                event_dict.get("tokens_in", 0), 
+                event_dict.get("tokens_out", 0)
+            )
+        except ValueError:
+            pass # Unknown model, keep 0
+            
+    # Insert single event
+    data = [event_dict]
 
     try:
         response = supabase.table("events").insert(data).execute()
