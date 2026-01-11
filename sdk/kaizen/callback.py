@@ -1,4 +1,6 @@
 import json
+import threading
+import requests
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -17,6 +19,30 @@ class KaizenCallbackHandler(BaseCallbackHandler):
     It uses a deterministic Trace ID (via contextvars) to link all steps
     of a single workflow together, even in async environments.
     """
+
+    def __init__(self, backend_url:str = "http://localhost:3000"):
+        super().__init__()
+        self.backend_url = backend_url
+        # create an instance variable that gets updated for each instance of callBackHandler
+        self._pending_starts: Dict[str, dict] = {} 
+
+    def _send_event(self, event_data: dict):
+        """Send events to the backend in background thread"""
+        def _send():
+            try:
+                response = requests.post(f"{self.backend_url}/events",
+                    json=event_data,
+                    timeout=5)
+                if response.status_code in (200, 201):
+                    print("Capturing Event ...")
+                else:
+                    print(f"Warning: Backend returned {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                print(f"Warning: Could not reach backend: {e}")
+        
+        thread = threading.Thread(target=_send, daemon=True)
+        thread.start()
+    
 
     def on_chat_model_start(
         self,
@@ -37,21 +63,25 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         # For simple agents, it's usually just one list of messages.
         if not messages:
             return
-
-        trace_id = get_trace_id()
         
-        # Simple logging of the event
-        # In a real system, we might buffer this or send a "start" event.
-        print(json.dumps({
-            "event": "llm_start",
-            "trace_id": trace_id,
+        # Store start data keyed by run_id - we'll complete it in on_chat_model_end
+        # Try to get the actual model name from kwargs (more accurate)
+        model_name = "unknown"
+        if "invocation_params" in kwargs:
+            model_name = kwargs["invocation_params"].get("model") or kwargs["invocation_params"].get("model_name")
+        
+        if not model_name or model_name == "unknown":
+            model_name = serialized.get("name", "unknown")
+
+        self._pending_starts[str(run_id)] = {
             "run_id": str(run_id),
-            "timestamp": datetime.now().isoformat(),
-            "model": serialized.get("name", "unknown"),
-             # Simply converting messages to string for readability in logs
-            "messages": str(messages[0]),
-            "parent_run_id": str(parent_run_id) if parent_run_id else None
-        }, indent=2))
+            "workflow_id": get_trace_id(),
+            "parent_run_id": str(parent_run_id) if parent_run_id else None,
+            "event_type": "llm_call",
+            "model": model_name,
+            "prompt": str(messages[0]),
+            "start_time": datetime.now(),
+        }
 
     def on_chat_model_end(
         self,
@@ -66,10 +96,11 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         Called when the LLM finishes generating a response.
         We capture the output text and token usage/costs here.
         """
-        # DEBUG: Verify this method is called
-        # print("DEBUG: on_chat_model_end called")
 
-        trace_id = get_trace_id()
+        start_data = self._pending_starts.pop(str(run_id), None)
+        if not start_data:
+            print(f"Warning: No matching start for run_id {run_id}")
+            return
         
         # LangChain provides usage info in llm_output
         
@@ -89,97 +120,55 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         
         # Fallback 2: Check generation_info (Google legacy)
         if not token_usage and result.generations:
-            gen_info = result.generations[0][0].generation_info or {}
-            token_usage = gen_info.get("usage_metadata") or gen_info.get("token_usage", {})
+            try:
+                gen_info = result.generations[0][0].generation_info or {}
+                token_usage = gen_info.get("usage_metadata") or gen_info.get("token_usage", {})
+            except IndexError:
+                pass
 
         # Get the actual text response
         generation_text = ""
         if result.generations:
              # Just taking the first generation
-            generation_text = result.generations[0][0].text
+            try:
+                generation_text = result.generations[0][0].text
+            except IndexError:
+                pass
 
-        print(json.dumps({
-            "event": "llm_end",
-            "trace_id": trace_id,
-            "run_id": str(run_id),
-            "timestamp": datetime.now().isoformat(),
+        # Calculate latency
+        latency_ms = int((datetime.now() - start_data["start_time"]).total_seconds() * 1000)
+
+        # Normalize token keys (different providers use different names)
+        tokens_in = (
+            token_usage.get("prompt_tokens") or 
+            token_usage.get("input_tokens") or 
+            token_usage.get("input_token_count", 0)
+        )
+        tokens_out = (
+            token_usage.get("completion_tokens") or 
+            token_usage.get("output_tokens") or 
+            token_usage.get("output_token_count", 0)
+        )
+
+        # Build complete event matching EventCreate schema
+        event_data = {
+            "run_id": start_data["run_id"],
+            "workflow_id": start_data["workflow_id"],
+            "parent_run_id": start_data["parent_run_id"],
+            "event_type": "llm_call",
+            "model": start_data["model"],
+            "prompt": start_data["prompt"],
             "response": generation_text,
-            "response": generation_text,
-            "token_usage": token_usage,
-            "parent_run_id": str(parent_run_id) if parent_run_id else None
-        }, indent=2))
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+            "cost": 0.0,  # Backend can calculate this from model + tokens
+            "latency_ms": latency_ms,
+        }
 
-    def on_tool_start(
-        self,
-        serialized: Dict[str, Any],
-        input_str: str,
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        inputs: Optional[Dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> Any:
-        """
-        Called when a tool is about to run.
-        """
-        trace_id = get_trace_id()
-        print(json.dumps({
-            "event": "tool_start",
-            "trace_id": trace_id,
-            "run_id": str(run_id),
-            "parent_run_id": str(parent_run_id) if parent_run_id else None,
-            "timestamp": datetime.now().isoformat(),
-            "tool_name": serialized.get("name", "unknown"),
-            "tool_input": inputs if inputs else input_str
-        }, indent=2))
+        # Send to backend
+        self._send_event(event_data)
 
-    def on_tool_end(
-        self,
-        output: str,
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        **kwargs: Any,
-    ) -> Any:
-        """
-        Called when a tool finishes running.
-        """
-        trace_id = get_trace_id()
-        print(json.dumps({
-            "event": "tool_end",
-            "trace_id": trace_id,
-            "run_id": str(run_id),
-            "parent_run_id": str(parent_run_id) if parent_run_id else None,
-            "timestamp": datetime.now().isoformat(),
-            "tool_output": output
-        }, indent=2))
 
-    def on_agent_action(
-        self,
-        action: AgentAction,
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        **kwargs: Any,
-    ) -> Any:
-        """
-        Called when the agent decides to take a specific action (use a tool).
-        """
-        trace_id = get_trace_id()
-        print(json.dumps({
-            "event": "agent_action",
-            "trace_id": trace_id,
-            "run_id": str(run_id),
-            "parent_run_id": str(parent_run_id) if parent_run_id else None,
-            "timestamp": datetime.now().isoformat(),
-            "tool": action.tool,
-            "tool_input": action.tool_input,
-            "log": action.log  # This is the "Reasoning" or thought process
-        }, indent=2))
 
     def on_llm_end(
         self,
