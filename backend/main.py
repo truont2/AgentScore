@@ -158,7 +158,7 @@ def analyze_workflow(id: str):
 
         # 3. Call Gemini
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
