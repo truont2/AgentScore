@@ -1,529 +1,240 @@
-# Kaizen
+# AgentScore
 
-**Multi-Agent AI Cost Optimization Platform**
+**Your AI agents work... but at what cost?**
 
-Kaizen is a performance profiler for multi-agent AI systems. It automatically captures AI workflow calls, uses Google Gemini to analyze patterns, and identifies where you're wasting 60-80% of your AI budget on redundant calls, model overkill, and prompt bloat.
+AgentScore is a performance profiler for multi-agent AI systems. Think of it as a fitness tracker for your AI workflows—it monitors what your agents are doing, identifies where they're wasting money, and tells you exactly how to fix it.
 
----
-
-## ⛩️ Why Kaizen?
-
-**Kaizen (改善)** is a Japanese philosophy meaning "change for the better" or "continuous improvement".
-
-In the context of AI engineering, **Muda (waste)** comes in the form of redundant tokens, oversized models, and repetitive prompts. Kaizen helps you continuously identify and eliminate this waste, ensuring your AI systems get faster, cheaper, and more efficient with every iteration.
+Built for the **Google Gemini 3 Hackathon**.
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
-When developers build multi-agent AI systems (using tools like LangChain, CrewAI, AutoGPT), their agents often make 50-100+ AI calls per workflow. These calls are expensive, and developers have **zero visibility** into what's causing the costs.
+Multi-agent AI systems are powerful but wasteful. Developers see the final output and total cost, but have zero visibility into:
 
-**Common waste patterns:**
-- **Redundant calls**: Same question asked multiple times in different words
-- **Model overkill**: Using GPT-4 for simple tasks that GPT-3.5 could handle
-- **Prompt bloat**: Sending unnecessary context in every call
+- Which calls were actually necessary
+- Which calls duplicated work already done
+- Which calls used expensive models when cheaper ones would suffice
+- Which calls sent way more context than needed
 
-**Example:** A workflow that costs $3.40 could cost $1.00 after optimization. Multiply that by 1,000 runs/day = $2,400/day wasted.
+A workflow that costs **$3.40** might only need to cost **$1.00**. At scale, that's $72,000/month wasted.
 
 ---
 
-## 💡 The Solution
+## How It Works
 
-Kaizen works in three steps:
+### 1. Capture
+Add our lightweight SDK to your application. Wrap your AI client and mark workflow boundaries—AgentScore silently captures every LLM call in the background.
 
-### 1. **Capture**
-Developers install our Python SDK and wrap their AI client. Kaizen silently captures every AI call in the background.
 ```python
-from kaizen import Lens
-from openai import OpenAI
+from agentscore import AgentScore
 
-lens = Lens(api_key="your-key")
+lens = AgentScore()
 client = lens.wrap(OpenAI())
 
-lens.start_workflow("Process customer email")
-# Make AI calls normally - Kaizen captures everything
-response = client.chat.completions.create(...)
+lens.start_workflow("Process customer request")
+# Your multi-agent workflow runs normally
 lens.end_workflow()
 ```
 
-### 2. **Analyze**
-Developers open the Kaizen dashboard and click "Analyze". We send the entire workflow trace to Google Gemini 3, which uses its massive context window to spot waste patterns across all calls simultaneously.
+### 2. Analyze
+Trigger analysis and AgentScore sends your workflow trace to Gemini 3. The massive context window allows Gemini to see patterns across 50-100+ calls simultaneously—detecting inefficiencies that would take hours to find manually.
 
-### 3. **Optimize**
-The dashboard shows specific recommendations:
-- "Calls #12 and #47 are asking the same thing. Cache the first result and save $0.02 per run."
-- "Call #3 is using GPT-4 for simple translation. Switch to Gemini Flash and save $0.008."
-- "Call #22 includes 8,500 tokens but only needs 1,200. Remove unnecessary context and save $0.15."
+### 3. Optimize
+View your results in the dashboard:
+- **Efficiency Score** (0-100) showing overall workflow health
+- **Before/After cost comparison** with concrete savings
+- **Specific recommendations** with confidence scores
 
 ---
 
-## 🏗️ Architecture
+## The Three Agent Sins
 
-Kaizen consists of three components:
+AgentScore detects three categories of waste that plague multi-agent systems:
+
+### 🔄 Redundant Calls
+Semantically identical requests worded differently.
+
+> *"Translate myocardial infarction"* and *"What is MI in plain English?"* are the same question—but simple text matching won't catch it.
+
+### 💸 Model Overkill
+Expensive models used for simple tasks.
+
+> Using GPT-4 ($30/1M tokens) for basic translation when Gemini Flash ($0.35/1M tokens) produces identical results.
+
+### 📜 Context Bloat
+Unnecessary tokens stuffed into prompts.
+
+> Sending 10,000 tokens of conversation history when only the last 500 were relevant.
+
+---
+
+## Efficiency Score
+
+Every workflow receives an **Efficiency Score from 0-100**:
+
+| Score | Rating | What It Means |
+|-------|--------|---------------|
+| 90-100 | Excellent | Minimal waste, well-optimized |
+| 70-89 | Good | Some room for improvement |
+| 50-69 | Fair | Significant optimization opportunities |
+| 0-49 | Poor | Major inefficiencies detected |
+
+The score gamifies optimization—watch your number climb as you implement recommendations.
+
+**Score Calculation:**
+- Redundancy penalty: -points per duplicate call cluster
+- Model overkill penalty: -points per overspec'd model
+- Context bloat penalty: -points based on excess tokens
+- Weighted by cost impact and confidence
+
+---
+
+## Why Gemini 3?
+
+AgentScore isn't just *using* Gemini—it **requires** Gemini's unique capabilities:
+
+**Long Context Window**: Analyze entire workflow traces (50-100+ calls) in a single request. Other models would require chunking, losing cross-workflow pattern detection.
+
+**Semantic Understanding**: Detecting that two differently-worded prompts are asking the same thing requires genuine language comprehension, not regex.
+
+**Task Complexity Assessment**: Determining whether a task needs GPT-4 or Gemini Flash requires reasoning about the actual cognitive demands—something only AI can do reliably.
+
+---
+
+## Architecture
+
 ```
-┌─────────────────┐
-│  Python SDK     │  Captures AI calls, sends to backend
-│  (kaizen)       │  
-└────────┬────────┘
-         │ HTTP POST
-         ▼
-┌─────────────────┐
-│ FastAPI Backend │  Receives events, runs Gemini analysis
-│  (Python)       │  
-└────────┬────────┘
-         │ SQL
-         ▼
-┌─────────────────┐
-│   Supabase      │  Stores workflows, events, analysis results
-│   (PostgreSQL)  │  
-└─────────────────┘
-         ▲
-         │ API calls
-         │
-┌─────────────────┐
-│ React Dashboard │  Web UI for viewing workflows and analysis
-│  (TypeScript)   │  
-└─────────────────┘
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Your App +    │────▶│  FastAPI        │────▶│   Supabase      │
+│   AgentScore    │     │  Backend        │     │   PostgreSQL    │
+│   SDK           │     │                 │     │                 │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                                 ▼
+                        ┌─────────────────┐
+                        │   Gemini 3      │
+                        │   Analysis      │
+                        └─────────────────┘
+                                 │
+                                 ▼
+                        ┌─────────────────┐
+                        │   React         │
+                        │   Dashboard     │
+                        └─────────────────┘
 ```
 
-### **Component 1: Python SDK**
-- **Location**: `sdk/`
-- **Purpose**: Python package that developers install (`pip install kaizen`)
-- **Key Innovation**: Uses Python `ContextVars` for thread-safe trace ID storage, ensuring concurrent workflows don't get mixed up
-
-### **Component 2: FastAPI Backend**
-- **Location**: `backend/`
-- **Purpose**: REST API that receives events, stores data, and coordinates Gemini analysis
-- **Key Endpoints**:
-  - `POST /api/events` - Receive captured AI calls from SDK
-  - `GET /api/workflows` - List all workflows
-  - `POST /api/workflows/{id}/analyze` - Trigger Gemini analysis
-  - `GET /api/workflows/{id}/analysis` - Retrieve analysis results
-
-### **Component 3: React Dashboard**
-- **Location**: `dashboard/`
-- **Purpose**: Web interface for viewing workflows and optimization recommendations
-- **Tech Stack**: React + TypeScript + Vite
-- **Key Pages**:
-  - Workflow List - See all captured workflows
-  - Workflow Detail - Timeline of all AI calls
-  - Analysis Results - Optimization recommendations with before/after costs
+**Stack:**
+- **SDK**: Python, LangChain callback handlers, ContextVars for thread-safe tracing
+- **Backend**: FastAPI, async-first design
+- **Database**: Supabase PostgreSQL (handles concurrent writes)
+- **Frontend**: React, Tailwind CSS, dark mode developer aesthetic
+- **Analysis Engine**: Google Gemini 3
 
 ---
 
-## 🔑 Key Technical Decisions
+## Key Technical Decisions
 
-### **Why ContextVars for Trace IDs?**
-Multi-agent systems often run concurrent workflows. We use Python's `ContextVars` (not global variables or class attributes) to store trace IDs, ensuring each workflow's calls are correctly grouped even when multiple workflows run simultaneously. This is **thread-safe** and works in async environments.
-
-**Alternative considered:** Time-based grouping (rejected - fails with concurrent users)
-
-### **Why PostgreSQL via Supabase?**
-SQLite can't handle concurrent writes (file locking). PostgreSQL handles concurrency natively, which is critical when multiple users/workflows hit the backend simultaneously. Supabase provides managed PostgreSQL with a free tier.
-
-**Alternative considered:** SQLite (rejected - concurrency issues)
-
-### **Why Batch Analysis (Not Real-Time)?**
-We analyze workflows **on-demand** (when user clicks "Analyze") rather than automatically. This gives users control and saves Gemini API costs. Real-time analysis would be expensive and unnecessary.
-
-**Alternative considered:** Real-time analysis (rejected - cost and latency)
-
-### **Why Gemini 3?**
-Gemini's **massive context window** (1M+ tokens) allows us to send the entire workflow trace in a single API call. It can see patterns across 50-100+ calls simultaneously, identifying semantic similarities that simple text matching would miss. This is the core value proposition.
-
-**What Gemini does:**
-- Detects semantically identical prompts worded differently (redundancy detection)
-- Assesses task complexity to recommend appropriate models (model overkill detection)
-- Analyzes which parts of prompts were actually used (prompt bloat detection)
+| Decision | Choice | Why |
+|----------|--------|-----|
+| Workflow ID | Deterministic Trace IDs via ContextVars | 100% accurate grouping even with concurrent users |
+| SDK Pattern | Wrapper (`lens.wrap(client)`) | Safer than monkey-patching, won't break on library updates |
+| Database | PostgreSQL | Native concurrency handling for multi-user scenarios |
+| Analysis | Single Gemini call per workflow | Leverages long context window, simpler architecture |
+| Confidence Filter | 0.7 threshold | Shows only high-confidence recommendations |
 
 ---
 
-## 🚀 Getting Started
+## MVP Features
 
-### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- Supabase account (free tier)
-- Google Gemini API key
-- OpenAI API key (for testing the SDK)
+- ✅ Python SDK with OpenAI wrapper
+- ✅ Automatic capture of all LLM calls (prompt, response, cost, latency)
+- ✅ Thread-safe workflow tracing
+- ✅ FastAPI backend with event ingestion
+- ✅ Gemini-powered analysis detecting all three Agent Sins
+- ✅ Efficiency Score calculation
+- ✅ React dashboard with workflow list and analysis views
+- ✅ Before/after cost comparison
+- ✅ Actionable recommendations with confidence scores
 
-### Setup
+---
 
-#### 1. Clone the repo
+## Post-MVP Roadmap
+
+### Phase 1: Expand Coverage
+- [ ] Anthropic (Claude) SDK support
+- [ ] Google (Gemini) SDK support
+- [ ] Native LangChain integration
+- [ ] PyPI package publication
+
+### Phase 2: Production Features
+- [ ] User authentication & team workspaces
+- [ ] Historical analytics and cost trends
+- [ ] Spending alerts and anomaly detection
+- [ ] CI/CD integration via API
+- [ ] Webhook notifications
+
+### Phase 3: Advanced Intelligence
+- [ ] **Auto-fix generation**: Generate code patches for detected issues
+- [ ] **A/B testing**: Compare optimization strategies
+- [ ] **Custom rules**: Define organization-specific optimization policies
+- [ ] **Benchmark comparisons**: See how your efficiency compares to anonymized industry data
+- [ ] **Real-time streaming**: Live efficiency monitoring during workflow execution
+
+---
+
+## Differentiation
+
+| Tool | What It Does | What's Missing |
+|------|--------------|----------------|
+| LangSmith | Logs calls, basic debugging | No intelligent optimization |
+| Helicone | Cost tracking, metrics | Reports costs, doesn't find savings |
+| PromptLayer | Prompt versioning | Not multi-agent aware |
+| **AgentScore** | **AI-powered optimization** | **Tells you what to fix and how** |
+
+The key difference: Other tools tell you *how much you spent*. AgentScore tells you *how much you should have spent* and exactly how to get there.
+
+---
+
+## Quick Start
+
 ```bash
-git clone https://github.com/your-org/kaizen.git
-cd kaizen
-```
+# Install SDK
+pip install agentscore
 
-#### 2. Set up Backend
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+# Initialize
+from agentscore import AgentScore
+from openai import OpenAI
 
-# Create .env file
-cp .env.example .env
-# Edit .env and add:
-#   SUPABASE_URL=your-supabase-url
-#   SUPABASE_KEY=your-supabase-key
-#   GEMINI_API_KEY=your-gemini-key
+lens = AgentScore(api_key="your-api-key")
+client = lens.wrap(OpenAI())
 
-# Run database migrations
-python -m alembic upgrade head
+# Track workflow
+lens.start_workflow("My Agent Task")
 
-# Start the server
-uvicorn main:app --reload --port 8000
-```
+# Your agent code runs normally...
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
 
-Backend runs at `http://localhost:8000`
+lens.end_workflow()
 
-#### 3. Set up Dashboard
-```bash
-cd dashboard
-npm install
-
-# Start dev server (proxies API calls to localhost:8000)
-npm run dev
-```
-
-Dashboard runs at `http://localhost:5173`
-
-#### 4. Set up SDK (for testing)
-```bash
-cd sdk
-pip install -e .  # Install in development mode
-```
-
-#### 5. Test the full flow
-```bash
-cd examples
-python basic_workflow.py
-```
-
-Then open `http://localhost:5173` to see the captured workflow in the dashboard.
-
----
-
-## 📁 Project Structure
-```
-kaizen/
-├── sdk/                          # Python SDK
-│   ├── kaizen/
-│   │   ├── __init__.py          # Package exports
-│   │   ├── lens.py              # Main Lens class (start/end workflow)
-│   │   ├── wrapper.py           # OpenAI client wrapper
-│   │   └── client.py            # HTTP client for backend communication
-│   ├── setup.py                 # Package configuration
-│   └── examples/
-│       └── basic_workflow.py    # Example usage
-│
-├── backend/                      # FastAPI backend
-│   ├── main.py                  # FastAPI app + API routes
-│   ├── models.py                # Pydantic models (Event, Workflow, Analysis)
-│   ├── database.py              # Supabase client setup
-│   ├── analysis.py              # Gemini integration + analysis prompt
-│   ├── requirements.txt         # Python dependencies
-│   └── .env.example             # Environment variables template
-│
-├── dashboard/                    # React dashboard
-│   ├── src/
-│   │   ├── App.tsx              # Main app component
-│   │   ├── main.tsx             # Entry point
-│   │   ├── types/
-│   │   │   └── index.ts         # TypeScript type definitions
-│   │   ├── pages/
-│   │   │   ├── WorkflowList.tsx      # Workflow list page
-│   │   │   ├── WorkflowDetail.tsx    # Workflow detail page
-│   │   │   └── AnalysisResults.tsx   # Analysis results page
-│   │   ├── components/
-│   │   │   ├── WorkflowCard.tsx      # Workflow card component
-│   │   │   ├── CallTimeline.tsx      # Call timeline component
-│   │   │   └── SavingsCard.tsx       # Cost savings display
-│   │   └── api/
-│   │       └── client.ts        # API client functions
-│   ├── package.json
-│   ├── tsconfig.json            # TypeScript configuration
-│   ├── vite.config.ts           # Vite configuration (with proxy)
-│   └── index.html
-│
-└── README.md                     # This file
+# View results at dashboard.agentscore.dev
 ```
 
 ---
 
-## 🗄️ Database Schema
+## Team
 
-### **workflows table**
-```sql
-CREATE TABLE workflows (
-    id UUID PRIMARY KEY,
-    name TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    total_calls INTEGER DEFAULT 0,
-    total_cost DECIMAL(10,6) DEFAULT 0,
-    status TEXT DEFAULT 'pending'  -- pending, analyzing, analyzed, failed
-);
-```
-
-### **events table**
-```sql
-CREATE TABLE events (
-    id UUID PRIMARY KEY,
-    workflow_id UUID REFERENCES workflows(id),
-    created_at TIMESTAMP DEFAULT NOW(),
-    timestamp TIMESTAMP NOT NULL,
-    model TEXT NOT NULL,
-    prompt TEXT NOT NULL,
-    response TEXT NOT NULL,
-    tokens_in INTEGER NOT NULL,
-    tokens_out INTEGER NOT NULL,
-    cost DECIMAL(10,6) NOT NULL,
-    latency_ms INTEGER
-);
-```
-
-### **analyses table**
-```sql
-CREATE TABLE analyses (
-    id UUID PRIMARY KEY,
-    workflow_id UUID REFERENCES workflows(id),
-    created_at TIMESTAMP DEFAULT NOW(),
-    raw_response JSONB,
-    redundant_calls JSONB,
-    model_overkill JSONB,
-    prompt_bloat JSONB,
-    original_cost DECIMAL(10,6),
-    optimized_cost DECIMAL(10,6),
-    total_savings DECIMAL(10,6),
-    savings_percentage DECIMAL(5,2)
-);
-```
+Built by a 3-developer team in 4 weeks for the Google Gemini 3 Hackathon.
 
 ---
 
-## 🧪 Testing
+## License
 
-### Backend Tests
-```bash
-cd backend
-pytest
-```
-
-### SDK Tests
-```bash
-cd sdk
-pytest
-```
-
-### End-to-End Test
-```bash
-# Start backend
-cd backend && uvicorn main:app --reload &
-
-# Run test workflow
-cd sdk/examples
-python test_workflow.py
-
-# Check dashboard at http://localhost:5173
-```
+MIT
 
 ---
 
-## 🎨 Design Decisions
-
-### **Why Separate SDK Package?**
-- ✅ Developers install with `pip install kaizen`
-- ✅ Works in any Python environment
-- ✅ Can version independently from backend
-- ✅ Standard pattern for developer tools
-
-### **Why FastAPI over Django/Flask?**
-- ✅ Built-in async support (important for Gemini API calls)
-- ✅ Automatic OpenAPI docs
-- ✅ Fast development with Pydantic models
-- ✅ Modern Python framework
-
-### **Why React + Vite over Next.js?**
-- ✅ We already have a backend (FastAPI)
-- ✅ Don't need SSR (private dashboard, not SEO)
-- ✅ Simpler deployment (FastAPI can serve React build)
-- ✅ Clear separation of concerns
-
-### **Why TypeScript?**
-- ✅ Catches bugs at compile time
-- ✅ Better IDE autocomplete
-- ✅ Self-documenting code with type definitions
-- ✅ Safer refactoring
-
----
-
-## 🔐 Environment Variables
-
-### Backend (.env)
-```bash
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-anon-key
-GEMINI_API_KEY=your-gemini-api-key
-ENVIRONMENT=development  # development, production
-LOG_LEVEL=INFO
-```
-
-### Dashboard (.env)
-```bash
-# None needed - uses proxy in development
-# For production, set VITE_API_URL=https://api.kaizen.com
-```
-
----
-
-## 🚢 Deployment
-
-### Backend (Railway/Render)
-```bash
-# Railway
-railway up
-
-# Render
-render deploy
-```
-
-### Dashboard (Vercel)
-```bash
-# Vercel
-vercel deploy
-```
-
-### SDK (PyPI)
-```bash
-# Build package
-cd sdk
-python -m build
-
-# Upload to PyPI
-twine upload dist/*
-```
-
----
-
-## 📊 Project Timeline
-
-**Week 1: SDK + Backend Foundation**
-- [ ] Implement ContextVar trace ID system in SDK
-- [ ] Build OpenAI wrapper to capture calls
-- [ ] Create FastAPI endpoints for receiving events
-- [ ] Set up Supabase database with tables
-- [ ] Test: SDK → Backend → Database flow
-
-**Week 2: Gemini Analysis Engine**
-- [ ] Write Gemini analysis prompt
-- [ ] Implement analysis endpoint
-- [ ] Test with real workflow data
-- [ ] Iterate on prompt quality (15-20 iterations)
-- [ ] Handle edge cases and errors
-
-**Week 3: Dashboard**
-- [ ] Build workflow list page
-- [ ] Build workflow detail page with timeline
-- [ ] Build analysis results page
-- [ ] Integrate with backend API
-- [ ] Polish UI/UX
-
-**Week 4: Polish + Demo**
-- [ ] Deploy backend to Railway
-- [ ] Deploy frontend to Vercel
-- [ ] Create demo data
-- [ ] Record 3-minute demo video
-- [ ] Write 200-word Gemini integration description
-- [ ] Submit to hackathon
-
----
-
-## 🤝 Contributing
-
-### Branching Strategy
-- `main` - Production-ready code
-- `develop` - Integration branch
-- `feature/[name]` - Feature branches
-
-### Workflow
-1. Create feature branch from `develop`
-2. Make changes
-3. Test locally
-4. Create PR to `develop`
-5. After review, merge to `develop`
-6. When ready, merge `develop` to `main`
-
-### Code Style
-- **Python**: Follow PEP 8, use `black` for formatting
-- **TypeScript**: Use ESLint + Prettier
-- **Commits**: Use conventional commits (feat:, fix:, docs:, etc.)
-
----
-
-## 🎯 Success Metrics (Hackathon)
-
-**Technical Goals:**
-- [x] SDK captures OpenAI calls reliably
-- [x] Backend handles concurrent workflows without race conditions
-- [x] Gemini identifies all three waste types with >70% confidence
-- [x] Dashboard displays workflows and analysis results
-- [x] End-to-end flow works: SDK → Backend → Gemini → Dashboard
-
-**Demo Goals:**
-- [x] Show real workflow costing $3.40
-- [x] Show analysis identifying specific waste
-- [x] Show optimized cost of $1.00
-- [x] Explain why Gemini makes this possible
-- [x] Complete demo in under 3 minutes
-
----
-
-## 📚 Resources
-
-### Documentation
-- [FastAPI Docs](https://fastapi.tiangolo.com/)
-- [React Docs](https://react.dev/)
-- [Supabase Docs](https://supabase.com/docs)
-- [Gemini API Docs](https://ai.google.dev/docs)
-- [Python ContextVars](https://docs.python.org/3/library/contextvars.html)
-
-### Tutorials
-- [FastAPI Tutorial](https://fastapi.tiangolo.com/tutorial/)
-- [React + TypeScript](https://react-typescript-cheatsheet.netlify.app/)
-- [Vite Guide](https://vitejs.dev/guide/)
-
----
-
-## 💬 Questions?
-
-**For architecture/design questions:** Open an issue with the `question` label
-**For bugs:** Open an issue with the `bug` label
-**For feature requests:** Open an issue with the `enhancement` label
-
----
-
-## 📝 License
-
-MIT License - see LICENSE file for details
-
----
-
-## 🏆 Hackathon Submission
-
-**Event:** Google Gemini 3 Hackathon
-**Team:** [Your Team Name]
-**Category:** Developer Tools / AI Infrastructure
-
-**Key Points:**
-- Kaizen uses Gemini's long context window to analyze entire multi-agent workflow traces
-- Identifies 60-80% cost savings through AI-powered pattern detection
-- Solves a real problem: invisible waste in AI agent systems
-- Demonstrates genuine technical innovation (not just API wrapper)
-- Production-scalable architecture
-
----
-
-**Built with ❤️ for the AI community**
+*Stop flying blind. Start optimizing.*
