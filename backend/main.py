@@ -7,6 +7,7 @@ from datetime import datetime
 from uuid import UUID
 import traceback
 import json
+from prompt import ANALYSIS_PROMPT
 
 from database import supabase
 from schemas import BatchEvents, Workflow, WorkflowDetail, AnalysisResult, EventCreate
@@ -143,19 +144,8 @@ def analyze_workflow(id: str):
             cost = e.get('cost', 0)
             events_str += f"\n- [{role}] Model: {model}, Cost: ${cost}\n  Input: {prompt_data}\n  Output: {response_data}\n"
 
-        prompt = f"""Analyze the following AI workflow trace for cost inefficiencies, redundancies, and prompt bloat.
+        prompt = ANALYSIS_PROMPT
         
-        Workflow Events:
-        {events_str}
-        
-        Return the analysis in JSON format with these keys: 
-        - original_cost (float)
-        - optimized_cost (float, estimated)
-        - redundancies (list of strings)
-        - model_overkill (list of strings)
-        - prompt_bloat (list of strings)
-        """
-
         # 3. Call Gemini
         response = gemini_client.models.generate_content(
             model="gemini-2.5-flash",
