@@ -144,7 +144,7 @@ def analyze_workflow(id: str):
             cost = e.get('cost', 0)
             events_str += f"\n- [{role}] Model: {model}, Cost: ${cost}\n  Input: {prompt_data}\n  Output: {response_data}\n"
 
-        prompt = ANALYSIS_PROMPT
+        prompt = ANALYSIS_PROMPT + "\n\n## WORKFLOW CALLS\n" + events_str
         
         # 3. Call Gemini
         response = gemini_client.models.generate_content(

@@ -111,7 +111,7 @@ const SupabaseDemo = () => {
       {workflows.length > 0 && (
         <div style={{ marginTop: '20px' }}>
           <h3>Workflows (from DB)</h3>
-          <pre style={{ textAlign: 'left', background: '#f0f0f0', padding: '10px', borderRadius: '4px', overflow: 'auto' }}>
+          <pre style={{ textAlign: 'left', padding: '10px', borderRadius: '4px', overflow: 'auto' }}>
             {workflows.map((wf) => (
               <div key={wf.id} style={{ marginBottom: '20px', padding: '10px', borderBottom: '1px solid #eee' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -135,7 +135,7 @@ const SupabaseDemo = () => {
                 </div>
 
                 {analysisResults[wf.id] && (
-                  <div style={{ marginTop: '10px', background: '#eef2ff', padding: '10px', borderRadius: '6px', fontSize: '0.9em' }}>
+                  <div style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', fontSize: '0.9em' }}>
                     <h4 style={{ margin: '5px 0' }}>Gemini Analysis Result</h4>
                     <p><strong>Original Cost:</strong> ${analysisResults[wf.id].original_cost?.toFixed(4)}</p>
                     <p><strong>Optimized Cost:</strong> ${analysisResults[wf.id].optimized_cost?.toFixed(4)}</p>
