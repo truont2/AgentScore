@@ -136,15 +136,18 @@ def analyze_workflow(id: str):
 
         # 2. Construct Prompt using new schema fields
         events_str = ""
+        calculated_total_cost = 0.0
         for e in events:
             role = e.get('event_type', 'unknown')
             prompt_data = e.get('prompt', '')
             response_data = e.get('response', '')
             model = e.get('model', 'unknown')
             cost = e.get('cost', 0)
+            calculated_total_cost += cost
             events_str += f"\n- [{role}] Model: {model}, Cost: ${cost}\n  Input: {prompt_data}\n  Output: {response_data}\n"
 
         prompt = ANALYSIS_PROMPT + "\n\n## WORKFLOW CALLS\n" + events_str
+        
         
         # 3. Call Gemini
         response = gemini_client.models.generate_content(
@@ -158,13 +161,20 @@ def analyze_workflow(id: str):
         analysis_json = json.loads(response.text)
 
         # 4. Store Analysis
+        from scoring import calculate_efficiency_score
+        
+        # Calculate score first
+        score_data = calculate_efficiency_score(analysis_json)
+        
         analysis_entry = {
             "workflow_id": id,
-            "original_cost": analysis_json.get("original_cost"),
-            "optimized_cost": analysis_json.get("optimized_cost"),
-            "redundancies": {"items": analysis_json.get("redundancies", [])},
-            "model_overkill": {"items": analysis_json.get("model_overkill", [])},
-            "prompt_bloat": {"items": analysis_json.get("prompt_bloat", [])},
+            "original_cost": analysis_json.get("original_cost") or calculated_total_cost,
+            "optimized_cost": analysis_json.get("optimized_cost") or (calculated_total_cost * 0.8), # Fallback if missing
+            "redundancies": {"items": analysis_json.get("redundancies") or analysis_json.get("redundant_calls") or []},
+            "model_overkill": {"items": analysis_json.get("model_overkill") or []},
+            "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},
+            "efficiency_score": score_data["score"],
+            "efficiency_grade": score_data["grade"]
             # "created_at": datetime.now().isoformat() # defaulted in DB
         }
         

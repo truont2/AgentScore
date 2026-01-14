@@ -4,6 +4,7 @@ uvicorn[standard]
 
 # Database (Latest version handles dependencies better)
 supabase
+psycopg2-binary
 
 # AI Integration
 google-genai

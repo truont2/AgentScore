@@ -39,4 +39,6 @@ class AnalysisResult(BaseModel):
     redundancies: Optional[Dict[str, Any]] = None
     model_overkill: Optional[Dict[str, Any]] = None
     prompt_bloat: Optional[Dict[str, Any]] = None
+    efficiency_score: Optional[int] = None
+    efficiency_grade: Optional[str] = None
     created_at: datetime
