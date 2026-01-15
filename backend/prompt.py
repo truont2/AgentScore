@@ -81,6 +81,8 @@ Key: Estimate what portion of tokens_in was actually necessary.
 Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
 {
+  "original_cost": 0.1543,
+  "optimized_cost": 0.0512,
   "redundant_calls": [
     {
       "call_ids": ["<run_id_1>", "<run_id_2>"],

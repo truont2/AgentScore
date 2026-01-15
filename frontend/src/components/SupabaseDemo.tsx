@@ -135,27 +135,82 @@ const SupabaseDemo = () => {
                 </div>
 
                 {analysisResults[wf.id] && (
-                  <div style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', fontSize: '0.9em' }}>
-                    <h4 style={{ margin: '5px 0' }}>Gemini Analysis Result</h4>
-                    <p><strong>Original Cost:</strong> ${analysisResults[wf.id].original_cost?.toFixed(4)}</p>
-                    <p><strong>Optimized Cost:</strong> ${analysisResults[wf.id].optimized_cost?.toFixed(4)}</p>
+                  <div style={{ marginTop: '15px', padding: '20px', borderRadius: '8px', fontSize: '1em', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.1em', color: '#1e293b' }}>✨ Analysis Results</h4>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '4px 12px',
+                          borderRadius: '9999px',
+                          fontSize: '1.2em',
+                          fontWeight: 'bold',
+                          backgroundColor: analysisResults[wf.id].efficiency_grade === 'A' ? '#dcfce7' : (analysisResults[wf.id].efficiency_grade === 'F' ? '#fee2e2' : '#ffedd5'),
+                          color: analysisResults[wf.id].efficiency_grade === 'A' ? '#166534' : (analysisResults[wf.id].efficiency_grade === 'F' ? '#991b1b' : '#9a3412'),
+                        }}>
+                          Score: {analysisResults[wf.id].efficiency_score} / 100 ({analysisResults[wf.id].efficiency_grade})
+                        </span>
+                      </div>
+                    </div>
 
-                    {analysisResults[wf.id].redundancies?.items?.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '20px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '6px' }}>
                       <div>
-                        <strong>Redundancies:</strong>
-                        <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
-                          {analysisResults[wf.id].redundancies.items.map((r: string, i: number) => <li key={i}>{r}</li>)}
-                        </ul>
+                        <div style={{ fontSize: '0.85em', color: '#64748b', marginBottom: '4px' }}>Original Cost</div>
+                        <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#334155' }}>${analysisResults[wf.id].original_cost?.toFixed(4) || '0.0000'}</div>
                       </div>
-                    )}
-                    {analysisResults[wf.id].prompt_bloat?.items?.length > 0 && (
                       <div>
-                        <strong>Prompt Bloat:</strong>
-                        <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
-                          {analysisResults[wf.id].prompt_bloat.items.map((r: string, i: number) => <li key={i}>{r}</li>)}
-                        </ul>
+                        <div style={{ fontSize: '0.85em', color: '#64748b', marginBottom: '4px' }}>Optimized Cost</div>
+                        <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#334155' }}>${analysisResults[wf.id].optimized_cost?.toFixed(4) || '0.0000'}</div>
                       </div>
-                    )}
+                      <div>
+                        <div style={{ fontSize: '0.85em', color: '#64748b', marginBottom: '4px' }}>Potential Savings</div>
+                        <div style={{ fontSize: '1.1em', fontWeight: 'bold', color: '#16a34a' }}>
+                          ${((analysisResults[wf.id].original_cost || 0) - (analysisResults[wf.id].optimized_cost || 0)).toFixed(4)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {analysisResults[wf.id].redundancies?.items?.length > 0 && (
+                        <div style={{ padding: '12px', borderRadius: '6px', border: '1px solid #fecaca', backgroundColor: '#fef2f2' }}>
+                          <strong style={{ display: 'block', color: '#991b1b', marginBottom: '8px' }}>🚫 Redundancies ({analysisResults[wf.id].redundancies.items.length})</strong>
+                          <ul style={{ margin: 0, paddingLeft: '20px', color: '#7f1d1d' }}>
+                            {analysisResults[wf.id].redundancies.items.map((r: any, i: number) => (
+                              <li key={i} style={{ marginBottom: '4px' }}>{r.reason || JSON.stringify(r)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {analysisResults[wf.id].model_overkill?.items?.length > 0 && (
+                        <div style={{ padding: '12px', borderRadius: '6px', border: '1px solid #fed7aa', backgroundColor: '#fff7ed' }}>
+                          <strong style={{ display: 'block', color: '#9a3412', marginBottom: '8px' }}>⚡️ Model Overkill ({analysisResults[wf.id].model_overkill.items.length})</strong>
+                          <ul style={{ margin: 0, paddingLeft: '20px', color: '#7c2d12' }}>
+                            {analysisResults[wf.id].model_overkill.items.map((r: any, i: number) => (
+                              <li key={i} style={{ marginBottom: '4px' }}>{r.reason || JSON.stringify(r)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {analysisResults[wf.id].prompt_bloat?.items?.length > 0 && (
+                        <div style={{ padding: '12px', borderRadius: '6px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff' }}>
+                          <strong style={{ display: 'block', color: '#1e40af', marginBottom: '8px' }}>🐡 Prompt Bloat ({analysisResults[wf.id].prompt_bloat.items.length})</strong>
+                          <ul style={{ margin: 0, paddingLeft: '20px', color: '#1e3a8a' }}>
+                            {analysisResults[wf.id].prompt_bloat.items.map((r: any, i: number) => (
+                              <li key={i} style={{ marginBottom: '4px' }}>{r.unnecessary_content ? r.unnecessary_content.substring(0, 100) + '...' : JSON.stringify(r)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <details style={{ marginTop: '15px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                      <summary style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '0.9em' }}>View Full raw JSON</summary>
+                      <pre style={{ fontSize: '0.8em', overflow: 'auto', maxHeight: '200px', backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', marginTop: '5px', color: '#334155' }}>
+                        {JSON.stringify(analysisResults[wf.id], null, 2)}
+                      </pre>
+                    </details>
                   </div>
                 )}
               </div>
