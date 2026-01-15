@@ -6,7 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
 
 # Load environment variables
-load_dotenv(dotenv_path="sdk/kaizen/.env")
+load_dotenv(dotenv_path="../sdk/kaizen/.env")
 
 """
 Simulated Agent: Medical Report Summarizer
@@ -23,7 +23,7 @@ async def run_redundant_calls(handler: KaizenCallbackHandler):
     print("\n--- [Agent] Flaw: Type 1 - Redundant Calls ---")
     
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",  # Updated to available model
+        model="gemini-2.5-flash-lite",
         callbacks=[handler],
         temperature=0.7,
         google_api_key=os.getenv("GEMINI_AGENT_KEY")
@@ -34,7 +34,7 @@ async def run_redundant_calls(handler: KaizenCallbackHandler):
     await llm.ainvoke(messages1)
     
     print("Agent Action 2: Asking about MI (semantically identical).")
-    messages2 = [HumanMessage(content="Can you explain what MI stands for and what it is?")]
+    messages2 = [HumanMessage(content="In medical terminology, what does MI stand for and what is it?")]
     await llm.ainvoke(messages2)
     
     print("Agent Action 3: Yet another MI question (triple redundancy).")
@@ -45,15 +45,13 @@ async def run_redundant_calls(handler: KaizenCallbackHandler):
 async def run_model_overkill(handler: KaizenCallbackHandler):
     """
     Type 2: Model Overkill
-    Using expensive model for simple tasks that cheaper model handles fine.
-    gemini-3-flash: More expensive, more capable
-    gemini-2.5-flash-lite: Cheapest option
+    Using expensive Flash model for a simple task when Flash-Lite would suffice.
     """
     print("\n--- [Agent] Flaw: Type 2 - Model Overkill ---")
     
-    expensive_model = "gemini-3-flash"  # Updated to available expensive model
+    expensive_model = "gemini-2.5-flash"
     
-    print(f"Agent Action: Using '{expensive_model}' for simple translation (overkill for this task).")
+    print(f"Agent Action: Using '{expensive_model}' for simple translation (overkill).")
     
     llm = ChatGoogleGenerativeAI(
         model=expensive_model,
@@ -74,13 +72,12 @@ async def run_prompt_bloat(handler: KaizenCallbackHandler):
     print("\n--- [Agent] Flaw: Type 3 - Prompt Bloat ---")
     
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",  # Updated to available model
+        model="gemini-2.5-flash-lite",
         callbacks=[handler],
         temperature=0.7,
         google_api_key=os.getenv("GEMINI_AGENT_KEY")
     )
 
-    # Realistic conversation history bloat
     print("Agent Action: Constructing bloated conversation history.")
     
     conversation_history = """
@@ -94,7 +91,7 @@ User: Do you know any good restaurants nearby?
 Assistant: There are several great options! For Italian, try Bella Vista on Main Street. For sushi, Sakura House has excellent reviews. If you want something casual, The Corner Bistro has great burgers.
 User: What about parking in that area?
 Assistant: Parking can be tricky on weekends. There's a public garage on 5th Street that charges $2/hour, or you can find street parking which is free after 6pm.
-""" * 30  # Repeat to create ~5000 tokens of irrelevant context
+""" * 30
     
     prompt_content = f"""
 Here is the full conversation history for context:
@@ -106,9 +103,14 @@ Based on all the above context, please answer this simple medical question:
 What is the normal resting heart rate for an adult?
 """
     
-    print("Agent Action: Sending bloated prompt (~5000 tokens) for simple medical fact.")
+    print(f"Agent Action: Sending bloated prompt (~{len(prompt_content)} chars) for simple medical fact.")
     messages = [HumanMessage(content=prompt_content)]
-    await llm.ainvoke(messages)
+    
+    try:
+        result = await llm.ainvoke(messages)
+        print(f"  ✓ Bloat call SUCCESS - response: {len(result.content)} chars")
+    except Exception as e:
+        print(f"  ✗ Bloat call FAILED: {type(e).__name__}: {e}")
 
 
 async def main():
@@ -117,11 +119,12 @@ async def main():
     print("  Demonstrating the Three Types of AI Waste")
     print("=" * 60)
     print("\nModels used:")
-    print("  - gemini-2.5-flash (standard)")
-    print("  - gemini-3-flash (expensive - for overkill demo)")
-    print("\nExpected inefficient cost: ~$0.05-0.10")
-    print("Expected optimized cost:   ~$0.01-0.02")
-    print("Potential savings:         70-80%")
+    print("  - gemini-2.5-flash-lite (cheap - standard calls)")
+    print("  - gemini-2.5-flash (expensive - overkill demo)")
+    print("\nExpected issues to detect:")
+    print("  - 3 redundant calls (same MI question)")
+    print("  - 1 model overkill (flash for simple translation)")
+    print("  - 1 prompt bloat (~5000 tokens for simple question)")
     
     reset_trace_id()
     handler = KaizenCallbackHandler()
@@ -129,7 +132,6 @@ async def main():
     print(f"\nSession Trace ID: {trace_id}")
     print("-" * 60)
     
-    # Run all three waste scenarios
     await run_redundant_calls(handler)
     await run_model_overkill(handler)
     await run_prompt_bloat(handler)

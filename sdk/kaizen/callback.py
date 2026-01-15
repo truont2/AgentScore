@@ -20,19 +20,22 @@ class KaizenCallbackHandler(BaseCallbackHandler):
     of a single workflow together, even in async environments.
     """
 
-    def __init__(self, backend_url:str = "http://localhost:8000"):
+    def __init__(self, backend_url: str = "http://localhost:8000", timeout: int = 10):
         super().__init__()
         self.backend_url = backend_url
-        # create an instance variable that gets updated for each instance of callBackHandler
-        self._pending_starts: Dict[str, dict] = {} 
+        self.timeout = timeout
+        self._pending_starts: Dict[str, dict] = {}
+        self._threads: List[threading.Thread] = []
 
     def _send_event(self, event_data: dict):
-        """Send events to the backend in background thread"""
+        """Send events to the backend, waiting for completion."""
         def _send():
             try:
-                response = requests.post(f"{self.backend_url}/events",
+                response = requests.post(
+                    f"{self.backend_url}/events",
                     json=event_data,
-                    timeout=5)
+                    timeout=self.timeout
+                )
                 if response.status_code in (200, 201):
                     print("Capturing Event ...")
                 else:
@@ -40,9 +43,12 @@ class KaizenCallbackHandler(BaseCallbackHandler):
             except requests.exceptions.RequestException as e:
                 print(f"Warning: Could not reach backend: {e}")
         
-        thread = threading.Thread(target=_send, daemon=True)
+        thread = threading.Thread(target=_send)
         thread.start()
-    
+        thread.join(timeout=self.timeout)  # Wait for completion
+        
+        if thread.is_alive():
+            print("Warning: Event send timed out, continuing...")
 
     def on_chat_model_start(
         self,
@@ -59,12 +65,9 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         Called when the LLM starts processing a request (before it answers).
         We capture the input prompt here.
         """
-        # "messages" is a list of lists because LangChain supports batching.
-        # For simple agents, it's usually just one list of messages.
         if not messages:
             return
         
-        # Store start data keyed by run_id - we'll complete it in on_chat_model_end
         # Try to get the actual model name from kwargs (more accurate)
         model_name = "unknown"
         if "invocation_params" in kwargs:
@@ -96,23 +99,19 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         Called when the LLM finishes generating a response.
         We capture the output text and token usage/costs here.
         """
-
         start_data = self._pending_starts.pop(str(run_id), None)
         if not start_data:
             print(f"Warning: No matching start for run_id {run_id}")
             return
         
         # LangChain provides usage info in llm_output
-        
         llm_output = result.llm_output or {}
         token_usage = llm_output.get("token_usage", {})
         
         # Fallback: Check the first generation's message metadata (standard for Chat Models)
         if not token_usage and result.generations:
             try:
-                # result.generations is List[List[ChatGeneration]]
                 first_gen = result.generations[0][0]
-                # ChatGeneration has a 'message' attribute which is BaseMessage
                 if hasattr(first_gen, "message"):
                     token_usage = getattr(first_gen.message, "usage_metadata", {}) or {}
             except Exception:
@@ -129,7 +128,6 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         # Get the actual text response
         generation_text = ""
         if result.generations:
-             # Just taking the first generation
             try:
                 generation_text = result.generations[0][0].text
             except IndexError:
@@ -161,14 +159,12 @@ class KaizenCallbackHandler(BaseCallbackHandler):
             "response": generation_text,
             "tokens_in": tokens_in,
             "tokens_out": tokens_out,
-            "cost": 0.0,  # Backend can calculate this from model + tokens
+            "cost": 0.0,  # Backend calculates this from model + tokens
             "latency_ms": latency_ms,
         }
 
         # Send to backend
         self._send_event(event_data)
-
-
 
     def on_llm_end(
         self,
@@ -181,7 +177,6 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         """
         Fallback for when on_chat_model_end is not called.
         """
-        # Forward to the chat model handler for consistency
         self.on_chat_model_end(
             result=response,
             run_id=run_id,

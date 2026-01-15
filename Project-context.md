@@ -30,6 +30,97 @@ A performance profiler for multi-agent AI systems built for the **Google Gemini 
 
 ---
 
+## Recent Session Log
+
+### Session Summary - January 15, 2026
+
+**Project Status:** Multi-agent AI cost optimization platform for Google Gemini 3 Hackathon ($100k prize pool). Core functionality complete, moving to final polish and demo preparation.
+
+#### What We Accomplished Today
+
+**1. Created Comprehensive README**
+- Built detailed README (`KAIZEN_README.md`) documenting entire project
+- Covers architecture, tech stack, database schema, API endpoints, SDK usage, Gemini integration, and the three waste types
+
+**2. Resolved Model Availability Issues**
+- Discovered that `gemini-3-flash` is not available via LangChain API (only in AI Studio quota panel)
+- Available models: `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro`
+- Updated vulnerable agent to use `gemini-2.5-flash-lite` (cheap) and `gemini-2.5-flash` (expensive for overkill demo)
+
+**3. Fixed Pricing Calculation Bug**
+- **Problem:** Costs showing as $0.00
+- **Cause:** Model names from API include `models/` prefix (e.g., `models/gemini-2.5-flash`) but pricing table keys don't
+- **Fix:** Added `normalize_model_name()` function in `pricing.py` to strip the `models/` prefix
+
+**4. Fixed Missing Events Bug**
+- **Problem:** Only 4 of 5 events were reaching the database (prompt bloat call missing)
+- **Cause:** Callback handler used `daemon=True` threads that didn't wait for completion
+- **Fix:** Updated `KaizenCallbackHandler` to use `thread.join(timeout=self.timeout)` to wait for each event to send
+
+**5. Updated Analysis Prompt**
+- Removed hardcoded `recommended_model` list - Gemini now intelligently picks the best model
+- Added model tier guidance (expensive vs cheap models)
+- Improved prompt bloat detection instructions
+
+**6. Finalized Vulnerable Agent Demo**
+- File: `vulnerable_agent.py`
+- Uses two models to demonstrate waste:
+  - `gemini-2.5-flash-lite` - Standard/cheap calls
+  - `gemini-2.5-flash` - Expensive call (for overkill demo)
+- 5 LLM calls demonstrating 3 waste types:
+  1. MI definition (flash-lite) - Redundant #1
+  2. MI explanation (flash-lite) - Redundant #2
+  3. Heart attack definition (flash-lite) - Redundant #3
+  4. Spanish translation (flash) - Model Overkill
+  5. Bloated medical question (flash-lite, ~32K chars) - Prompt Bloat
+
+**7. Successful Analysis Result**
+Final test showed all three waste types detected:
+```json
+{
+  "efficiency_score": 47,
+  "efficiency_grade": "F",
+  "redundancies": { "items": [1 finding - calls 0 & 2] },
+  "model_overkill": { "items": [1 finding - call 3, flash → flash-lite] },
+  "prompt_bloat": { "items": [1 finding - call 4, 5782 tokens → 50 needed] }
+}
+```
+
+#### Key Files Modified Today
+
+| File | Changes |
+|------|---------|
+| `sdk/kaizen/callback.py` | Added `thread.join()` to wait for event sends |
+| `backend/pricing.py` | Added `normalize_model_name()` to handle `models/` prefix |
+| `backend/prompt.py` | Removed hardcoded model list, improved detection instructions |
+| `agentDemos/vulnerable_agent.py` | Updated to use flash-lite + flash models, added debug output |
+
+#### Current Working Architecture
+
+```
+Vulnerable Agent (flash-lite + flash)
+    ↓
+KaizenCallbackHandler (captures 5 events)
+    ↓
+FastAPI Backend (/events endpoint)
+    ↓
+Supabase PostgreSQL (stores events)
+    ↓
+Gemini Analysis (detects 3 waste types)
+    ↓
+Dashboard (shows efficiency score + recommendations)
+```
+
+#### Next Steps
+
+- [ ] Test full flow in dashboard UI
+- [ ] Polish UI for hackathon demo
+- [ ] Record 3-minute demo video
+- [ ] Write 200-word Gemini integration description
+- [ ] Final testing and submission
+
+---
+
 ## Project Overview
 
 ### What is Kaizen?
