@@ -8,8 +8,8 @@ Last updated: January 2026
 
 MODEL_PRICING = {
     # Google Gemini
-    "gemini-3-pro-preview": {"input": 2.00, "output": 12.00},
-    "gemini-3-flash-preview": {"input": 0.50, "output": 3.00},
+    "gemini-3-pro": {"input": 2.00, "output": 12.00},
+    "gemini-3-flash": {"input": 0.50, "output": 3.00},
     "gemini-2.5-pro": {"input": 1.25, "output": 10.00},
     "gemini-2.5-flash": {"input": 0.30, "output": 2.50},
     "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40},
@@ -39,12 +39,30 @@ MODEL_PRICING = {
 }
 
 
+def normalize_model_name(model: str) -> str:
+    """
+    Normalize model names to match pricing table keys.
+    Handles prefixes like 'models/' from different providers.
+    """
+    # Remove common prefixes
+    prefixes_to_remove = ["models/", "openai/", "anthropic/"]
+    normalized = model
+    for prefix in prefixes_to_remove:
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix):]
+    return normalized
+
+
 def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
     """Calculate cost in USD for a given model and token counts."""
-    if model not in MODEL_PRICING:
-        raise ValueError(f"Unknown model: {model}")
+    normalized_model = normalize_model_name(model)
     
-    pricing = MODEL_PRICING[model]
+    if normalized_model not in MODEL_PRICING:
+        # Log warning but don't crash - return 0
+        print(f"Warning: Unknown model '{model}' (normalized: '{normalized_model}')")
+        return 0.0
+    
+    pricing = MODEL_PRICING[normalized_model]
     input_cost = (pricing["input"] / 1_000_000) * prompt_tokens
     output_cost = (pricing["output"] / 1_000_000) * completion_tokens
     

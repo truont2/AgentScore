@@ -52,13 +52,21 @@ def receive_event(event: EventCreate):
 
     # Ensure Workflow Exists (Fix for FK Constraint)
     try:
-        supabase.table("workflows").upsert({
-            "id": event_dict["workflow_id"],
-            "name": "Untitled Workflow",
-            "status": "active"
-        }, on_conflict="id").execute()
+        # Check if workflow already exists
+        existing = supabase.table("workflows").select("id").eq("id", event_dict["workflow_id"]).execute()
+        
+        if not existing.data:
+            # First event - create with timestamp name
+            timestamp = datetime.now().strftime("%b %d, %I:%M %p")
+            default_name = f"Workflow - {timestamp}"
+            
+            supabase.table("workflows").insert({
+                "id": event_dict["workflow_id"],
+                "name": default_name,
+                "status": "active"
+            }).execute()
     except Exception as e:
-        print(f"Warning: Workflow upsert failed: {e}")
+        print(f"Warning: Workflow creation failed: {e}")
             
     # Calculate Cost if missing
     if event_dict.get("cost", 0) == 0 and event_dict.get("model") and event_dict.get("tokens_in") is not None:
