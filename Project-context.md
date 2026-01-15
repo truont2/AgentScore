@@ -111,6 +111,82 @@ Gemini Analysis (detects 3 waste types)
 Dashboard (shows efficiency score + recommendations)
 ```
 
+#### How to Reproduce These Results
+
+Follow these steps to run the vulnerable agent demo and generate the same events:
+
+**Step 1: Start the Backend**
+```bash
+cd backend
+source venv/bin/activate
+uvicorn main:app --reload
+```
+The backend should start at `http://localhost:8000`
+
+**Step 2: Verify Environment Variables**
+
+Make sure `sdk/kaizen/.env` contains:
+```bash
+GEMINI_API_KEY=your_api_key_here
+KAIZEN_BACKEND_URL=http://localhost:8000
+```
+
+**Step 3: Run the Vulnerable Agent**
+```bash
+cd agentDemos
+python vulnerable_agent.py
+```
+
+**Expected Output:**
+```
+🔄 Starting Medical Agent Workflow
+📋 Trace ID: <uuid-here>
+
+Making 5 LLM calls (demonstrating all 3 waste types)...
+
+Call #1 (Redundant): Asking about MI definition...
+Response: <definition response>
+
+Call #2 (Redundant): Asking about MI explanation...
+Response: <explanation response>
+
+Call #3 (Redundant): Asking about heart attack...
+Response: <definition response>
+
+Call #4 (Model Overkill): Translating with expensive model...
+Response: Hola, ¿cómo estás?
+
+Call #5 (Prompt Bloat): Sending 32K character prompt...
+Response: <answer about heart rate>
+
+✅ All calls complete!
+📊 Check dashboard for Trace ID: <uuid-here>
+```
+
+**Step 4: View Results in Dashboard**
+
+1. Start the frontend (in a new terminal):
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   Dashboard opens at `http://localhost:5173`
+
+2. Click on the workflow with your Trace ID
+
+3. Click "Analyze Workflow" button
+
+4. View the analysis results showing:
+   - Efficiency Score: ~47 (Grade F)
+   - 1 Redundancy finding (calls 0 & 2)
+   - 1 Model Overkill finding (call 3)
+   - 1 Prompt Bloat finding (call 4)
+
+**Troubleshooting:**
+- If backend shows "command not found: uvicorn", make sure you activated the virtual environment
+- If costs show $0.00, check that model names are being normalized correctly in `backend/pricing.py`
+- If only 4 events appear, ensure `callback.py` is using `thread.join()` instead of daemon threads
+
 #### Next Steps
 
 - [ ] Test full flow in dashboard UI
