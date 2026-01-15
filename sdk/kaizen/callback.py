@@ -20,7 +20,7 @@ class KaizenCallbackHandler(BaseCallbackHandler):
     of a single workflow together, even in async environments.
     """
 
-    def __init__(self, backend_url:str = "http://localhost:3000"):
+    def __init__(self, backend_url:str = "http://localhost:8000"):
         super().__init__()
         self.backend_url = backend_url
         # create an instance variable that gets updated for each instance of callBackHandler
