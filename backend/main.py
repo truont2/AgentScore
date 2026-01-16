@@ -84,6 +84,35 @@ def receive_event(event: EventCreate):
 
     try:
         response = supabase.table("events").insert(data).execute()
+        
+        # Update workflow statistics after event insertion
+        workflow_id = event_dict["workflow_id"]
+        
+        # Aggregate statistics from all events for this workflow
+        events_response = supabase.table("events")\
+            .select("cost, created_at")\
+            .eq("workflow_id", workflow_id)\
+            .execute()
+        
+        if events_response.data:
+            # Calculate totals
+            total_calls = len(events_response.data)
+            total_cost = sum(float(e.get("cost", 0)) for e in events_response.data)
+            
+            # Get start and end times
+            timestamps = [e["created_at"] for e in events_response.data if e.get("created_at")]
+            start_time = min(timestamps) if timestamps else None
+            end_time = max(timestamps) if timestamps else None
+            
+            # Update workflow with aggregated stats
+            supabase.table("workflows").update({
+                "total_calls": total_calls,
+                "total_cost": total_cost,
+                "start_time": start_time,
+                "end_time": end_time,
+                "status": "active"
+            }).eq("id", workflow_id).execute()
+        
         return {"message": "Events logged successfully", "data": response.data}
     except Exception as e:
         print(f"Error inserting events: {e}")

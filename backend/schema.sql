@@ -10,8 +10,11 @@ drop table if exists workflows;
 create table workflows (
   id uuid primary key default gen_random_uuid(),
   name text,
-  status text,
-  total_cost float default 0,
+  status text default 'pending',
+  start_time timestamp with time zone,
+  end_time timestamp with time zone,
+  total_calls integer default 0,
+  total_cost decimal(10, 6) default 0,
   created_at timestamp with time zone default now()
 );
 

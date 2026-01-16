@@ -25,7 +25,10 @@ class Workflow(BaseModel):
     id: UUID
     name: Optional[str] = None
     status: str
-    total_cost: float
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    total_calls: int = 0
+    total_cost: float = 0.0
     created_at: datetime
 
 class WorkflowDetail(Workflow):
