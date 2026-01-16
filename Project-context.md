@@ -32,7 +32,139 @@ A performance profiler for multi-agent AI systems built for the **Google Gemini 
 
 ## Recent Session Log
 
-### Session Summary - January 15, 2026
+### Session Summary - January 15, 2026 (Evening)
+
+**Focus:** Fixed critical bug where workflow statistics (total_calls, total_cost) were not being calculated or displayed in the dashboard.
+
+#### Problem Discovered
+
+The dashboard was showing **$0.00 cost and 0 calls** for all workflows, making the product appear broken. This was a critical issue for the hackathon demo.
+
+**Root Cause:**
+1. Database schema was incomplete - missing `total_calls`, `start_time`, and `end_time` columns from the original specification
+2. Workflow records were created with default values (0 cost, 0 calls) when events were uploaded
+3. After events were stored, workflow statistics were never recalculated or updated
+4. The GET /workflows endpoint simply returned raw workflow data without any aggregation
+
+#### Changes Implemented
+
+**1. Fixed Database Schema ([schema.sql](file:///Users/takaratruong/code/Kaizen/backend/schema.sql))**
+```sql
+-- Added missing columns to workflows table:
+start_time timestamp with time zone,
+end_time timestamp with time zone,
+total_calls integer default 0,
+total_cost decimal(10, 6) default 0,  -- Changed from float for accuracy
+status text default 'pending'
+```
+
+**2. Updated Backend Models ([schemas.py](file:///Users/takaratruong/code/Kaizen/backend/schemas.py))**
+```python
+class Workflow(BaseModel):
+    # ... existing fields ...
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    total_calls: int = 0
+    total_cost: float = 0.0
+```
+
+**3. Enhanced Events Endpoint ([main.py](file:///Users/takaratruong/code/Kaizen/backend/main.py))**
+
+After each event is inserted, the endpoint now:
+- Queries all events for that workflow
+- Calculates `total_calls` (count of events)
+- Calculates `total_cost` (sum of all event costs)
+- Determines `start_time` (earliest event timestamp)
+- Determines `end_time` (latest event timestamp)
+- Updates the workflow record with these calculated values
+
+**Implementation approach:**
+```python
+# After inserting event, aggregate statistics
+events_response = supabase.table("events")\
+    .select("cost, created_at")\
+    .eq("workflow_id", workflow_id)\
+    .execute()
+
+supabase.table("workflows").update({
+    "total_calls": total_calls,
+    "total_cost": total_cost,
+    "start_time": start_time,
+    "end_time": end_time,
+    "status": "active"
+}).eq("id", workflow_id).execute()
+```
+
+#### Why This Approach (Update on Write)
+
+**Rejected approach:** PostgreSQL RPC function to calculate on read
+- More complex setup
+- Requires creating database functions
+- User didn't see the need for RPC functions
+
+**Chosen approach:** Calculate and update after each event insert
+- Simpler implementation
+- No RPC functions needed
+- Statistics always accurate immediately after event upload
+- Frontend gets correct data without any changes
+- Works perfectly for hackathon demo scale
+
+#### Testing Results
+
+✅ Ran `vulnerable_agent.py` demo successfully
+- Created workflow with Trace ID: `204f66cb-dabf-4f36-8fff-ff2d213df0b3`
+- 5 events logged demonstrating all 3 waste types
+- Workflow statistics now correctly calculated and displayed
+
+#### Files Modified
+
+| File | Changes |
+|------|---------|
+| `backend/schema.sql` | Added `total_calls`, `start_time`, `end_time` columns; changed `total_cost` to decimal |
+| `backend/schemas.py` | Updated `Workflow` model to include new fields |
+| `backend/main.py` | Added statistics aggregation after event insertion |
+
+#### Impact on Demo
+
+**Before this fix:**
+- Dashboard showed $0.00 for all workflows → Looked completely broken
+- Couldn't demonstrate cost savings → No proof of value
+- Missing call counts → Incomplete workflow visibility
+
+**After this fix:**
+- ✅ Dashboard shows actual costs (e.g., "$0.0023" for 5 calls)
+- ✅ Call counts display correctly
+- ✅ Start and end times tracked for workflow duration
+- ✅ Ready for hackathon demo
+
+#### Database Migration Required
+
+Users need to apply schema changes to Supabase:
+
+**Option 1: Recreate tables (deletes data)**
+```sql
+-- Run entire schema.sql file in Supabase SQL Editor
+```
+
+**Option 2: Add columns only (preserves data)**
+```sql
+ALTER TABLE workflows 
+  ADD COLUMN IF NOT EXISTS start_time timestamp with time zone,
+  ADD COLUMN IF NOT EXISTS end_time timestamp with time zone,
+  ADD COLUMN IF NOT EXISTS total_calls integer DEFAULT 0,
+  ALTER COLUMN total_cost TYPE decimal(10, 6);
+
+-- Backfill existing workflows
+UPDATE workflows w SET 
+  total_calls = (SELECT COUNT(*) FROM events e WHERE e.workflow_id = w.id),
+  total_cost = (SELECT COALESCE(SUM(cost), 0) FROM events e WHERE e.workflow_id = w.id),
+  start_time = (SELECT MIN(created_at) FROM events e WHERE e.workflow_id = w.id),
+  end_time = (SELECT MAX(created_at) FROM events e WHERE e.workflow_id = w.id);
+```
+
+---
+
+### Session Summary - January 15, 2026 (Morning)
 
 **Project Status:** Multi-agent AI cost optimization platform for Google Gemini 3 Hackathon ($100k prize pool). Core functionality complete, moving to final polish and demo preparation.
 
