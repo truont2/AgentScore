@@ -180,23 +180,57 @@ def test_savings_breakdown_structure():
     assert breakdown["total_savings"] == 0.0
 
 def test_savings_breakdown_calculation():
-    """Test savings calculation for redundancies"""
+    """Test savings calculation with Gemini-style sequential IDs"""
     analysis = {
-        "redundancies": {"items": [{"call_ids": ["call_0", "call_1"]}]},
+        "redundancies": {"items": [{"call_ids": ["a0a0a0a0-0000-4000-8000-000000000001", "a0a0a0a0-0000-4000-8000-000000000002"]}]},
         "model_overkill": {"items": []},
         "prompt_bloat": {"items": []}
     }
     events = [
-        {"run_id": "call_0", "cost": 0.001, "tokens_in": 100},
-        {"run_id": "call_1", "cost": 0.001, "tokens_in": 100},
-        {"run_id": "call_2", "cost": 0.002, "tokens_in": 200}
+        {"run_id": "real-uuid-1", "cost": 0.001, "tokens_in": 100},
+        {"run_id": "real-uuid-2", "cost": 0.001, "tokens_in": 100},
+        {"run_id": "real-uuid-3", "cost": 0.002, "tokens_in": 200}
     ]
     
     breakdown = calculate_savings_breakdown(analysis, events)
     
-    # Should save cost of 1 redundant call
+    # Should save cost of 1 redundant call (ID ending in ...002 → events[1])
     assert breakdown["redundancy_savings"] == 0.001
     assert breakdown["total_savings"] == 0.001
+
+
+def test_match_call_id_to_event():
+    """Test helper function matches various ID formats to events"""
+    from scoring import match_call_id_to_event
+    
+    events = [
+        {"run_id": "uuid-1", "cost": 0.001},
+        {"run_id": "uuid-2", "cost": 0.002},
+        {"run_id": "uuid-3", "cost": 0.003}
+    ]
+    
+    # Test Gemini's fabricated UUID pattern
+    event = match_call_id_to_event("a0a0a0a0-0000-4000-8000-000000000001", events)
+    assert event["cost"] == 0.001
+    
+    event = match_call_id_to_event("a0a0a0a0-0000-4000-8000-000000000003", events)
+    assert event["cost"] == 0.003
+    
+    # Test simplified ID pattern
+    event = match_call_id_to_event("llm_call_1", events)
+    assert event["cost"] == 0.001
+    
+    event = match_call_id_to_event("llm_call_2", events)
+    assert event["cost"] == 0.002
+    
+    # Test exact UUID fallback
+    event = match_call_id_to_event("uuid-2", events)
+    assert event["cost"] == 0.002
+    
+    # Test invalid ID
+    event = match_call_id_to_event("invalid", events)
+    assert event is None
+
 
 
 # INTEGRATION TEST

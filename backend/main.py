@@ -173,18 +173,24 @@ def analyze_workflow(id: str):
              raise HTTPException(status_code=400, detail="No events found for this workflow to analyze")
 
         # 2. Construct Prompt using new schema fields
+        # Add explicit call numbers so Gemini can reference them
         events_str = ""
         calculated_total_cost = 0.0
-        for e in events:
+        for idx, e in enumerate(events, start=1):
             role = e.get('event_type', 'unknown')
             prompt_data = e.get('prompt', '')
             response_data = e.get('response', '')
             model = e.get('model', 'unknown')
             cost = e.get('cost', 0)
+            run_id = e.get('run_id', '')
             calculated_total_cost += cost
-            events_str += f"\n- [{role}] Model: {model}, Cost: ${cost}\n  Input: {prompt_data}\n  Output: {response_data}\n"
+            # Use strict mapping: Internal UUID <-> LLM-facing "call_N"
+            # We hide the UUID from Gemini to force it to use our simple ID
+            events_str += f"\n---\nID: call_{idx}\nEvent Type: [{role}]\nModel: {model}\nCost: ${cost}\nInput: {prompt_data}\nOutput: {response_data}\n"
 
         prompt = ANALYSIS_PROMPT + "\n\n## WORKFLOW CALLS\n" + events_str
+        prompt += "\n\n**IMPORTANT: In your response, ALWAYS use the provided ID (e.g., 'call_1', 'call_2') as the call_id.**"
+
         
         
         # 3. Call Gemini

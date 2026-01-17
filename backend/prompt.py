@@ -85,16 +85,19 @@ Key: Estimate what portion of tokens_in was actually necessary for the task.
 
 Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
+**CRITICAL: You MUST use the EXACT run_id UUIDs from the events. Do NOT create simplified IDs like "llm_call_1" or "call_1". Use the actual UUID strings.**
+
+Example with actual UUIDs:
 {
   "redundant_calls": [
     {
-      "call_ids": ["<run_id_1>", "<run_id_2>"],
+      "call_ids": ["3ea33274-b0b2-41a5-aeef-b483b25ea5d5", "7f2a1b3c-9d4e-4f5a-8b6c-1e2d3f4a5b6c"],
       "reason": "Both calls ask for translation of 'myocardial infarction' to plain English",
       "prompts": {
-        "<run_id_1>": "Translate myocardial infarction to plain English",
-        "<run_id_2>": "What does MI mean in simple terms?"
+        "3ea33274-b0b2-41a5-aeef-b483b25ea5d5": "Translate myocardial infarction to plain English",
+        "7f2a1b3c-9d4e-4f5a-8b6c-1e2d3f4a5b6c": "What does MI mean in simple terms?"
       },
-      "keep_call_id": "<run_id_1>",
+      "keep_call_id": "3ea33274-b0b2-41a5-aeef-b483b25ea5d5",
       "confidence": 0.95,
       "common_fix": {
         "summary": "Cache the first result and reuse it for semantically similar queries",
@@ -104,7 +107,7 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
   ],
   "model_overkill": [
     {
-      "call_id": "<run_id>",
+      "call_id": "9a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
       "current_model": "gemini-2.5-flash",
       "recommended_model": "gemini-2.5-flash-lite",
       "task_type": "simple_translation",
@@ -119,7 +122,7 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
   ],
   "prompt_bloat": [
     {
-      "call_id": "<run_id>",
+      "call_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
       "current_tokens": 8500,
       "estimated_necessary_tokens": 200,
       "reason": "Full conversation history included but only the medical question was relevant",
@@ -157,13 +160,14 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
 1. Return ONLY valid JSON - no markdown, no backticks, no explanation text
 2. Only include findings with confidence >= 0.7
-3. Use the run_id or id field from each call as the call_id in your response
+3. **CRITICAL**: Use the EXACT run_id UUID from each event. Copy the full UUID string (e.g., "3ea33274-b0b2-41a5-aeef-b483b25ea5d5"). Do NOT create simplified IDs like "llm_call_1" or "call_1".
 4. If no issues found in a category, return empty array []
 5. For model_overkill, recommend a real model that would handle the task well
 6. For prompt_bloat, estimate how many tokens were actually needed vs sent
 7. Include actual prompt text/snippets so developers can find the issue in their code
 8. Keep common_fix.code simple - most common solution only
 9. Use \\n for newlines in JSON code strings
+10. **VERIFY**: Before returning, check that all call_id and call_ids values are actual UUIDs from the events, not simplified names
 
 ---
 

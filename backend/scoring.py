@@ -97,6 +97,34 @@ def calculate_optimized_context_efficiency(current_efficiency: int, bloat_items:
     return min(100, optimized)
 
 
+def match_call_id_to_event(call_id: str, events: List[Dict]) -> Optional[Dict]:
+    """
+    Match Gemini's call_id to actual event by extracting sequence number.
+    
+    Gemini creates IDs like:
+    - "llm_call_1", "llm_call_2" → matches events[0], events[1]
+    - "a0a0a0a0-0000-4000-8000-000000000001" → matches events[0]
+    
+    Extracts the trailing number and uses it as 1-based index.
+    """
+    import re
+    
+    # Try to extract ANY number sequence (more permissive)
+    match = re.search(r'(\d+)', call_id)
+    if match:
+        index = int(match.group(1)) - 1  # Convert to 0-based index
+        if 0 <= index < len(events):
+            return events[index]
+    
+    # Fallback: try exact UUID match (in case Gemini actually uses real UUIDs)
+    for event in events:
+        if call_id == str(event.get("run_id", "")):
+            return event
+    
+    return None
+
+
+
 def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> Dict[str, float]:
     """
     Calculate dollar savings per category.
@@ -112,14 +140,15 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
     
     for finding in redundancies:
         call_ids = finding.get("call_ids", [])
-        # Find costs of these calls from events
-        for event in events:
-            event_run_id = str(event.get("run_id", ""))
-            # Check if this event is in the redundant call_ids
-            if any(call_id in event_run_id for call_id in call_ids):
-                # Add cost of all but one (we keep one, eliminate the rest)
-                if call_ids.index(next(cid for cid in call_ids if cid in event_run_id)) > 0:
+        # Sum costs of all redundant calls except the first one (which we keep)
+        for i, call_id in enumerate(call_ids):
+            if i > 0:  # Skip the first call (the one we keep)
+                event = match_call_id_to_event(call_id, events)
+                if event:
                     redundancy_savings += event.get("cost", 0)
+
+
+
     
     # 2. Model fit savings: difference between current and recommended model costs
     overkill = analysis_results.get("model_overkill") or []
@@ -131,18 +160,18 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
         recommended_model = finding.get("recommended_model", "")
         
         if current_model and recommended_model:
-            # Find the event for this call
             call_id = finding.get("call_id", "")
-            for event in events:
-                if call_id in str(event.get("run_id", "")):
-                    tokens_in = event.get("tokens_in", 0)
-                    tokens_out = event.get("tokens_out", 0)
-                    
-                    # Calculate cost difference
-                    current_cost = calculate_cost(current_model, tokens_in, tokens_out)
-                    recommended_cost = calculate_cost(recommended_model, tokens_in, tokens_out)
-                    model_fit_savings += max(0, current_cost - recommended_cost)
-                    break
+            event = match_call_id_to_event(call_id, events)
+            
+            if event:
+                tokens_in = event.get("tokens_in", 0)
+                tokens_out = event.get("tokens_out", 0)
+                
+                # Calculate cost difference
+                current_cost = calculate_cost(current_model, tokens_in, tokens_out)
+                recommended_cost = calculate_cost(recommended_model, tokens_in, tokens_out)
+                model_fit_savings += max(0, current_cost - recommended_cost)
+
     
     # 3. Context efficiency savings: cost of unnecessary tokens
     bloat_items = analysis_results.get("prompt_bloat") or []
@@ -155,24 +184,24 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
         necessary_tokens = item.get("estimated_necessary_tokens", 0)
         
         if current_tokens > necessary_tokens:
-            # Find the event to get model and calculate wasted token cost
-            for event in events:
-                if call_id in str(event.get("run_id", "")):
-                    model = event.get("model", "")
-                    if model:
-                        # Cost of unnecessary input tokens
-                        wasted_tokens = current_tokens - necessary_tokens
-                        normalized_model = normalize_model_name(model)
-                        if normalized_model in MODEL_PRICING:
-                            input_price_per_token = MODEL_PRICING[normalized_model]["input"] / 1_000_000
-                            context_efficiency_savings += wasted_tokens * input_price_per_token
-                    break
+            event = match_call_id_to_event(call_id, events)
+            
+            if event:
+                model = event.get("model", "")
+                if model:
+                    # Cost of unnecessary input tokens
+                    wasted_tokens = current_tokens - necessary_tokens
+                    normalized_model = normalize_model_name(model)
+                    if normalized_model in MODEL_PRICING:
+                        input_price_per_token = MODEL_PRICING[normalized_model]["input"] / 1_000_000
+                        context_efficiency_savings += wasted_tokens * input_price_per_token
+
     
     return {
-        "redundancy_savings": round(redundancy_savings, 6),
-        "model_fit_savings": round(model_fit_savings, 6),
-        "context_efficiency_savings": round(context_efficiency_savings, 6),
-        "total_savings": round(redundancy_savings + model_fit_savings + context_efficiency_savings, 6)
+        "redundancy_savings": round(redundancy_savings, 10),
+        "model_fit_savings": round(model_fit_savings, 10),
+        "context_efficiency_savings": round(context_efficiency_savings, 10),
+        "total_savings": round(redundancy_savings + model_fit_savings + context_efficiency_savings, 10)
     }
 
 
