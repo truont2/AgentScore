@@ -1,27 +1,36 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import DashboardLayout from "./layouts/DashboardLayout";
+import Dashboard from "./pages/Dashboard";
+import WorkflowDetail from "./pages/WorkflowDetail";
+import DependencyGraph from "./pages/DependencyGraph";
+import NotFound from "./pages/NotFound";
 
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import SupabaseDemo from './components/SupabaseDemo'
+const queryClient = new QueryClient();
 
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-function App() {
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/workflow/:id" element={<WorkflowDetail />} />
+            <Route path="/workflow/:id/graph" element={<DependencyGraph />} />
+          </Route>
 
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Kaizen + Supabase Demo</h1>
-      <SupabaseDemo />
-    </>
-  )
-}
-
-export default App
+export default App;
