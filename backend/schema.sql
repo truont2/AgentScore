@@ -45,5 +45,9 @@ create table analyses (
   prompt_bloat jsonb,
   efficiency_score integer,
   efficiency_grade text,
+  sub_scores jsonb,
+  optimized_sub_scores jsonb,
+  optimized_score integer,
+  savings_breakdown jsonb,
   created_at timestamp with time zone default now()
 );

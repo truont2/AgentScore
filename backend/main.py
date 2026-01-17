@@ -201,8 +201,11 @@ def analyze_workflow(id: str):
         # 4. Store Analysis
         from scoring import calculate_efficiency_score
         
-        # Calculate score first
-        score_data = calculate_efficiency_score(analysis_json)
+        # Fetch events again for scoring calculations (need token counts)
+        events_for_scoring = events  # Already fetched above
+        
+        # Calculate score with events for sub-scores and savings
+        score_data = calculate_efficiency_score(analysis_json, events=events_for_scoring)
         
         analysis_entry = {
             "workflow_id": id,
@@ -212,7 +215,11 @@ def analyze_workflow(id: str):
             "model_overkill": {"items": analysis_json.get("model_overkill") or []},
             "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},
             "efficiency_score": score_data["score"],
-            "efficiency_grade": score_data["grade"]
+            "efficiency_grade": score_data["grade"],
+            "sub_scores": score_data["sub_scores"],
+            "optimized_sub_scores": score_data["optimized_sub_scores"],
+            "optimized_score": score_data["optimized_score"],
+            "savings_breakdown": score_data["savings_breakdown"]
             # "created_at": datetime.now().isoformat() # defaulted in DB
         }
         
