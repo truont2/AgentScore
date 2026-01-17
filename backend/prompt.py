@@ -1,5 +1,5 @@
 """
-AgentScore - Gemini Analysis Prompt
+Kaizen - Gemini Analysis Prompt
 Usage: ANALYSIS_PROMPT + "\n\n## WORKFLOW CALLS\n" + json.dumps(events, default=str)
 """
 
@@ -9,7 +9,7 @@ Your job: Identify inefficiencies in the workflow. Do NOT calculate costs or sco
 
 You will receive a JSON array of LLM calls. Each call has:
 - run_id or id: Unique identifier (use this as call_id in your response)
-- model: AI model used (gpt-4, gpt-3.5-turbo, etc.)
+- model: AI model used
 - prompt: Input sent to model
 - response: Output received
 - tokens_in: Input token count
@@ -29,15 +29,19 @@ Look for:
 - One agent asking what another agent already answered
 - Repeated lookups for identical data
 
-Key: Detect SEMANTIC similarity, not just string matching. "MI" = "myocardial infarction"
+Key: Detect SEMANTIC similarity, not just string matching. "MI" = "myocardial infarction" = "heart attack"
 
 ---
 
 ## 2. MODEL OVERKILL
 
-Expensive models (GPT-4, Claude Opus) used for tasks that cheap models handle equally well.
+Expensive/capable models used for tasks that cheaper/simpler models handle equally well.
 
-SIMPLE tasks (should use GPT-3.5-turbo, Gemini Flash, GPT-4o-mini):
+Model tiers (from most to least expensive):
+- EXPENSIVE: gpt-4, gpt-4-turbo, claude-3-opus, gemini-1.5-pro, gemini-2.5-pro, gemini-2.5-flash
+- CHEAP: gpt-3.5-turbo, gpt-4o-mini, claude-3-haiku, gemini-1.5-flash, gemini-2.0-flash-lite, gemini-2.5-flash-lite
+
+SIMPLE tasks (should use cheap models):
 - Translation between languages
 - Text formatting, cleanup, restructuring
 - Data extraction from structured content
@@ -49,7 +53,7 @@ SIMPLE tasks (should use GPT-3.5-turbo, Gemini Flash, GPT-4o-mini):
 - Date/time formatting
 - Data format conversion
 
-COMPLEX tasks (need GPT-4, Claude Opus, Gemini Pro):
+COMPLEX tasks (need expensive models):
 - Multi-step reasoning
 - Nuanced judgment requiring world knowledge
 - Creative writing with style constraints
@@ -57,7 +61,7 @@ COMPLEX tasks (need GPT-4, Claude Opus, Gemini Pro):
 - Synthesis of multiple concepts
 - Critical accuracy requirements
 
-Key: Evaluate task complexity, not prompt length.
+Key: Evaluate task complexity, not prompt length. Recommend a specific cheaper model that exists and would handle the task well.
 
 ---
 
@@ -71,8 +75,9 @@ Look for:
 - Irrelevant context or documents included
 - Verbose instructions that could be condensed
 - Entire documents when only a section is needed
+- Context about unrelated topics (e.g., weather/restaurants when asking medical questions)
 
-Key: Estimate what portion of tokens_in was actually necessary.
+Key: Estimate what portion of tokens_in was actually necessary for the task.
 
 ---
 
@@ -93,22 +98,22 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
   "model_overkill": [
     {
       "call_id": "<run_id>",
-      "current_model": "gpt-4",
-      "recommended_model": "gpt-3.5-turbo",
+      "current_model": "gemini-2.5-flash",
+      "recommended_model": "gemini-2.5-flash-lite",
       "task_type": "simple_translation",
       "reason": "This is straightforward translation requiring no complex reasoning",
       "confidence": 0.91,
-      "fix_suggestion": "Switch to gpt-3.5-turbo for translation tasks"
+      "fix_suggestion": "Switch to gemini-2.5-flash-lite for translation tasks"
     }
   ],
   "prompt_bloat": [
     {
       "call_id": "<run_id>",
       "current_tokens": 8500,
-      "estimated_necessary_tokens": 1200,
-      "unnecessary_content": "Full conversation history included but only last exchange was relevant",
-      "confidence": 0.82,
-      "fix_suggestion": "Implement sliding window - keep only last 3 messages"
+      "estimated_necessary_tokens": 200,
+      "unnecessary_content": "Full conversation history about weather and restaurants included but only medical question was relevant",
+      "confidence": 0.95,
+      "fix_suggestion": "Remove irrelevant conversation history - only send the actual question"
     }
   ]
 }
@@ -122,8 +127,8 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 3. Use the run_id or id field from each call as the call_id in your response
 4. fix_suggestion must be actionable and specific
 5. If no issues found in a category, return empty array []
-6. task_type must be one of: simple_translation, formatting, classification, routing, summarization, extraction, data_conversion, simple_qa, other_simple
-7. recommended_model must be one of: gpt-3.5-turbo, gpt-4o-mini, gemini-flash, claude-3-haiku
+6. For model_overkill, recommend a real model that would handle the task well (don't invent model names)
+7. For prompt_bloat, estimate how many tokens were actually needed vs sent
 
 ---
 
@@ -135,15 +140,10 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
 ---
 
-## FIX SUGGESTIONS - BE SPECIFIC
+## ANALYSIS TIPS
 
-Good examples:
-- "Cache the translation result from call_003 in a dictionary keyed by medical term"
-- "Replace GPT-4 with GPT-3.5-turbo for date formatting - identical output quality"
-- "Remove conversation history from context - only current query needed"
-
-Bad examples:
-- "Use caching" (too vague)
-- "Use cheaper model" (not specific)
-- "Reduce prompt size" (not actionable)
+- A call with thousands of tokens asking a simple factual question is likely bloated
+- Translation, formatting, and simple Q&A rarely need expensive models
+- If multiple calls have very similar prompts about the same topic, they're likely redundant
+- Look at the actual task being performed, not just the model or token count
 """

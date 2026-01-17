@@ -25,7 +25,10 @@ class Workflow(BaseModel):
     id: UUID
     name: Optional[str] = None
     status: str
-    total_cost: float
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    total_calls: int = 0
+    total_cost: float = 0.0
     created_at: datetime
 
 class WorkflowDetail(Workflow):
@@ -39,4 +42,6 @@ class AnalysisResult(BaseModel):
     redundancies: Optional[Dict[str, Any]] = None
     model_overkill: Optional[Dict[str, Any]] = None
     prompt_bloat: Optional[Dict[str, Any]] = None
+    efficiency_score: Optional[int] = None
+    efficiency_grade: Optional[str] = None
     created_at: datetime

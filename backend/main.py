@@ -53,13 +53,21 @@ def receive_event(event: EventCreate):
 
     # Ensure Workflow Exists (Fix for FK Constraint)
     try:
-        supabase.table("workflows").upsert({
-            "id": event_dict["workflow_id"],
-            "name": "Untitled Workflow",
-            "status": "active"
-        }, on_conflict="id").execute()
+        # Check if workflow already exists
+        existing = supabase.table("workflows").select("id").eq("id", event_dict["workflow_id"]).execute()
+        
+        if not existing.data:
+            # First event - create with timestamp name
+            timestamp = datetime.now().strftime("%b %d, %I:%M %p")
+            default_name = f"Workflow - {timestamp}"
+            
+            supabase.table("workflows").insert({
+                "id": event_dict["workflow_id"],
+                "name": default_name,
+                "status": "active"
+            }).execute()
     except Exception as e:
-        print(f"Warning: Workflow upsert failed: {e}")
+        print(f"Warning: Workflow creation failed: {e}")
             
     # Calculate Cost if missing
     if event_dict.get("cost", 0) == 0 and event_dict.get("model") and event_dict.get("tokens_in") is not None:
@@ -77,6 +85,35 @@ def receive_event(event: EventCreate):
 
     try:
         response = supabase.table("events").insert(data).execute()
+        
+        # Update workflow statistics after event insertion
+        workflow_id = event_dict["workflow_id"]
+        
+        # Aggregate statistics from all events for this workflow
+        events_response = supabase.table("events")\
+            .select("cost, created_at")\
+            .eq("workflow_id", workflow_id)\
+            .execute()
+        
+        if events_response.data:
+            # Calculate totals
+            total_calls = len(events_response.data)
+            total_cost = sum(float(e.get("cost", 0)) for e in events_response.data)
+            
+            # Get start and end times
+            timestamps = [e["created_at"] for e in events_response.data if e.get("created_at")]
+            start_time = min(timestamps) if timestamps else None
+            end_time = max(timestamps) if timestamps else None
+            
+            # Update workflow with aggregated stats
+            supabase.table("workflows").update({
+                "total_calls": total_calls,
+                "total_cost": total_cost,
+                "start_time": start_time,
+                "end_time": end_time,
+                "status": "active"
+            }).eq("id", workflow_id).execute()
+        
         return {"message": "Events logged successfully", "data": response.data}
     except Exception as e:
         print(f"Error inserting events: {e}")
@@ -137,15 +174,18 @@ def analyze_workflow(id: str):
 
         # 2. Construct Prompt using new schema fields
         events_str = ""
+        calculated_total_cost = 0.0
         for e in events:
             role = e.get('event_type', 'unknown')
             prompt_data = e.get('prompt', '')
             response_data = e.get('response', '')
             model = e.get('model', 'unknown')
             cost = e.get('cost', 0)
+            calculated_total_cost += cost
             events_str += f"\n- [{role}] Model: {model}, Cost: ${cost}\n  Input: {prompt_data}\n  Output: {response_data}\n"
 
         prompt = ANALYSIS_PROMPT + "\n\n## WORKFLOW CALLS\n" + events_str
+        
         
         # 3. Call Gemini
         response = gemini_client.models.generate_content(
@@ -159,13 +199,20 @@ def analyze_workflow(id: str):
         analysis_json = json.loads(response.text)
 
         # 4. Store Analysis
+        from scoring import calculate_efficiency_score
+        
+        # Calculate score first
+        score_data = calculate_efficiency_score(analysis_json)
+        
         analysis_entry = {
             "workflow_id": id,
-            "original_cost": analysis_json.get("original_cost"),
-            "optimized_cost": analysis_json.get("optimized_cost"),
-            "redundancies": {"items": analysis_json.get("redundancies", [])},
-            "model_overkill": {"items": analysis_json.get("model_overkill", [])},
-            "prompt_bloat": {"items": analysis_json.get("prompt_bloat", [])},
+            "original_cost": analysis_json.get("original_cost") or calculated_total_cost,
+            "optimized_cost": analysis_json.get("optimized_cost") or (calculated_total_cost * 0.8), # Fallback if missing
+            "redundancies": {"items": analysis_json.get("redundancies") or analysis_json.get("redundant_calls") or []},
+            "model_overkill": {"items": analysis_json.get("model_overkill") or []},
+            "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},
+            "efficiency_score": score_data["score"],
+            "efficiency_grade": score_data["grade"]
             # "created_at": datetime.now().isoformat() # defaulted in DB
         }
         
