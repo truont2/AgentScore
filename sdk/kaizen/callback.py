@@ -140,13 +140,24 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         tokens_in = (
             token_usage.get("prompt_tokens") or 
             token_usage.get("input_tokens") or 
-            token_usage.get("input_token_count", 0)
+            token_usage.get("input_token_count") or
+            token_usage.get("prompt_token_count", 0)
         )
         tokens_out = (
             token_usage.get("completion_tokens") or 
             token_usage.get("output_tokens") or 
-            token_usage.get("output_token_count", 0)
+            token_usage.get("output_token_count") or
+            token_usage.get("candidates_token_count", 0)
         )
+
+        if tokens_in == 0 and tokens_out == 0:
+            print(f"DEBUG: Zero tokens found. Available keys: {list(token_usage.keys()) if token_usage else 'None'}")
+            # Try to print generation info if available for deeper debug
+            if result.generations:
+                try:
+                    print(f"DEBUG Gen Info: {result.generations[0][0].generation_info}")
+                except:
+                    pass
 
         # Build complete event matching EventCreate schema
         event_data = {

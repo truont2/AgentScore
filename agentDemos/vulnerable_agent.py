@@ -1,12 +1,15 @@
 import os
 import asyncio
+import time
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
 
-# Load environment variables
-load_dotenv(dotenv_path="../sdk/kaizen/.env")
+# Explicitly load .env from sdk/kaizen
+env_path = Path(__file__).resolve().parent.parent / "sdk" / "kaizen" / ".env"
+load_dotenv(dotenv_path=env_path)
 
 """
 Simulated Agent: Medical Report Summarizer
@@ -14,6 +17,18 @@ Simulated Agent: Medical Report Summarizer
 This agent takes a patient case and produces a summary.
 It demonstrates all three waste types in a realistic workflow.
 """
+
+async def invoke_with_retry(llm, messages, retries=3, delay=30):
+    for attempt in range(retries):
+        try:
+            return await llm.ainvoke(messages)
+        except Exception as e:
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                if attempt < retries - 1:
+                    print(f"  ⚠ Rate limit hit (429). Waiting {delay}s before retry {attempt+1}/{retries}...")
+                    await asyncio.sleep(delay)
+                    continue
+            raise e
 
 async def run_redundant_calls(handler: KaizenCallbackHandler):
     """
@@ -31,15 +46,15 @@ async def run_redundant_calls(handler: KaizenCallbackHandler):
 
     print("Agent Action 1: Asking for definition of Myocardial Infarction.")
     messages1 = [HumanMessage(content="What is the medical definition of Myocardial Infarction?")]
-    await llm.ainvoke(messages1)
+    await invoke_with_retry(llm, messages1)
     
     print("Agent Action 2: Asking about MI (semantically identical).")
     messages2 = [HumanMessage(content="In medical terminology, what does MI stand for and what is it?")]
-    await llm.ainvoke(messages2)
-    
+    await invoke_with_retry(llm, messages2)
+
     print("Agent Action 3: Yet another MI question (triple redundancy).")
     messages3 = [HumanMessage(content="Define heart attack - also known as myocardial infarction.")]
-    await llm.ainvoke(messages3)
+    await invoke_with_retry(llm, messages3)
 
 
 async def run_model_overkill(handler: KaizenCallbackHandler):
@@ -61,7 +76,7 @@ async def run_model_overkill(handler: KaizenCallbackHandler):
     )
 
     messages = [HumanMessage(content="Translate 'Hello, how are you?' to Spanish.")]
-    await llm.ainvoke(messages)
+    await invoke_with_retry(llm, messages)
 
 
 async def run_prompt_bloat(handler: KaizenCallbackHandler):
@@ -107,7 +122,7 @@ What is the normal resting heart rate for an adult?
     messages = [HumanMessage(content=prompt_content)]
     
     try:
-        result = await llm.ainvoke(messages)
+        result = await invoke_with_retry(llm, messages)
         print(f"  ✓ Bloat call SUCCESS - response: {len(result.content)} chars")
     except Exception as e:
         print(f"  ✗ Bloat call FAILED: {type(e).__name__}: {e}")

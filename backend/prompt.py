@@ -89,7 +89,8 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
   "redundant_calls": [
     {
       "call_ids": ["<run_id_1>", "<run_id_2>"],
-      "reason": "Both calls ask for translation of the same medical term",
+      "description": "Redundant requests for medical definition",
+      "details": "Both calls ask for translation of the same medical term 'Myocardial Infarction', resulting in wasted tokens.",
       "keep_call_id": "<run_id_1>",
       "confidence": 0.95,
       "fix_suggestion": "Cache result from first call and reuse for second"
@@ -101,7 +102,8 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
       "current_model": "gemini-2.5-flash",
       "recommended_model": "gemini-2.5-flash-lite",
       "task_type": "simple_translation",
-      "reason": "This is straightforward translation requiring no complex reasoning",
+      "description": "Overkill model used for simple translation",
+      "details": "The task is a straightforward translation requiring no complex reasoning, but uses the expensive 'gemini-2.5-flash' model.",
       "confidence": 0.91,
       "fix_suggestion": "Switch to gemini-2.5-flash-lite for translation tasks"
     }
@@ -111,7 +113,9 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
       "call_id": "<run_id>",
       "current_tokens": 8500,
       "estimated_necessary_tokens": 200,
-      "unnecessary_content": "Full conversation history about weather and restaurants included but only medical question was relevant",
+      "description": "8,300 unused tokens in prompt",
+      "details": "Full conversation history about weather and restaurants included but only medical question was relevant.",
+      "unnecessary_content": "Full conversation history...",
       "confidence": 0.95,
       "fix_suggestion": "Remove irrelevant conversation history - only send the actual question"
     }

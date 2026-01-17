@@ -12,8 +12,10 @@ interface BackendWorkflow {
   id: string;
   name?: string;
   status: string;
+  total_calls: number;
   total_cost: number;
   created_at: string;
+  efficiency_score?: number;
 }
 
 export default function Dashboard() {
@@ -34,14 +36,14 @@ export default function Dashboard() {
             id: bw.id,
             name: bw.name || 'Untitled Workflow',
             timestamp: bw.created_at,
-            callCount: 0, // Placeholder
+            callCount: bw.total_calls || 0,
             totalCost: bw.total_cost || 0,
             optimizedCost: 0, // Placeholder
-            efficiencyScore: null,
+            efficiencyScore: bw.efficiency_score || null, // Map from backend
             redundancyScore: null,
             modelFitScore: null,
             contextEfficiencyScore: null,
-            status: bw.status === 'completed' ? 'analyzed' : 'pending',
+            status: bw.status === 'analyzed' ? 'analyzed' : 'pending',
             redundancyFindings: [],
             modelOverkillFindings: [],
             contextBloatFindings: []
@@ -71,7 +73,7 @@ export default function Dashboard() {
     return {
       totalWorkflows,
       averageScore,
-      totalSavings: totalSavings.toFixed(2),
+      totalSavings: totalSavings < 0.01 && totalSavings > 0 ? totalSavings.toFixed(5) : totalSavings.toFixed(2),
     };
   })();
 
