@@ -85,38 +85,74 @@ Key: Estimate what portion of tokens_in was actually necessary for the task.
 
 Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
+**CRITICAL: You MUST use the EXACT run_id UUIDs from the events. Do NOT create simplified IDs like "llm_call_1" or "call_1". Use the actual UUID strings.**
+
+Example with actual UUIDs:
 {
   "redundant_calls": [
     {
-      "call_ids": ["<run_id_1>", "<run_id_2>"],
-      "reason": "Both calls ask for translation of the same medical term",
-      "keep_call_id": "<run_id_1>",
+      "call_ids": ["3ea33274-b0b2-41a5-aeef-b483b25ea5d5", "7f2a1b3c-9d4e-4f5a-8b6c-1e2d3f4a5b6c"],
+      "reason": "Both calls ask for translation of 'myocardial infarction' to plain English",
+      "prompts": {
+        "3ea33274-b0b2-41a5-aeef-b483b25ea5d5": "Translate myocardial infarction to plain English",
+        "7f2a1b3c-9d4e-4f5a-8b6c-1e2d3f4a5b6c": "What does MI mean in simple terms?"
+      },
+      "keep_call_id": "3ea33274-b0b2-41a5-aeef-b483b25ea5d5",
       "confidence": 0.95,
-      "fix_suggestion": "Cache result from first call and reuse for second"
+      "common_fix": {
+        "summary": "Cache the first result and reuse it for semantically similar queries",
+        "code": "# Cache results to avoid redundant calls\\ncache = {}\\n\\ndef cached_llm_call(query):\\n    key = query.lower().strip()\\n    if key not in cache:\\n        cache[key] = llm.call(query)\\n    return cache[key]\\n\\nresult = cached_llm_call('Translate myocardial infarction')"
+      }
     }
   ],
   "model_overkill": [
     {
-      "call_id": "<run_id>",
+      "call_id": "9a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
       "current_model": "gemini-2.5-flash",
       "recommended_model": "gemini-2.5-flash-lite",
       "task_type": "simple_translation",
-      "reason": "This is straightforward translation requiring no complex reasoning",
+      "reason": "Simple translation task - no complex reasoning needed",
+      "prompt_snippet": "Translate 'hello' to Spanish",
       "confidence": 0.91,
-      "fix_suggestion": "Switch to gemini-2.5-flash-lite for translation tasks"
+      "common_fix": {
+        "summary": "Use a cheaper model for simple tasks like translation, formatting, or extraction",
+        "code": "# Route simple tasks to cheaper models\\nSIMPLE_TASKS = ['translate', 'format', 'extract', 'classify']\\n\\ndef get_model(task_type):\\n    if any(t in task_type.lower() for t in SIMPLE_TASKS):\\n        return 'gemini-2.5-flash-lite'  # 10x cheaper\\n    return 'gemini-2.5-flash'\\n\\nmodel = get_model('translate_medical_term')\\nresponse = client.generate(model=model, prompt=prompt)"
+      }
     }
   ],
   "prompt_bloat": [
     {
-      "call_id": "<run_id>",
+      "call_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
       "current_tokens": 8500,
       "estimated_necessary_tokens": 200,
-      "unnecessary_content": "Full conversation history about weather and restaurants included but only medical question was relevant",
+      "reason": "Full conversation history included but only the medical question was relevant",
+      "unnecessary_content": "8000+ tokens of chat history about weather and restaurants before the actual question",
+      "prompt_snippet": "...discussing lunch plans... ...weather tomorrow... [RELEVANT]: What is the dosage for ibuprofen?",
       "confidence": 0.95,
-      "fix_suggestion": "Remove irrelevant conversation history - only send the actual question"
+      "common_fix": {
+        "summary": "Only include relevant context - trim conversation history to recent/related messages",
+        "code": "# Trim context to only relevant messages\\ndef trim_to_relevant(messages, max_recent=3):\\n    return messages[-max_recent:]\\n\\n# Before: prompt = full_history + question (8500 tokens)\\n# After: prompt = trim_to_relevant(history) + question (200 tokens)\\nprompt = trim_to_relevant(history) + question"
+      }
     }
   ]
 }
+
+---
+
+## FIELD GUIDELINES
+
+### prompts / prompt_snippet
+- Include the ACTUAL text from the calls so developers can search their codebase
+- For redundant_calls: show both prompts so they can see the similarity
+- For model_overkill/prompt_bloat: show a snippet (first 100 chars or key part)
+- This helps developers ctrl+F and find WHERE in their code the issue is
+
+### common_fix
+- `summary`: One sentence explaining the fix
+- `code`: Simple, copy-paste ready Python code (10-15 lines max)
+- Show the MOST COMMON solution to this type of problem
+- Use comments to explain what's happening
+- Use \\n for newlines in code strings
 
 ---
 
@@ -124,11 +160,14 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
 1. Return ONLY valid JSON - no markdown, no backticks, no explanation text
 2. Only include findings with confidence >= 0.7
-3. Use the run_id or id field from each call as the call_id in your response
-4. fix_suggestion must be actionable and specific
-5. If no issues found in a category, return empty array []
-6. For model_overkill, recommend a real model that would handle the task well (don't invent model names)
-7. For prompt_bloat, estimate how many tokens were actually needed vs sent
+3. **CRITICAL**: Use the EXACT run_id UUID from each event. Copy the full UUID string (e.g., "3ea33274-b0b2-41a5-aeef-b483b25ea5d5"). Do NOT create simplified IDs like "llm_call_1" or "call_1".
+4. If no issues found in a category, return empty array []
+5. For model_overkill, recommend a real model that would handle the task well
+6. For prompt_bloat, estimate how many tokens were actually needed vs sent
+7. Include actual prompt text/snippets so developers can find the issue in their code
+8. Keep common_fix.code simple - most common solution only
+9. Use \\n for newlines in JSON code strings
+10. **VERIFY**: Before returning, check that all call_id and call_ids values are actual UUIDs from the events, not simplified names
 
 ---
 
@@ -146,4 +185,5 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 - Translation, formatting, and simple Q&A rarely need expensive models
 - If multiple calls have very similar prompts about the same topic, they're likely redundant
 - Look at the actual task being performed, not just the model or token count
+- Include enough of the actual prompt text that developers can grep/search for it
 """
