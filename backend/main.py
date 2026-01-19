@@ -19,8 +19,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
     "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:8080",
 ]
 
 app.add_middleware(
@@ -80,6 +78,8 @@ def receive_event(event: EventCreate):
         except ValueError:
             pass # Unknown model, keep 0
             
+    print(f"DEBUG: Calculated Cost: {event_dict.get('cost')} for model {event_dict.get('model')} (Tokens: {event_dict.get('tokens_in')}/{event_dict.get('tokens_out')})")
+
     # Insert single event
     data = [event_dict]
 
@@ -124,11 +124,21 @@ def receive_event(event: EventCreate):
 def list_workflows():
     """Returns list of workflows with basic stats."""
     try:
-        # Assuming 'workflows' table exists. 
-        # If workflows are derived from events, we might need a different query.
-        # For now, assuming a dedicated workflows table or view.
-        response = supabase.table("workflows").select("*").execute()
-        return response.data
+        # Fetch workflows with latest analysis efficiency score
+        response = supabase.table("workflows").select("*, analyses(efficiency_score)").order("created_at", desc=True).execute()
+        
+        workflows = response.data
+        for wf in workflows:
+            # Flatten the nested analysis score
+            analyses = wf.get("analyses", [])
+            if analyses and len(analyses) > 0:
+                # Take the most recent analysis (Supabase usually returns in default order, but we can rely on list presence)
+                # Ideally we'd sort, but taking the first one is a good approximation if only 1 exists
+                wf["efficiency_score"] = analyses[0].get("efficiency_score")
+            else:
+                wf["efficiency_score"] = None
+                
+        return workflows
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -231,6 +241,10 @@ def analyze_workflow(id: str):
         
         # Insert and return inserted data to get the ID and timestamp
         res_insert = supabase.table("analyses").insert(analysis_entry).execute()
+        
+        # Update workflow status to analyzed
+        supabase.table("workflows").update({"status": "analyzed"}).eq("id", id).execute()
+        
         return res_insert.data[0]
 
     except HTTPException:

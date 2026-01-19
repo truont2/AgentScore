@@ -29,6 +29,7 @@ class Workflow(BaseModel):
     end_time: Optional[datetime] = None
     total_calls: int = 0
     total_cost: float = 0.0
+    efficiency_score: Optional[int] = None
     created_at: datetime
 
 class WorkflowDetail(Workflow):
