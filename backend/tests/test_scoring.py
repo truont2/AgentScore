@@ -2,7 +2,14 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scoring import calculate_efficiency_score, calculate_letter_grade
+from scoring import (
+    calculate_efficiency_score, 
+    calculate_letter_grade,
+    calculate_redundancy_score,
+    calculate_model_fit_score,
+    calculate_context_efficiency_score,
+    calculate_savings_breakdown
+)
 
 def test_perfect_score():
     analysis = {
@@ -75,3 +82,186 @@ def test_score_floor():
     result = calculate_efficiency_score(analysis)
     assert result["score"] == 0
     assert result["grade"] == "F"
+
+
+# NEW TESTS FOR SUB-SCORES
+
+def test_redundancy_score_calculation():
+    """Test redundancy score: 5 calls, 2 redundant → 60%"""
+    redundancies = [
+        {"call_ids": ["call_0", "call_2"]}  # 2 calls, 1 is redundant
+    ]
+    score = calculate_redundancy_score(redundancies, total_calls=5)
+    assert score == 80  # 100 * (1 - 1/5) = 80
+
+def test_redundancy_score_perfect():
+    """Test no redundancies → 100%"""
+    score = calculate_redundancy_score([], total_calls=5)
+    assert score == 100
+
+def test_model_fit_score_calculation():
+    """Test model fit score: 5 calls, 1 overkill → 80%"""
+    overkill_items = [{"call_id": "call_3"}]
+    score = calculate_model_fit_score(overkill_items, total_calls=5)
+    assert score == 80  # 100 * (1 - 1/5) = 80
+
+def test_model_fit_score_perfect():
+    """Test no overkill → 100%"""
+    score = calculate_model_fit_score([], total_calls=5)
+    assert score == 100
+
+def test_context_efficiency_score_calculation():
+    """Test context efficiency: 8000 tokens sent, only 2000 needed → 25%"""
+    bloat_items = [
+        {"current_tokens": 8000, "estimated_necessary_tokens": 2000}  # 6000 excess
+    ]
+    events = [
+        {"tokens_in": 8000}
+    ]
+    score = calculate_context_efficiency_score(bloat_items, events)
+    assert score == 25  # 100 * (2000 / 8000) = 25
+
+def test_context_efficiency_score_perfect():
+    """Test no bloat → 100%"""
+    events = [{"tokens_in": 1000}]
+    score = calculate_context_efficiency_score([], events)
+    assert score == 100
+
+
+# NEW TESTS FOR OPTIMIZED SCORES
+
+def test_optimized_scores_returned():
+    """Test that calculate_efficiency_score returns optimized predictions"""
+    analysis = {
+        "redundancies": {"items": [{"call_ids": ["call_0", "call_1"]}]},
+        "model_overkill": {"items": [{"call_id": "call_2"}]},
+        "prompt_bloat": {"items": [{"current_tokens": 5000, "estimated_necessary_tokens": 500}]}
+    }
+    events = [
+        {"tokens_in": 1000, "run_id": "call_0", "cost": 0.001},
+        {"tokens_in": 1000, "run_id": "call_1", "cost": 0.001},
+        {"tokens_in": 1000, "run_id": "call_2", "cost": 0.002},
+        {"tokens_in": 5000, "run_id": "call_3", "cost": 0.005},
+        {"tokens_in": 1000, "run_id": "call_4", "cost": 0.001}
+    ]
+    
+    result = calculate_efficiency_score(analysis, events=events)
+    
+    # Check new fields exist
+    assert "sub_scores" in result
+    assert "optimized_sub_scores" in result
+    assert "optimized_score" in result
+    assert "savings_breakdown" in result
+    
+    # Optimized scores should be better than current
+    assert result["optimized_sub_scores"]["redundancy"] == 100
+    assert result["optimized_sub_scores"]["model_fit"] == 100
+    assert result["optimized_score"] > result["score"]
+
+
+# NEW TESTS FOR SAVINGS BREAKDOWN
+
+def test_savings_breakdown_structure():
+    """Test that savings breakdown has correct structure"""
+    analysis = {
+        "redundancies": {"items": []},
+        "model_overkill": {"items": []},
+        "prompt_bloat": {"items": []}
+    }
+    events = [{"tokens_in": 1000, "cost": 0.001}]
+    
+    result = calculate_efficiency_score(analysis, events=events)
+    breakdown = result["savings_breakdown"]
+    
+    assert "redundancy_savings" in breakdown
+    assert "model_fit_savings" in breakdown
+    assert "context_efficiency_savings" in breakdown
+    assert "total_savings" in breakdown
+    assert breakdown["total_savings"] == 0.0
+
+def test_savings_breakdown_calculation():
+    """Test savings calculation with Gemini-style sequential IDs"""
+    analysis = {
+        "redundancies": {"items": [{"call_ids": ["a0a0a0a0-0000-4000-8000-000000000001", "a0a0a0a0-0000-4000-8000-000000000002"]}]},
+        "model_overkill": {"items": []},
+        "prompt_bloat": {"items": []}
+    }
+    events = [
+        {"run_id": "real-uuid-1", "cost": 0.001, "tokens_in": 100},
+        {"run_id": "real-uuid-2", "cost": 0.001, "tokens_in": 100},
+        {"run_id": "real-uuid-3", "cost": 0.002, "tokens_in": 200}
+    ]
+    
+    breakdown = calculate_savings_breakdown(analysis, events)
+    
+    # Should save cost of 1 redundant call (ID ending in ...002 → events[1])
+    assert breakdown["redundancy_savings"] == 0.001
+    assert breakdown["total_savings"] == 0.001
+
+
+def test_match_call_id_to_event():
+    """Test helper function matches various ID formats to events"""
+    from scoring import match_call_id_to_event
+    
+    events = [
+        {"run_id": "uuid-1", "cost": 0.001},
+        {"run_id": "uuid-2", "cost": 0.002},
+        {"run_id": "uuid-3", "cost": 0.003}
+    ]
+    
+    # Test Gemini's fabricated UUID pattern
+    event = match_call_id_to_event("a0a0a0a0-0000-4000-8000-000000000001", events)
+    assert event["cost"] == 0.001
+    
+    event = match_call_id_to_event("a0a0a0a0-0000-4000-8000-000000000003", events)
+    assert event["cost"] == 0.003
+    
+    # Test simplified ID pattern
+    event = match_call_id_to_event("llm_call_1", events)
+    assert event["cost"] == 0.001
+    
+    event = match_call_id_to_event("llm_call_2", events)
+    assert event["cost"] == 0.002
+    
+    # Test exact UUID fallback
+    event = match_call_id_to_event("uuid-2", events)
+    assert event["cost"] == 0.002
+    
+    # Test invalid ID
+    event = match_call_id_to_event("invalid", events)
+    assert event is None
+
+
+
+# INTEGRATION TEST
+
+def test_full_integration_with_events():
+    """Test complete flow with realistic vulnerable agent data"""
+    analysis = {
+        "redundancies": {"items": [{"call_ids": ["call_0", "call_2"]}]},
+        "model_overkill": {"items": [{"call_id": "call_3", "current_model": "gemini-2.5-flash", "recommended_model": "gemini-2.5-flash-lite"}]},
+        "prompt_bloat": {"items": [{"call_id": "call_4", "current_tokens": 5782, "estimated_necessary_tokens": 50}]}
+    }
+    
+    events = [
+        {"run_id": "call_0", "tokens_in": 100, "tokens_out": 50, "cost": 0.0001, "model": "gemini-2.5-flash-lite"},
+        {"run_id": "call_1", "tokens_in": 100, "tokens_out": 50, "cost": 0.0001, "model": "gemini-2.5-flash-lite"},
+        {"run_id": "call_2", "tokens_in": 100, "tokens_out": 50, "cost": 0.0001, "model": "gemini-2.5-flash-lite"},
+        {"run_id": "call_3", "tokens_in": 20, "tokens_out": 10, "cost": 0.0002, "model": "gemini-2.5-flash"},
+        {"run_id": "call_4", "tokens_in": 5782, "tokens_out": 20, "cost": 0.0020, "model": "gemini-2.5-flash-lite"}
+    ]
+    
+    result = calculate_efficiency_score(analysis, events=events)
+    
+    # Verify all new fields are populated
+    assert result["sub_scores"]["redundancy"] < 100  # Has redundancy
+    assert result["sub_scores"]["model_fit"] < 100  # Has overkill
+    assert result["sub_scores"]["context_efficiency"] < 100  # Has bloat
+    
+    assert result["optimized_sub_scores"]["redundancy"] == 100
+    assert result["optimized_sub_scores"]["model_fit"] == 100
+    assert result["optimized_sub_scores"]["context_efficiency"] > result["sub_scores"]["context_efficiency"]
+    
+    assert result["optimized_score"] > result["score"]
+    
+    assert result["savings_breakdown"]["total_savings"] > 0

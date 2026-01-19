@@ -45,4 +45,8 @@ class AnalysisResult(BaseModel):
     prompt_bloat: Optional[Dict[str, Any]] = None
     efficiency_score: Optional[int] = None
     efficiency_grade: Optional[str] = None
+    sub_scores: Optional[Dict[str, Any]] = None
+    optimized_sub_scores: Optional[Dict[str, Any]] = None
+    optimized_score: Optional[int] = None
+    savings_breakdown: Optional[Dict[str, Any]] = None
     created_at: datetime
