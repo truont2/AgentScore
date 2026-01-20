@@ -443,7 +443,180 @@ context = f"Previous context: {summary}\\n\\n" + "\\n".join(recent)`,
 ];
 
 export const getWorkflowById = (id: string): Workflow | undefined => {
+    if (id === 'demo-legacy') return demoLegacy;
+    if (id === 'demo-optimized') return demoOptimized;
     return workflows.find((w) => w.id === id);
+};
+
+export const demoLegacy: Workflow = {
+    id: 'demo-legacy',
+    name: 'Enterprise Customer Support (Legacy)',
+    timestamp: new Date().toISOString(),
+    callCount: 154200,
+    totalCost: 15840.50,
+    optimizedCost: 2145.20,
+    efficiencyScore: 32,
+    redundancyScore: 45,
+    modelFitScore: 28,
+    contextEfficiencyScore: 24,
+    status: 'analyzed',
+    redundancyFindings: [
+        {
+            id: 'r1',
+            description: 'Massive duplicate intent classification',
+            details: 'Intent classification runs on every message in thread, not just new ones. 85k+ redundant calls across 15k threads.',
+            savings: '$6,420.45/run',
+            confidence: 98,
+            callIds: ['All Threads'],
+            fix: {
+                strategy: 'State Management',
+                explanation: 'Classify intent once per thread/session and store in state. Only re-classify if the topic explicitly shifts.',
+                code: `# Cache results to avoid redundant calls
+class SessionManager:
+    def get_intent(self, session, message):
+        # 1. Check if intent is already cached for this session
+        if session.get("intent"):
+            return session["intent"]
+            
+        # 2. Only call LLM if missing
+        intent = llm.classify(message)
+        session["intent"] = intent
+        return intent
+
+# Usage
+current_intent = session_manager.get_intent(user_session, user_message)`,
+            },
+        },
+        {
+            id: 'r2',
+            description: 'Redundant PII Scrubbing Loop',
+            details: 'PII scrubbing runs on raw input AND again on intermediate steps in the decision tree.',
+            savings: '$2,980.30/run',
+            confidence: 95,
+            callIds: ['Input', 'Pre-process', 'Routing'],
+            fix: {
+                strategy: 'Pipeline Optimization',
+                explanation: 'Scrub PII once at the API ingress point. Mark the payload as "clean" and bypass downstream scrubbers.',
+                code: `# Middleware pattern for single-pass PII scrubbing
+def pii_middleware(request):
+    raw_text = request.body
+    
+    # 1. Clean once at entry
+    clean_text = pii_service.scrub(raw_text)
+    
+    # 2. Attach clean text to request context
+    request.state.clean_text = clean_text
+    
+    return process_request(request)
+
+# Downstream handlers use request.state.clean_text directly`,
+            },
+        }
+    ],
+    modelOverkillFindings: [
+        {
+            id: 'm1',
+            description: 'GPT-4 for Simple Routing',
+            details: 'Using GPT-4 to route tickets to "Sales" vs "Support". This is a high-volume, low-complexity classification task.',
+            savings: '$4,240.10/run',
+            currentModel: 'GPT-4',
+            recommendedModel: 'DistilBERT / GPT-4o-mini',
+            taskType: 'Classification',
+            fix: {
+                explanation: 'Routing is a simple classification task. Smaller models achieve 99% accuracy for 1/50th the price.',
+                code: `# Route simple tasks to cheaper models
+SIMPLE_TASKS = ['classify_intent', 'route_ticket', 'extract_date']
+
+def get_model_for_task(task_type):
+    # Use cheaper model for known simple tasks
+    if task_type in SIMPLE_TASKS:
+        return 'gpt-4o-mini'  # or 'gemini-2.5-flash-lite'
+        
+    # Keep powerful model for complex reasoning
+    return 'gpt-4-turbo'
+
+model = get_model_for_task('route_ticket')`,
+                costComparison: {
+                    current: '$0.03/1k',
+                    recommended: '$0.0005/1k',
+                    savingsPercent: 98
+                }
+            },
+        }
+    ],
+    contextBloatFindings: [
+        {
+            id: 'c1',
+            description: 'Full KB Context Injection',
+            details: 'Injecting entire 50-page FAQ (25k tokens) into context for every single query.',
+            savings: '$2,161.85/run',
+            currentTokens: 25000,
+            optimizedTokens: 500,
+            fix: {
+                strategy: 'RAG (Retrieval Augmented Generation)',
+                explanation: 'Use vector search to retrieve only the 3-5 most relevant FAQ sections instead of injecting the entire knowledge base.',
+                code: `# Before: prompt = full_faq_doc + question (25k tokens)
+
+# After: RAG pattern
+def build_prompt(question):
+    # 1. Retrieve only relevant chunks
+    relevant_chunks = vector_db.similarity_search(question, k=3)
+    context_str = "\\n".join(c.text for c in relevant_chunks)
+    
+    # 2. Build concise prompt (500 tokens)
+    return f"Context: {context_str}\\n\\nQuestion: {question}"`,
+            },
+        }
+    ]
+};
+
+export const demoOptimized: Workflow = {
+    id: 'demo-optimized',
+    name: 'Enterprise Customer Support (Optimized)',
+    timestamp: new Date().toISOString(),
+    callCount: 154200,
+    totalCost: 2145.20,
+    optimizedCost: 1980.50, // Slightly lower optimized cost to show room for improvement
+    efficiencyScore: 89,    // Lowered from 94
+    redundancyScore: 98,
+    modelFitScore: 85,
+    contextEfficiencyScore: 88,
+    status: 'analyzed',
+    redundancyFindings: [],
+    modelOverkillFindings: [
+        {
+            id: 'm_opt_1',
+            description: 'GPT-4 for Sentiment Nuance',
+            details: 'Using GPT-4 for sentiment analysis on sensitive escalation tickets.',
+            savings: '$120.10/run',
+            currentModel: 'GPT-4',
+            recommendedModel: 'GPT-3.5-turbo',
+            taskType: 'Sentiment',
+            fix: {
+                explanation: 'A smaller model could handle this, but we retain GPT-4 for higher safety on escalations. Only fix if cost reduction is critical.',
+                code: '# Intentional Trade-off: Keeping GPT-4 for safety\nmodel = "gpt-4" # vs "gpt-3.5-turbo"',
+                taskComplexity: {
+                    level: 'Medium',
+                    reasons: ['Tone sensitivity', 'High stakes escalation', 'Safety priority'],
+                }
+            },
+        }
+    ],
+    contextBloatFindings: [
+        {
+            id: 'c_opt_1',
+            description: 'Customer Profile Padding',
+            details: 'Including full customer profile metadata (last 5 orders) in every interaction.',
+            savings: '$45.60/run',
+            currentTokens: 1200,
+            optimizedTokens: 400,
+            fix: {
+                strategy: 'Context Pruning',
+                explanation: 'We could trim strictly to the active order, but keeping recent history helps with personalization. Low priority fix.',
+                code: '# Personalization Trade-off\ncontext["history"] = last_5_orders # vs last_1_order',
+            },
+        }
+    ]
 };
 
 export const getSummaryStats = () => {
