@@ -26,6 +26,10 @@ export interface Finding {
     optimizedTokens?: number;
     callIds?: string[];
     fix?: Fix;
+    // New fields for schema completeness
+    promptSnippet?: string;
+    prompts?: Record<string, string>;
+    unnecessaryContent?: string;
 }
 
 export interface Workflow {
@@ -463,11 +467,16 @@ export const demoLegacy: Workflow = {
     redundancyFindings: [
         {
             id: 'r1',
-            description: 'Massive duplicate intent classification',
-            details: 'Intent classification runs on every message in thread, not just new ones. 85k+ redundant calls across 15k threads.',
+            description: 'Looping Intent Classification (Recursive)',
+            details: 'Intent classification triggers on every single message in a thread, even for replies where intent is already known. 85,000+ redundant calls wasting compute.',
             savings: '$6,420.45/run',
-            confidence: 98,
-            callIds: ['All Threads'],
+            confidence: 99,
+            callIds: ['All Active Threads', 'Recursive Loops'],
+            prompts: {
+                'Original Call': 'User: "My bill is wrong" -> Classify -> "Billing"',
+                'Redundant Call 1': 'Agent: "I can help." -> Classify -> "Billing" (Unnecessary)',
+                'Redundant Call 2': 'User: "Thanks" -> Classify -> "Billing" (Unnecessary)'
+            },
             fix: {
                 strategy: 'State Management',
                 explanation: 'Classify intent once per thread/session and store in state. Only re-classify if the topic explicitly shifts.',
@@ -516,12 +525,13 @@ def pii_middleware(request):
     modelOverkillFindings: [
         {
             id: 'm1',
-            description: 'GPT-4 for Simple Routing',
-            details: 'Using GPT-4 to route tickets to "Sales" vs "Support". This is a high-volume, low-complexity classification task.',
+            description: 'GPT-4 for Boolean Routing (98% Overkill)',
+            details: 'Using the most expensive model (GPT-4) for a trivial "Sales vs Support" routing decision. This is a 1-second task costing $0.03/call instead of $0.0005.',
             savings: '$4,240.10/run',
-            currentModel: 'GPT-4',
-            recommendedModel: 'DistilBERT / GPT-4o-mini',
-            taskType: 'Classification',
+            currentModel: 'GPT-4 (Expensive)',
+            recommendedModel: 'GPT-4o-mini',
+            taskType: 'Simple Classification',
+            promptSnippet: 'Classify this ticket: "I want to buy a new license." Options: [Sales, Support].',
             fix: {
                 explanation: 'Routing is a simple classification task. Smaller models achieve 99% accuracy for 1/50th the price.',
                 code: `# Route simple tasks to cheaper models
@@ -547,11 +557,13 @@ model = get_model_for_task('route_ticket')`,
     contextBloatFindings: [
         {
             id: 'c1',
-            description: 'Full KB Context Injection',
-            details: 'Injecting entire 50-page FAQ (25k tokens) into context for every single query.',
+            description: 'Context Flooding (25k Tokens / Call)',
+            details: 'Injecting the ENTIRE 50-page usage manual into the context window for every single user query, even for simple "Hello" messages.',
             savings: '$2,161.85/run',
             currentTokens: 25000,
             optimizedTokens: 500,
+            promptSnippet: 'You are a helpful assistant. Here is the entire product manual: [INSERT 50 PAGES OF TEXT]... Question: "How do I reset password?"',
+            unnecessaryContent: '[Pages 1-49 of completely irrelevant documentation, legal disclaimers, and legacy API references]',
             fix: {
                 strategy: 'RAG (Retrieval Augmented Generation)',
                 explanation: 'Use vector search to retrieve only the 3-5 most relevant FAQ sections instead of injecting the entire knowledge base.',
@@ -586,12 +598,13 @@ export const demoOptimized: Workflow = {
     modelOverkillFindings: [
         {
             id: 'm_opt_1',
-            description: 'GPT-4 for Sentiment Nuance',
-            details: 'Using GPT-4 for sentiment analysis on sensitive escalation tickets.',
+            description: 'Strategic Overkill: GPT-4 for Sentiment',
+            details: 'We deliberately use GPT-4 for sentiment analysis on escalated tickets to ensure maximum empathy and accuracy, despite the cost.',
             savings: '$120.10/run',
             currentModel: 'GPT-4',
             recommendedModel: 'GPT-3.5-turbo',
-            taskType: 'Sentiment',
+            taskType: 'Sentiment Analysis',
+            promptSnippet: 'Analyze this angry customer message with high sensitivity. Message: "I am extremely frustrated with your service!"',
             fix: {
                 explanation: 'A smaller model could handle this, but we retain GPT-4 for higher safety on escalations. Only fix if cost reduction is critical.',
                 code: '# Intentional Trade-off: Keeping GPT-4 for safety\nmodel = "gpt-4" # vs "gpt-3.5-turbo"',
@@ -605,11 +618,13 @@ export const demoOptimized: Workflow = {
     contextBloatFindings: [
         {
             id: 'c_opt_1',
-            description: 'Customer Profile Padding',
-            details: 'Including full customer profile metadata (last 5 orders) in every interaction.',
+            description: 'Personalization "Bloat" (Intentional)',
+            details: 'We include the last 5 orders in the context even for general queries. This allows the agent to be proactive ("Are you asking about Order #123?").',
             savings: '$45.60/run',
             currentTokens: 1200,
             optimizedTokens: 400,
+            promptSnippet: 'Context: { User: "Alice", RecentOrders: [Order #101, Order #102, Order #103...] } Question: "What are your shipping times?"',
+            unnecessaryContent: '[Details of 5 past delivered orders that are technically not needed to answer a generic shipping question]',
             fix: {
                 strategy: 'Context Pruning',
                 explanation: 'We could trim strictly to the active order, but keeping recent history helps with personalization. Low priority fix.',
