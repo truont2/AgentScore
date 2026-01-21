@@ -69,8 +69,8 @@ def calculate_context_efficiency_score(bloat_items: List[Dict], events: List[Dic
     total_necessary_tokens = total_actual_tokens  # Start with assumption all are necessary
     
     for item in bloat_items:
-        current = item.get("current_tokens", 0)
-        necessary = item.get("estimated_necessary_tokens", 0)
+        current = int(item.get("current_tokens") or 0)
+        necessary = int(item.get("estimated_necessary_tokens") or 0)
         
         if necessary > 0 and current > necessary:
             # Subtract the excess (bloat) from necessary tokens
@@ -191,10 +191,8 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
                 if model:
                     # Cost of unnecessary input tokens
                     wasted_tokens = current_tokens - necessary_tokens
-                    normalized_model = normalize_model_name(model)
-                    if normalized_model in MODEL_PRICING:
-                        input_price_per_token = MODEL_PRICING[normalized_model]["input"] / 1_000_000
-                        context_efficiency_savings += wasted_tokens * input_price_per_token
+                    # Use central pricing logic (handles -demo multiplier automatically)
+                    context_efficiency_savings += calculate_cost(model, wasted_tokens, 0)
 
     
     return {

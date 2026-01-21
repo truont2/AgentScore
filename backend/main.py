@@ -125,15 +125,17 @@ def list_workflows():
     """Returns list of workflows with basic stats."""
     try:
         # Fetch workflows with latest analysis efficiency score
-        response = supabase.table("workflows").select("*, analyses(efficiency_score)").order("created_at", desc=True).execute()
+        # Note: Supabase join doesn't always guarantee order, so we fetch created_at to sort in code
+        response = supabase.table("workflows").select("*, analyses(efficiency_score, created_at)").order("created_at", desc=True).execute()
         
         workflows = response.data
         for wf in workflows:
             # Flatten the nested analysis score
             analyses = wf.get("analyses", [])
             if analyses and len(analyses) > 0:
-                # Take the most recent analysis (Supabase usually returns in default order, but we can rely on list presence)
-                # Ideally we'd sort, but taking the first one is a good approximation if only 1 exists
+                # Sort by created_at descending to ensure we get the latest analysis
+                # (Handle None created_at just in case)
+                analyses.sort(key=lambda x: x.get("created_at") or "", reverse=True)
                 wf["efficiency_score"] = analyses[0].get("efficiency_score")
             else:
                 wf["efficiency_score"] = None

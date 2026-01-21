@@ -57,13 +57,22 @@ def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
     """Calculate cost in USD for a given model and token counts."""
     normalized_model = normalize_model_name(model)
     
+    is_demo = False
+    if normalized_model.endswith("-demo"):
+        is_demo = True
+        normalized_model = normalized_model.replace("-demo", "")
+
     if normalized_model not in MODEL_PRICING:
         # Log warning but don't crash - return 0
         print(f"Warning: Unknown model '{model}' (normalized: '{normalized_model}')")
         return 0.0
     
     pricing = MODEL_PRICING[normalized_model]
-    input_cost = (pricing["input"] / 1_000_000) * prompt_tokens
-    output_cost = (pricing["output"] / 1_000_000) * completion_tokens
+    
+    # Apply 10,000x multiplier if it's a demo run
+    multiplier = 10000.0 if is_demo else 1.0
+    
+    input_cost = (pricing["input"] / 1_000_000) * prompt_tokens * multiplier
+    output_cost = (pricing["output"] / 1_000_000) * completion_tokens * multiplier
     
     return round(input_cost + output_cost, 6)

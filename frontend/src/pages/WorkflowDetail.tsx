@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Play, Clock, GitBranch, RefreshCw, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 
@@ -45,7 +45,6 @@ export default function WorkflowDetail() {
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysisAttempted, setAnalysisAttempted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -137,7 +136,6 @@ export default function WorkflowDetail() {
     if (!id) return;
     try {
       setAnalyzing(true);
-      setAnalysisAttempted(true);
 
       const res = await fetch(`http://127.0.0.1:8000/workflows/${id}/analyze`, {
         method: 'POST',
@@ -154,23 +152,49 @@ export default function WorkflowDetail() {
       });
 
       await fetchData();
+      return true;
     } catch (err: any) {
       toast({
         title: "Analysis Failed",
         description: err.message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setAnalyzing(false);
     }
   }, [id, fetchData, toast]);
 
+  const attemptRef = useRef(false);
+  const [autoAnalysisFailed, setAutoAnalysisFailed] = useState(false);
+
   // Auto-Analyze Effect
   useEffect(() => {
-    if (workflow && workflow.status === 'pending' && workflow.callCount > 0 && !analyzing && !analysisAttempted) {
-      handleAnalyze();
+    // Only auto-analyze if:
+    // 1. Workflow data is loaded and valid
+    // 2. Status is pending (not analyzed)
+    // 3. We have calls to analyze
+    // 4. We haven't tried yet (ref check)
+    // 5. We aren't currently analyzing
+    if (
+      workflow &&
+      workflow.status === 'pending' &&
+      workflow.callCount > 0 &&
+      !analyzing &&
+      !attemptRef.current
+    ) {
+      attemptRef.current = true; // Mark as attempted immediately to prevent double-fire
+
+      // Small timeout to ensure UI is ready
+      setTimeout(async () => {
+        const success = await handleAnalyze();
+        if (!success) {
+          console.error("Auto-analysis failed");
+          setAutoAnalysisFailed(true);
+        }
+      }, 100);
     }
-  }, [workflow, analyzing, analysisAttempted, handleAnalyze]);
+  }, [workflow, analyzing, handleAnalyze]);
 
   if (loading) {
     return (
@@ -353,8 +377,8 @@ export default function WorkflowDetail() {
           /* Pending / Analyzing State */
           <Card className="p-12 bg-card border-border text-center">
             <div className="flex flex-col items-center gap-6">
-              {analyzing ? (
-                // LOADING STATE
+              {analyzing || (!autoAnalysisFailed && workflow.callCount > 0) ? (
+                // LOADING or PRE-LOADING STATE
                 <>
                   <div className="p-4 rounded-full bg-primary/10 animate-pulse">
                     <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -388,7 +412,7 @@ export default function WorkflowDetail() {
                   </Button>
                 </>
               ) : (
-                // MANUAL RETRY (Analyzed failed or pending call)
+                // MANUAL RETRY (Only if auto-analysis failed)
                 <>
                   <div className="p-4 rounded-full bg-score-warning/10">
                     <AlertTriangle className="w-10 h-10 text-score-warning" />
@@ -398,7 +422,7 @@ export default function WorkflowDetail() {
                       Analysis Required
                     </h2>
                     <p className="text-muted-foreground max-w-md">
-                      This workflow is ready for analysis.
+                      Automatic analysis failed. Please try again.
                     </p>
                   </div>
                   <Button onClick={handleAnalyze} size="lg" className="mt-2">
