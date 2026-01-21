@@ -1,7 +1,6 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Play, Clock, GitBranch, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Clock, GitBranch, RefreshCw, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 
 import { Header } from '@/components/Header';
 import { ScoreGauge } from '@/components/ScoreGauge';
@@ -9,6 +8,8 @@ import { ScoreBreakdown } from '@/components/ScoreBreakdown';
 import { CostComparison } from '@/components/CostComparison';
 import { FindingsAccordion } from '@/components/FindingsAccordion';
 import { StatusBadge } from '@/components/StatusBadge';
+import { SavingsProjector } from '@/components/projections/SavingsProjector';
+import { WorkflowInfoSidebar } from '@/components/WorkflowInfoSidebar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,23 +80,44 @@ export default function WorkflowDetail() {
         redundancyFindings: (latestAnalysis?.redundancies?.items || []).map((f: any, idx: number) => ({
           ...f,
           id: `r-${idx}`,
+          description: "Redundant Call Detected",
+          details: f.reason,
           savings: f.savings || '$0.00',
           callIds: f.call_ids,
+          fix: f.common_fix ? {
+            strategy: 'Optimization',
+            explanation: f.common_fix.summary,
+            code: f.common_fix.code,
+          } : undefined,
         })) as Finding[],
         modelOverkillFindings: (latestAnalysis?.model_overkill?.items || []).map((f: any, idx: number) => ({
           ...f,
           id: `m-${idx}`,
+          description: f.task_type ? `Model Overkill: ${f.task_type}` : "Model Overkill Detected",
+          details: f.reason,
           savings: f.savings || '$0.00',
           currentModel: f.current_model,
           recommendedModel: f.recommended_model,
           taskType: f.task_type,
+          fix: f.common_fix ? {
+            strategy: 'Model Swap',
+            explanation: f.common_fix.summary,
+            code: f.common_fix.code,
+          } : undefined,
         })) as Finding[],
         contextBloatFindings: (latestAnalysis?.prompt_bloat?.items || []).map((f: any, idx: number) => ({
           ...f,
           id: `c-${idx}`,
+          description: "Context Bloat Detected",
+          details: f.reason,
           savings: f.savings || '$0.00',
           currentTokens: f.current_tokens,
           optimizedTokens: f.estimated_necessary_tokens,
+          fix: f.common_fix ? {
+            strategy: 'Prompt Engineering',
+            explanation: f.common_fix.summary,
+            code: f.common_fix.code,
+          } : undefined,
         })) as Finding[],
       };
 
@@ -115,7 +137,7 @@ export default function WorkflowDetail() {
     if (!id) return;
     try {
       setAnalyzing(true);
-      setAnalysisAttempted(true); // Prevent auto-retry loop
+      setAnalysisAttempted(true);
 
       const res = await fetch(`http://127.0.0.1:8000/workflows/${id}/analyze`, {
         method: 'POST',
@@ -183,6 +205,15 @@ export default function WorkflowDetail() {
   // Calculate a projected score if we don't have one, or use a placeholder target
   const optimizedScore = isAnalyzed ? Math.min((workflow.efficiencyScore || 0) + 20, 99) : null;
 
+  // Calculate issue counts
+  const issuesCount = {
+    high: (workflow.redundancyFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) > 0.05).length || 0) +
+      (workflow.modelOverkillFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) > 0.05).length || 0),
+    medium: (workflow.contextBloatFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) > 0.05).length || 0),
+    low: (workflow.redundancyFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) <= 0.05).length || 0) +
+      (workflow.contextBloatFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) <= 0.05).length || 0)
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -208,67 +239,116 @@ export default function WorkflowDetail() {
               {workflow.callCount} AI calls • ${workflow.totalCost < 0.01 && workflow.totalCost > 0 ? workflow.totalCost.toFixed(5) : workflow.totalCost.toFixed(2)} total cost
             </p>
           </div>
+
+          {isAnalyzed && (
+            <Button
+              onClick={handleAnalyze}
+              disabled={analyzing}
+              variant="outline"
+              className="gap-2"
+            >
+              {analyzing ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  Gemini is analyzing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Re-run Analysis
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
         {isAnalyzed && workflow.efficiencyScore !== null ? (
-          <>
-            {/* Hero Section - Score */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <Card className="p-8 bg-card border-border flex flex-col items-center justify-center">
-                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">
-                  Efficiency Score
-                </h2>
-                <ScoreGauge
-                  score={workflow.efficiencyScore}
-                  optimizedScore={optimizedScore || undefined}
-                />
-                {optimizedScore && (
-                  <p className="text-sm text-muted-foreground mt-4">
-                    Apply recommendations to reach <span className="text-score-good font-semibold">{optimizedScore}</span>
-                  </p>
-                )}
-              </Card>
-
-              <div className="space-y-6">
-                <Card className="p-6 bg-card border-border">
-                  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
-                    Score Breakdown
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            {/* Main Content - 3 columns */}
+            <div className="xl:col-span-3 space-y-8">
+              {/* Hero Section - Score + Breakdown */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Score Card - THE HERO */}
+                <Card className="p-8 bg-card border-border flex flex-col items-center justify-center animate-fade-in-up">
+                  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">
+                    Efficiency Score
                   </h2>
+                  <ScoreGauge
+                    score={workflow.efficiencyScore}
+                    optimizedScore={optimizedScore || undefined}
+                    showTransformation={true}
+                  />
+                  {optimizedScore && (
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Apply recommendations to reach <span className="text-score-good font-semibold">{optimizedScore}</span>
+                    </p>
+                  )}
+                </Card>
+
+                {/* Score Breakdown */}
+                <Card className="p-6 bg-card border-border animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                   <ScoreBreakdown
                     redundancyScore={workflow.redundancyScore || 0}
                     modelFitScore={workflow.modelFitScore || 0}
                     contextEfficiencyScore={workflow.contextEfficiencyScore || 0}
                   />
                 </Card>
+              </div>
 
+              {/* Cost Comparison */}
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <CostComparison
+                  currentCost={workflow.totalCost}
+                  optimizedCost={workflow.optimizedCost}
+                  currentCalls={workflow.callCount}
+                  optimizedCalls={42} // This should be calculated from backend data if available, or estimated
+                />
+              </div>
+
+              {/* Savings Projector */}
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                <SavingsProjector
                   currentCost={workflow.totalCost}
                   optimizedCost={workflow.optimizedCost}
                 />
               </div>
+
+              {/* Actions */}
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                <Button variant="outline" className="gap-2" disabled>
+                  <GitBranch className="w-4 h-4" />
+                  View Dependency Graph
+                </Button>
+              </div>
+
+              {/* Findings Section */}
+              <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                <h2 className="text-xl font-semibold text-foreground">The Three Sins</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Issues identified in your workflow that are costing you money
+                </p>
+                <FindingsAccordion
+                  redundancyFindings={workflow.redundancyFindings}
+                  modelOverkillFindings={workflow.modelOverkillFindings}
+                  contextBloatFindings={workflow.contextBloatFindings}
+                />
+              </div>
             </div>
 
-            {/* Actions */}
-            <div className="mb-8">
-              <Button variant="outline" className="gap-2" disabled>
-                <GitBranch className="w-4 h-4" />
-                View Dependency Graph
-              </Button>
+            {/* Sidebar - 1 column */}
+            <div className="xl:col-span-1">
+              <div className="sticky top-8">
+                <WorkflowInfoSidebar
+                  name={workflow.name}
+                  callCount={workflow.callCount}
+                  totalCost={workflow.totalCost}
+                  timestamp={workflow.timestamp}
+                  issuesCount={issuesCount}
+                  potentialScore={optimizedScore || 100}
+                />
+              </div>
             </div>
-
-            {/* Findings Section */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">The Three Sins</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Issues identified in your workflow that are costing you money
-              </p>
-              <FindingsAccordion
-                redundancyFindings={workflow.redundancyFindings}
-                modelOverkillFindings={workflow.modelOverkillFindings}
-                contextBloatFindings={workflow.contextBloatFindings}
-              />
-            </div>
-          </>
+          </div>
         ) : (
           /* Pending / Analyzing State */
           <Card className="p-12 bg-card border-border text-center">

@@ -5,6 +5,7 @@ interface ScoreGaugeProps {
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
   optimizedScore?: number;
+  showTransformation?: boolean;
 }
 
 const getScoreColor = (score: number): string => {
@@ -19,7 +20,13 @@ const getScoreStrokeColor = (score: number): string => {
   return 'stroke-score-poor';
 };
 
-export function ScoreGauge({ score, size = 'lg', showLabel = true, optimizedScore }: ScoreGaugeProps) {
+export function ScoreGauge({
+  score,
+  size = 'lg',
+  showLabel = true,
+  optimizedScore,
+  showTransformation = false
+}: ScoreGaugeProps) {
   const sizes = {
     sm: { width: 80, strokeWidth: 6, fontSize: 'text-xl', labelSize: 'text-xs' },
     md: { width: 120, strokeWidth: 8, fontSize: 'text-3xl', labelSize: 'text-sm' },
@@ -29,8 +36,15 @@ export function ScoreGauge({ score, size = 'lg', showLabel = true, optimizedScor
   const { width, strokeWidth, fontSize, labelSize } = sizes[size];
   const radius = (width - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
+
+  // Calculate main score progress
   const progress = (score / 100) * circumference;
   const offset = circumference - progress;
+
+  // Calculate optimized score progress (if applicable)
+  const showOpt = showTransformation && optimizedScore && optimizedScore > score;
+  const optProgress = showOpt ? (optimizedScore! / 100) * circumference : 0;
+  const optOffset = circumference - optProgress;
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -49,7 +63,23 @@ export function ScoreGauge({ score, size = 'lg', showLabel = true, optimizedScor
             stroke="hsl(var(--muted))"
             strokeWidth={strokeWidth}
           />
-          {/* Progress circle */}
+
+          {/* Optimized Potential (Ghost) - rendered UNDER the main score if showing transformation */}
+          {showOpt && (
+            <circle
+              cx={width / 2}
+              cy={width / 2}
+              r={radius}
+              fill="none"
+              className="stroke-score-good/30 animate-pulse"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={optOffset}
+            />
+          )}
+
+          {/* Current Score Progress */}
           <circle
             cx={width / 2}
             cy={width / 2}
@@ -62,6 +92,7 @@ export function ScoreGauge({ score, size = 'lg', showLabel = true, optimizedScor
             strokeDashoffset={offset}
           />
         </svg>
+
         {/* Score text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className={cn('font-bold', fontSize, getScoreColor(score))}>
