@@ -16,6 +16,8 @@ interface WorkflowsTableProps {
   workflows: Workflow[];
 }
 
+import { demoLegacy, demoOptimized } from '@/data/mockData';
+
 function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   return date.toLocaleDateString('en-US', {
@@ -28,6 +30,9 @@ function formatTimestamp(timestamp: string): string {
 
 export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
   const navigate = useNavigate();
+
+  // Prepend demo workflows
+  const displayWorkflows = [demoLegacy, demoOptimized, ...workflows];
 
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-card">
@@ -44,7 +49,7 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {workflows.map((workflow) => (
+          {displayWorkflows.map((workflow) => (
             <TableRow
               key={workflow.id}
               className="cursor-pointer hover:bg-muted/30 border-border transition-colors"

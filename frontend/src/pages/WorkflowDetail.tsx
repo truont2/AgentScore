@@ -52,6 +52,22 @@ export default function WorkflowDetail() {
   const fetchData = useCallback(async () => {
     if (!id) return;
     try {
+
+      // 0. Check for Demo IDs
+      if (id === 'demo-legacy' || id === 'demo-optimized') {
+        // The data is fully populated in mockData.ts
+        // We can just rely on the getWorkflowById helper or import directly
+        // but since `fetchData` constructs the state, we should probably just set it directly here
+        // However, mockData already returns the Frontend interface, so we can just set it.
+
+        const { getWorkflowById } = await import('@/data/mockData');
+        const demoWf = getWorkflowById(id);
+        if (demoWf) {
+          setWorkflow(demoWf);
+          return;
+        }
+      }
+
       // 1. Fetch Workflow Basic Info
       const wfRes = await fetch(`http://127.0.0.1:8000/workflows/${id}`);
       if (!wfRes.ok) throw new Error('Failed to fetch workflow details');
