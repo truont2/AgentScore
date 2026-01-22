@@ -307,3 +307,109 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
         "savings_breakdown": savings_breakdown
     }
 
+def compute_workflow_graph_metrics(workflow_id: str, supabase_client):
+    """
+    Calculates graph-based metrics for a workflow:
+    - Dead branch waste
+    - Critical path latency
+    - Information efficiency
+    """
+    try:
+        # 1. Fetch data
+        events_res = supabase_client.table("events").select("*").eq("workflow_id", workflow_id).execute()
+        events = events_res.data
+        
+        edges_res = supabase_client.table("call_edges").select("*").eq("workflow_id", workflow_id).execute()
+        detected_edges = edges_res.data
+        
+        if not events: return
+        
+        # 2. Build graph structure
+        node_latencies = {}
+        node_costs = {}
+        outbound_counts = {}
+        inbound_counts = {}
+        adj = {}
+        
+        for e in events:
+            rid = str(e["run_id"])
+            node_latencies[rid] = e.get("latency_ms", 0)
+            node_costs[rid] = float(e.get("cost", 0))
+            outbound_counts[rid] = 0
+            inbound_counts[rid] = 0
+            adj[rid] = []
+            
+        for edge in detected_edges:
+            src = str(edge["source_id"])
+            tgt = str(edge["target_id"])
+            if src in adj: 
+                adj[src].append(tgt)
+                outbound_counts[src] += 1
+            if tgt in inbound_counts: 
+                inbound_counts[tgt] += 1
+
+        # 3. Identify Dead Branches (no outbound edges, not a root-only flow)
+        dead_branch_waste = 0.0
+        dead_nodes = []
+        
+        # A node is "dead" if it has no outbound edges AND there are other nodes that DO have outbound edges
+        # (meaning it's a leaf that wasn't intended to be a final output, or just wasted research)
+        has_any_outbound = any(count > 0 for count in outbound_counts.values())
+        
+        for rid, count in outbound_counts.items():
+            if count == 0 and has_any_outbound:
+                # If it's a leaf, check if it's the 'final' node (latest)
+                # For this demo, we'll simplify: if it's a leaf and not the latest node, it's potentially dead
+                # Or even better: if it's a leaf and has no "final" tag
+                dead_branch_waste += node_costs[rid]
+                dead_nodes.append(rid)
+
+        # 4. Critical Path (Longest Path)
+        # Using simple DP for DAG
+        dist = {rid: 0 for rid in node_latencies}
+        for rid in node_latencies:
+            dist[rid] = node_latencies[rid]
+            
+        # Topo sort (simple version for CP)
+        # We'll just iterate a few times since it's a small graph
+        for _ in range(len(node_latencies)):
+            for src in adj:
+                for tgt in adj[src]:
+                    if dist[tgt] < dist[src] + node_latencies[tgt]:
+                        dist[tgt] = dist[src] + node_latencies[tgt]
+        
+        critical_path_latency = max(dist.values()) if dist else 0
+
+        # 5. Information Efficiency
+        # Ratio of useful tokens (transferred) vs total tokens
+        total_tokens = sum(e.get("tokens_in", 0) + e.get("tokens_out", 0) for e in events)
+        # This is a bit complex without detailed token tracking, so we'll use a score-based proxy
+        info_efficiency = 0
+        if total_tokens > 0:
+            useful_score = sum(edge.get("overlap_score", 0) for edge in detected_edges)
+            info_efficiency = (useful_score * 100) / (len(events) or 1) # Proxy percentage
+
+        # 6. Update Database
+        update_data = {
+            "dead_branch_waste": round(dead_branch_waste, 6),
+            "critical_path_latency": int(critical_path_latency),
+            "information_efficiency": round(float(info_efficiency), 2),
+            "graph_computed": True
+        }
+        
+        supabase_client.table("workflows").update(update_data).eq("id", workflow_id).execute()
+        
+        # Update event node types
+        for rid in node_latencies:
+            ntype = "normal"
+            if rid in dead_nodes: ntype = "dead"
+            # Mark as critical if it's on the path that produced max latency
+            if dist[rid] == critical_path_latency: ntype = "critical"
+            
+            supabase_client.table("events").update({"node_type": ntype}).eq("run_id", rid).execute()
+
+        return update_data
+    except Exception as e:
+        print(f"Error computing graph metrics: {e}")
+        return None
+

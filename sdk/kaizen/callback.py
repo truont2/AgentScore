@@ -26,6 +26,49 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         self.timeout = timeout
         self._pending_starts: Dict[str, dict] = {}
         self._threads: List[threading.Thread] = []
+        # Local cache of responses in this workflow to detect information flow
+        self._response_cache: Dict[str, List[dict]] = {}
+
+    def _detect_parents(self, workflow_id: str, prompt: str) -> List[dict]:
+        """
+        Detects if this prompt contains content from previous responses
+        in the same workflow (Information Flow Tracking).
+        """
+        if not workflow_id or not prompt or workflow_id not in self._response_cache:
+            return []
+        
+        prompt_norm = prompt.lower()
+        parents = []
+        
+        for record in self._response_cache[workflow_id]:
+            response_text = record["response"].lower()
+            run_id = record["run_id"]
+            
+            if not response_text: continue
+            
+            score = 0.0
+            type = "none"
+            
+            # Simple heuristic detection
+            if response_text in prompt_norm:
+                score = 1.0
+                type = "exact"
+            elif len(response_text) > 100:
+                # Check for significant chunks
+                chunks = [response_text[i:i+50] for i in range(0, len(response_text)-50, 50)]
+                matches = sum(1 for c in chunks if c in prompt_norm)
+                if matches > 1:
+                    score = matches / len(chunks)
+                    type = "partial"
+
+            if score >= 0.1:
+                parents.append({
+                    "parent_id": run_id,
+                    "score": round(score, 2),
+                    "type": type
+                })
+        
+        return parents
 
     def _send_event(self, event_data: dict):
         """Send events to the backend, waiting for completion."""
@@ -76,14 +119,33 @@ class KaizenCallbackHandler(BaseCallbackHandler):
         if not model_name or model_name == "unknown":
             model_name = serialized.get("name", "unknown")
 
+        workflow_id = get_trace_id()
+        
+        # Extract actual text from messages
+        prompt_texts = []
+        for msg_list in messages:
+            for msg in msg_list:
+                if hasattr(msg, "content"):
+                    prompt_texts.append(str(msg.content))
+                else:
+                    prompt_texts.append(str(msg))
+        
+        prompt_text = "\n".join(prompt_texts)
+        
+        # Detect Information Flow
+        parents = self._detect_parents(workflow_id, prompt_text)
+        if parents:
+            print(f"DEBUG: Detected {len(parents)} parent relationships for this call.")
+
         self._pending_starts[str(run_id)] = {
             "run_id": str(run_id),
-            "workflow_id": get_trace_id(),
+            "workflow_id": workflow_id,
             "parent_run_id": str(parent_run_id) if parent_run_id else None,
             "event_type": "llm_call",
             "model": model_name,
-            "prompt": str(messages[0]),
+            "prompt": prompt_text,
             "start_time": datetime.now(),
+            "parent_relationships": parents
         }
 
     def on_chat_model_end(
@@ -161,10 +223,21 @@ class KaizenCallbackHandler(BaseCallbackHandler):
             "tokens_out": tokens_out,
             "cost": 0.0,  # Backend calculates this from model + tokens
             "latency_ms": latency_ms,
+            "parent_relationships": start_data.get("parent_relationships", [])
         }
 
         # Send to backend
         self._send_event(event_data)
+        
+        # Update local cache for future flow detection
+        workflow_id = event_data["workflow_id"]
+        if workflow_id not in self._response_cache:
+            self._response_cache[workflow_id] = []
+        
+        self._response_cache[workflow_id].append({
+            "run_id": event_data["run_id"],
+            "response": event_data["response"]
+        })
 
     def on_llm_end(
         self,

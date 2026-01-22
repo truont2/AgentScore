@@ -10,7 +10,8 @@ import {
 import { ScoreBadge } from './ScoreBadge';
 import { StatusBadge } from './StatusBadge';
 import type { Workflow } from '@/data/mockData';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface WorkflowsTableProps {
   workflows: Workflow[];
@@ -69,7 +70,20 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
                 <StatusBadge status={workflow.status} />
               </TableCell>
               <TableCell>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-emerald-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/workflow/${workflow.id}`); // This now defaults to Graph tab
+                    }}
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
               </TableCell>
             </TableRow>
           ))}

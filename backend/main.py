@@ -1,6 +1,6 @@
 import os
 from typing import List
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from google import genai
 from google.genai import types
 from datetime import datetime
@@ -8,6 +8,7 @@ from uuid import UUID
 import traceback
 import json
 from prompt import ANALYSIS_PROMPT
+from scoring import calculate_efficiency_score, compute_workflow_graph_metrics
 
 from database import supabase
 from schemas import BatchEvents, Workflow, WorkflowDetail, AnalysisResult, EventCreate
@@ -40,7 +41,7 @@ if GEMINI_API_KEY:
     gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 @app.post("/events")
-def receive_event(event: EventCreate):
+def receive_event(event: EventCreate, background_tasks: BackgroundTasks):
     """Receives a single AI call event."""
     
     event_dict = event.model_dump()
@@ -114,6 +115,9 @@ def receive_event(event: EventCreate):
                 "status": "active"
             }).eq("id", workflow_id).execute()
         
+        # Trigger Graph Computation
+        background_tasks.add_task(compute_workflow_graph_metrics, str(workflow_id), supabase)
+
         return {"message": "Events logged successfully", "data": response.data}
     except Exception as e:
         print(f"Error inserting events: {e}")
@@ -247,4 +251,52 @@ def get_workflow_analysis(id: str):
         response = supabase.table("analyses").select("*").eq("workflow_id", id).order("created_at", desc=True).execute()
         return response.data
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/workflows/{id}/graph")
+def get_workflow_graph(id: str):
+    """Returns the dependency graph for a workflow (nodes and edges)."""
+    try:
+        wf_res = supabase.table("workflows").select("*").eq("id", id).execute()
+        if not wf_res.data:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        workflow = wf_res.data[0]
+
+        events_res = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
+        events = events_res.data
+
+        edges_res = supabase.table("call_edges").select("*").eq("workflow_id", id).execute()
+        edges = edges_res.data
+
+        nodes = []
+        for e in events:
+            nodes.append({
+                "id": str(e["run_id"]),
+                "label": f"Call {str(e['run_id'])[:4]}",
+                "model": e.get("model", "unknown"),
+                "cost": float(e.get("cost", 0)),
+                "latency": e.get("latency_ms", 0),
+                "type": e.get("node_type", "normal") 
+            })
+
+        formatted_edges = []
+        for edge in edges:
+            formatted_edges.append({
+                "id": f"e-{edge['source_id']}-{edge['target_id']}",
+                "source": str(edge["source_id"]),
+                "target": str(edge["target_id"]),
+                "score": edge.get("overlap_score", 0),
+                "type": edge.get("overlap_type", "exact")
+            })
+
+        return {
+            "nodes": nodes,
+            "edges": formatted_edges,
+            "metrics": {
+                "dead_branch_cost": float(workflow.get("dead_branch_waste", 0) or 0),
+                "critical_path_latency": workflow.get("critical_path_latency", 0) or 0,
+                "info_efficiency": workflow.get("information_efficiency", 0) or 0,
+            }
+        }
+    except Exception as e:
+        print(f"Failed to fetch graph: {e}")
         raise HTTPException(status_code=500, detail=str(e))
