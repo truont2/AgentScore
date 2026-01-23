@@ -50,22 +50,28 @@ View your results in the dashboard:
 
 ## The Three Agent Sins
 
-AgentScore detects three categories of waste that plague multi-agent systems:
+AgentScore detects three categories of waste that plague multi-agent systems—derived from inefficiency patterns identified in Anthropic's *Building Effective Agents* and OpenAI's *A Practical Guide to Building Agents*:
 
 ### 🔄 Redundant Calls
 Semantically identical requests worded differently.
 
 > *"Translate myocardial infarction"* and *"What is MI in plain English?"* are the same question—but simple text matching won't catch it.
 
+Violates the **prompt chaining principle**: each call should process the output of the previous one, not re-request the same information.
+
 ### 💸 Model Overkill
 Expensive models used for simple tasks.
 
-> Using GPT-4 ($30/1M tokens) for basic translation when Gemini Flash ($0.35/1M tokens) produces identical results.
+> Using GPT-4 ($30/1M tokens) for basic classification when Gemini Flash ($0.35/1M tokens) produces identical results.
+
+As OpenAI notes: *"Not every task requires the smartest model—a simple retrieval or intent classification task may be handled by a smaller, faster model."*
 
 ### 📜 Context Bloat
 Unnecessary tokens stuffed into prompts.
 
 > Sending 10,000 tokens of conversation history when only the last 500 were relevant.
+
+Each call should include only the context needed for that specific action—not the entire conversation history.
 
 ---
 
@@ -83,10 +89,10 @@ Every workflow receives an **Efficiency Score from 0-100**:
 The score gamifies optimization—watch your number climb as you implement recommendations.
 
 **Score Calculation:**
-- Redundancy penalty: -points per duplicate call cluster
-- Model overkill penalty: -points per overspec'd model
-- Context bloat penalty: -points based on excess tokens
-- Weighted by cost impact and confidence
+- Redundancy penalty: Weighted by severity (exact duplicates penalized more than partial overlaps)
+- Model overkill penalty: Based on task complexity classification (classification, routing, extraction → use cheap models)
+- Context bloat penalty: Proportional to unnecessary token percentage
+- All findings filtered by confidence threshold (≥0.7)
 
 ---
 
@@ -98,7 +104,7 @@ AgentScore isn't just *using* Gemini—it **requires** Gemini's unique capabilit
 
 **Semantic Understanding**: Detecting that two differently-worded prompts are asking the same thing requires genuine language comprehension, not regex.
 
-**Task Complexity Assessment**: Determining whether a task needs GPT-4 or Gemini Flash requires reasoning about the actual cognitive demands—something only AI can do reliably.
+**Task Complexity Assessment**: Determining whether a task needs GPT-4 or Gemini Flash requires reasoning about the actual cognitive demands—something only AI can do reliably. Our analysis uses explicit task classification criteria: classification, routing, translation, and extraction are simple tasks; multi-step reasoning, planning, and synthesis require capable models.
 
 ---
 
@@ -141,6 +147,7 @@ AgentScore isn't just *using* Gemini—it **requires** Gemini's unique capabilit
 | SDK Pattern | Wrapper (`lens.wrap(client)`) | Safer than monkey-patching, won't break on library updates |
 | Database | PostgreSQL | Native concurrency handling for multi-user scenarios |
 | Analysis | Single Gemini call per workflow | Leverages long context window, simpler architecture |
+| Detection Criteria | Industry best practices (Anthropic, OpenAI) | Defensible methodology, not arbitrary rules |
 | Confidence Filter | 0.7 threshold | Shows only high-confidence recommendations |
 
 ---
@@ -152,7 +159,7 @@ AgentScore isn't just *using* Gemini—it **requires** Gemini's unique capabilit
 - ✅ Thread-safe workflow tracing
 - ✅ FastAPI backend with event ingestion
 - ✅ Gemini-powered analysis detecting all three Agent Sins
-- ✅ Efficiency Score calculation
+- ✅ Severity-weighted Efficiency Score calculation
 - ✅ React dashboard with workflow list and analysis views
 - ✅ Before/after cost comparison
 - ✅ Actionable recommendations with confidence scores
