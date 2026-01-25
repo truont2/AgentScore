@@ -134,18 +134,24 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
     context_efficiency_savings = 0.0
     
     # 1. Redundancy savings: cost of all duplicate calls that would be eliminated
-    redundancies = analysis_results.get("redundancies") or []
+    redundancies = analysis_results.get("redundancies") or analysis_results.get("redundant_calls") or []
     if isinstance(redundancies, dict):
         redundancies = redundancies.get("items", [])
     
     for finding in redundancies:
         call_ids = finding.get("call_ids", [])
-        # Sum costs of all redundant calls except the first one (which we keep)
+        # Calculate total savings for this redundancy group
+        group_savings = 0.0
         for i, call_id in enumerate(call_ids):
             if i > 0:  # Skip the first call (the one we keep)
                 event = match_call_id_to_event(call_id, events)
                 if event:
-                    redundancy_savings += event.get("cost", 0)
+                    cost = event.get("cost", 0)
+                    redundancy_savings += cost
+                    group_savings += cost
+        
+        # Inject savings into the finding item for frontend display
+        finding["savings"] = f"${group_savings:.2f}"
 
 
 
@@ -167,10 +173,18 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
                 tokens_in = event.get("tokens_in", 0)
                 tokens_out = event.get("tokens_out", 0)
                 
+                # Use the event's actual model string (which might have -demo suffix)
+                # This ensures we trigger the cost multiplier if applicable.
+                real_current_model = event.get("model", "") or current_model
+                
                 # Calculate cost difference
-                current_cost = calculate_cost(current_model, tokens_in, tokens_out)
+                current_cost = calculate_cost(real_current_model, tokens_in, tokens_out)
                 recommended_cost = calculate_cost(recommended_model, tokens_in, tokens_out)
-                model_fit_savings += max(0, current_cost - recommended_cost)
+                saving = max(0, current_cost - recommended_cost)
+                model_fit_savings += saving
+                
+                # Inject savings into the finding item for frontend display
+                finding["savings"] = f"${saving:.2f}"
 
     
     # 3. Context efficiency savings: cost of unnecessary tokens
@@ -192,7 +206,11 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
                     # Cost of unnecessary input tokens
                     wasted_tokens = current_tokens - necessary_tokens
                     # Use central pricing logic (handles -demo multiplier automatically)
-                    context_efficiency_savings += calculate_cost(model, wasted_tokens, 0)
+                    saving = calculate_cost(model, wasted_tokens, 0)
+                    context_efficiency_savings += saving
+                    
+                    # Inject savings into the finding item
+                    item["savings"] = f"${saving:.2f}"
 
     
     return {

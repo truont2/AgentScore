@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { FrequencyInput, type TimePeriod } from './FrequencyInput';
+import { Slider } from '@/components/ui/slider';
 import { ProjectionDisplay } from './ProjectionDisplay';
-import { ContextComparisons } from './ContextComparisons';
 import { DollarSign } from 'lucide-react';
 
 interface SavingsProjectorProps {
@@ -11,22 +10,12 @@ interface SavingsProjectorProps {
 }
 
 export function SavingsProjector({ currentCost, optimizedCost }: SavingsProjectorProps) {
-    const [frequency, setFrequency] = useState(100);
-    const [period, setPeriod] = useState<TimePeriod>('day');
+    const [runsPerDay, setRunsPerDay] = useState(100);
 
     const savingsPerRun = currentCost - optimizedCost;
     const savingsPercent = currentCost > 0
         ? Math.round((savingsPerRun / currentCost) * 100)
         : 0;
-
-    // Calculate annual savings for comparisons
-    const multipliers: Record<TimePeriod, number> = {
-        hour: 24 * 365,
-        day: 365,
-        week: 52,
-        month: 12,
-    };
-    const annualSavings = savingsPerRun * frequency * multipliers[period];
 
     return (
         <Card className="p-6 bg-card border-border">
@@ -58,28 +47,36 @@ export function SavingsProjector({ currentCost, optimizedCost }: SavingsProjecto
                 </p>
             </div>
 
-            {/* Frequency Input */}
-            <div className="bg-muted/30 border border-border/50 rounded-lg p-4 mb-6">
-                <FrequencyInput
-                    frequency={frequency}
-                    period={period}
-                    onFrequencyChange={setFrequency}
-                    onPeriodChange={setPeriod}
+            {/* Slider Input */}
+            <div className="bg-muted/30 border border-border/50 rounded-lg p-5 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-medium text-foreground">
+                        Runs per day
+                    </label>
+                    <span className="text-lg font-bold font-mono text-primary">
+                        {runsPerDay}
+                    </span>
+                </div>
+                <Slider
+                    value={[runsPerDay]}
+                    onValueChange={(vals) => setRunsPerDay(vals[0])}
+                    min={1}
+                    max={10000}
+                    step={1}
+                    className="w-full"
                 />
+                <div className="flex justify-between mt-2 text-[10px] text-muted-foreground uppercase tracking-wide">
+                    <span>1 run/day</span>
+                    <span>10k runs/day</span>
+                </div>
             </div>
 
             {/* Projection Display */}
             <ProjectionDisplay
                 savingsPerRun={savingsPerRun}
                 currentCostPerRun={currentCost}
-                frequency={frequency}
-                period={period}
+                dailyRuns={runsPerDay}
             />
-
-            {/* Context Comparisons */}
-            <div className="mt-6">
-                <ContextComparisons annualSavings={annualSavings} />
-            </div>
         </Card>
     );
 }

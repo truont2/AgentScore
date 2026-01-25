@@ -85,13 +85,13 @@ Key: Estimate what portion of tokens_in was actually necessary for the task.
 
 Return ONLY valid JSON. No markdown, no code blocks, no explanation.
 
-**CRITICAL: You MUST use the EXACT run_id UUIDs from the events. Do NOT create simplified IDs like "llm_call_1" or "call_1". Use the actual UUID strings.**
+**CRITICAL: You MUST use the provided call IDs (e.g., "call_1"). Do NOT use UUIDs unless provided in the input.**
 
-Example with actual UUIDs:
+Example:
 {
   "redundant_calls": [
     {
-      "call_ids": ["3ea33274-b0b2-41a5-aeef-b483b25ea5d5", "7f2a1b3c-9d4e-4f5a-8b6c-1e2d3f4a5b6c"],
+      "call_ids": ["call_1", "call_3"],
       "reason": "Both calls ask for translation of 'myocardial infarction' to plain English",
       "prompts": {
         "3ea33274-b0b2-41a5-aeef-b483b25ea5d5": "Translate myocardial infarction to plain English",
