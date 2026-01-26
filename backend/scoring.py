@@ -1,11 +1,37 @@
 """
-Scoring algorithm for assigning a value to an agentic system.
+Scoring algorithm for AgentScore - evaluating agentic system efficiency.
+
+Updated to use severity-weighted scoring based on Gemini analysis results.
+Severity levels: HIGH, MEDIUM, LOW (from industry best practices)
 """
 
 from typing import Dict, Any, List, Optional
 from pricing import calculate_cost, MODEL_PRICING, normalize_model_name
 
+
+# Severity weights - HIGH issues count more than LOW issues
+SEVERITY_WEIGHTS = {
+    "HIGH": 1.0,
+    "MEDIUM": 0.6,
+    "LOW": 0.3
+}
+
+# Base penalties per issue type (applied with severity weight)
+BASE_PENALTIES = {
+    "redundancy": 15,
+    "model_overkill": 10,
+    "prompt_bloat": 5  # per 1000 wasted tokens
+}
+
+
+def get_severity_weight(finding: Dict) -> float:
+    """Get the severity weight for a finding, defaulting to MEDIUM if not specified."""
+    severity = finding.get("severity", "MEDIUM").upper()
+    return SEVERITY_WEIGHTS.get(severity, 0.6)
+
+
 def calculate_letter_grade(score: int) -> str:
+    """Convert numeric score to letter grade."""
     if score >= 90:
         return "A"
     elif score >= 80:
@@ -20,72 +46,86 @@ def calculate_letter_grade(score: int) -> str:
 
 def calculate_redundancy_score(redundancies: List[Dict], total_calls: int) -> int:
     """
-    Calculate redundancy score (0-100) based on what percentage of calls are NOT redundant.
-    Formula: 100 × (1 - redundant_calls / total_calls)
+    Calculate redundancy score (0-100) weighted by severity.
+    
+    HIGH severity duplicates count fully, LOW severity count less.
+    Formula: 100 × (1 - weighted_redundant_calls / total_calls)
     """
     if total_calls == 0:
-        return 100  # No calls = perfect score
+        return 100
     
-    # Count how many calls are redundant (all duplicates except the one to keep)
-    redundant_call_count = 0
+    weighted_redundant_count = 0.0
     for finding in redundancies:
         call_ids = finding.get("call_ids", [])
+        weight = get_severity_weight(finding)
+        
         # All calls in the group are redundant except one (the one we keep)
         if len(call_ids) > 1:
-            redundant_call_count += len(call_ids) - 1
+            redundant_in_group = len(call_ids) - 1
+            weighted_redundant_count += redundant_in_group * weight
     
-    score = 100 * (1 - redundant_call_count / total_calls)
+    score = 100 * (1 - weighted_redundant_count / total_calls)
     return int(max(0, min(100, score)))
 
 
 def calculate_model_fit_score(overkill_items: List[Dict], total_calls: int) -> int:
     """
-    Calculate model fit score (0-100) based on what percentage of calls use appropriate models.
-    Formula: 100 × (1 - overkill_calls / total_calls)
+    Calculate model fit score (0-100) weighted by severity.
+    
+    HIGH severity overkill (GPT-4 for classification) counts more than
+    LOW severity (borderline cases).
     """
     if total_calls == 0:
         return 100
     
-    overkill_count = len(overkill_items)
-    score = 100 * (1 - overkill_count / total_calls)
+    weighted_overkill_count = 0.0
+    for finding in overkill_items:
+        weight = get_severity_weight(finding)
+        weighted_overkill_count += weight
+    
+    score = 100 * (1 - weighted_overkill_count / total_calls)
     return int(max(0, min(100, score)))
 
 
 def calculate_context_efficiency_score(bloat_items: List[Dict], events: List[Dict]) -> int:
     """
-    Calculate context efficiency score (0-100) based on ratio of necessary tokens to actual tokens.
-    Formula: 100 × (necessary_tokens / actual_tokens)
+    Calculate context efficiency score (0-100) based on ratio of necessary to actual tokens.
+    
+    Weighted by severity - HIGH severity bloat (>75% waste) impacts more.
     """
     if not events:
         return 100
     
-    # Calculate total tokens sent and total necessary tokens
     total_actual_tokens = sum(e.get("tokens_in", 0) for e in events)
     
     if total_actual_tokens == 0:
         return 100
     
-    # Calculate total necessary tokens
-    total_necessary_tokens = total_actual_tokens  # Start with assumption all are necessary
+    # Calculate weighted waste
+    total_weighted_waste = 0.0
     
     for item in bloat_items:
         current = item.get("current_tokens", 0)
         necessary = item.get("estimated_necessary_tokens", 0)
+        weight = get_severity_weight(item)
         
         if necessary > 0 and current > necessary:
-            # Subtract the excess (bloat) from necessary tokens
-            total_necessary_tokens -= (current - necessary)
-        elif item.get("unnecessary_token_count"):
-            total_necessary_tokens -= item.get("unnecessary_token_count", 0)
+            waste = current - necessary
+            total_weighted_waste += waste * weight
+        elif item.get("waste_percentage"):
+            # Use waste_percentage if provided
+            waste = current * (item.get("waste_percentage", 0) / 100)
+            total_weighted_waste += waste * weight
     
-    score = 100 * (total_necessary_tokens / total_actual_tokens)
+    # Score based on weighted efficiency
+    effective_waste = min(total_weighted_waste, total_actual_tokens)
+    score = 100 * (1 - effective_waste / total_actual_tokens)
     return int(max(0, min(100, score)))
 
 
 def calculate_optimized_context_efficiency(current_efficiency: int, bloat_items: List[Dict]) -> int:
     """
     Estimate optimized context efficiency after removing bloat.
-    If there's significant bloat, we can improve significantly. Otherwise, stay at current level.
     """
     if not bloat_items:
         return current_efficiency
@@ -99,24 +139,20 @@ def calculate_optimized_context_efficiency(current_efficiency: int, bloat_items:
 
 def match_call_id_to_event(call_id: str, events: List[Dict]) -> Optional[Dict]:
     """
-    Match Gemini's call_id to actual event by extracting sequence number.
+    Match Gemini's call_id (e.g., "call_1") to actual event.
     
-    Gemini creates IDs like:
-    - "llm_call_1", "llm_call_2" → matches events[0], events[1]
-    - "a0a0a0a0-0000-4000-8000-000000000001" → matches events[0]
-    
-    Extracts the trailing number and uses it as 1-based index.
+    Extracts the number and uses it as 1-based index into events list.
     """
     import re
     
-    # Try to extract ANY number sequence (more permissive)
+    # Extract number from call_id (e.g., "call_1" -> 1)
     match = re.search(r'(\d+)', call_id)
     if match:
         index = int(match.group(1)) - 1  # Convert to 0-based index
         if 0 <= index < len(events):
             return events[index]
     
-    # Fallback: try exact UUID match (in case Gemini actually uses real UUIDs)
+    # Fallback: try exact UUID match
     for event in events:
         if call_id == str(event.get("run_id", "")):
             return event
@@ -124,31 +160,32 @@ def match_call_id_to_event(call_id: str, events: List[Dict]) -> Optional[Dict]:
     return None
 
 
-
 def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> Dict[str, float]:
     """
-    Calculate dollar savings per category.
+    Calculate dollar savings per category, weighted by severity.
+    
+    HIGH severity issues represent more certain savings.
     """
     redundancy_savings = 0.0
     model_fit_savings = 0.0
     context_efficiency_savings = 0.0
     
-    # 1. Redundancy savings: cost of all duplicate calls that would be eliminated
-    redundancies = analysis_results.get("redundancies") or []
+    # 1. Redundancy savings: cost of duplicate calls that would be eliminated
+    redundancies = analysis_results.get("redundancies") or analysis_results.get("redundant_calls") or []
     if isinstance(redundancies, dict):
         redundancies = redundancies.get("items", [])
     
     for finding in redundancies:
         call_ids = finding.get("call_ids", [])
-        # Sum costs of all redundant calls except the first one (which we keep)
+        confidence = finding.get("confidence", 0.8)
+        
+        # Sum costs of all redundant calls except the first one
         for i, call_id in enumerate(call_ids):
             if i > 0:  # Skip the first call (the one we keep)
                 event = match_call_id_to_event(call_id, events)
                 if event:
-                    redundancy_savings += event.get("cost", 0)
-
-
-
+                    # Weight by confidence
+                    redundancy_savings += event.get("cost", 0) * confidence
     
     # 2. Model fit savings: difference between current and recommended model costs
     overkill = analysis_results.get("model_overkill") or []
@@ -158,6 +195,7 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
     for finding in overkill:
         current_model = finding.get("current_model", "")
         recommended_model = finding.get("recommended_model", "")
+        confidence = finding.get("confidence", 0.8)
         
         if current_model and recommended_model:
             call_id = finding.get("call_id", "")
@@ -167,11 +205,10 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
                 tokens_in = event.get("tokens_in", 0)
                 tokens_out = event.get("tokens_out", 0)
                 
-                # Calculate cost difference
                 current_cost = calculate_cost(current_model, tokens_in, tokens_out)
                 recommended_cost = calculate_cost(recommended_model, tokens_in, tokens_out)
-                model_fit_savings += max(0, current_cost - recommended_cost)
-
+                savings = max(0, current_cost - recommended_cost)
+                model_fit_savings += savings * confidence
     
     # 3. Context efficiency savings: cost of unnecessary tokens
     bloat_items = analysis_results.get("prompt_bloat") or []
@@ -182,6 +219,7 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
         call_id = item.get("call_id", "")
         current_tokens = item.get("current_tokens", 0)
         necessary_tokens = item.get("estimated_necessary_tokens", 0)
+        confidence = item.get("confidence", 0.8)
         
         if current_tokens > necessary_tokens:
             event = match_call_id_to_event(call_id, events)
@@ -189,36 +227,125 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
             if event:
                 model = event.get("model", "")
                 if model:
-                    # Cost of unnecessary input tokens
                     wasted_tokens = current_tokens - necessary_tokens
                     normalized_model = normalize_model_name(model)
                     if normalized_model in MODEL_PRICING:
                         input_price_per_token = MODEL_PRICING[normalized_model]["input"] / 1_000_000
-                        context_efficiency_savings += wasted_tokens * input_price_per_token
-
+                        savings = wasted_tokens * input_price_per_token
+                        context_efficiency_savings += savings * confidence
     
     return {
-        "redundancy_savings": round(redundancy_savings, 10),
-        "model_fit_savings": round(model_fit_savings, 10),
-        "context_efficiency_savings": round(context_efficiency_savings, 10),
-        "total_savings": round(redundancy_savings + model_fit_savings + context_efficiency_savings, 10)
+        "redundancy_savings": round(redundancy_savings, 6),
+        "model_fit_savings": round(model_fit_savings, 6),
+        "context_efficiency_savings": round(context_efficiency_savings, 6),
+        "total_savings": round(redundancy_savings + model_fit_savings + context_efficiency_savings, 6)
     }
+
+
+def extract_severity_counts(analysis_results: Dict) -> Dict[str, int]:
+    """
+    Count findings by severity level across all categories.
+    """
+    counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    
+    # Check if Gemini provided summary counts
+    summary = analysis_results.get("analysis_summary", {})
+    if summary.get("severity_counts"):
+        return summary["severity_counts"]
+    
+    # Otherwise, count manually
+    all_findings = []
+    
+    redundancies = analysis_results.get("redundancies") or analysis_results.get("redundant_calls") or []
+    if isinstance(redundancies, dict):
+        redundancies = redundancies.get("items", [])
+    all_findings.extend(redundancies)
+    
+    overkill = analysis_results.get("model_overkill") or []
+    if isinstance(overkill, dict):
+        overkill = overkill.get("items", [])
+    all_findings.extend(overkill)
+    
+    bloat = analysis_results.get("prompt_bloat") or []
+    if isinstance(bloat, dict):
+        bloat = bloat.get("items", [])
+    all_findings.extend(bloat)
+    
+    for finding in all_findings:
+        severity = finding.get("severity", "MEDIUM").upper()
+        if severity in counts:
+            counts[severity] += 1
+    
+    return counts
+
+
+def extract_top_issues(analysis_results: Dict) -> List[str]:
+    """
+    Extract top issues from Gemini's analysis summary, or generate them.
+    """
+    # Try to get from Gemini's summary first
+    summary = analysis_results.get("analysis_summary", {})
+    if summary.get("top_issues"):
+        return summary["top_issues"]
+    
+    # Generate from findings
+    issues = []
+    
+    redundancies = analysis_results.get("redundancies") or analysis_results.get("redundant_calls") or []
+    if isinstance(redundancies, dict):
+        redundancies = redundancies.get("items", [])
+    
+    overkill = analysis_results.get("model_overkill") or []
+    if isinstance(overkill, dict):
+        overkill = overkill.get("items", [])
+    
+    bloat = analysis_results.get("prompt_bloat") or []
+    if isinstance(bloat, dict):
+        bloat = bloat.get("items", [])
+    
+    # Prioritize HIGH severity issues
+    high_severity = []
+    for f in redundancies + overkill + bloat:
+        if f.get("severity", "").upper() == "HIGH":
+            high_severity.append(f)
+    
+    # Generate issue descriptions
+    if len(redundancies) > 0:
+        high_count = sum(1 for r in redundancies if r.get("severity", "").upper() == "HIGH")
+        if high_count > 0:
+            issues.append(f"{high_count} HIGH severity redundant call(s) — semantic duplicates detected")
+        elif len(redundancies) > 0:
+            issues.append(f"{len(redundancies)} redundant call(s) detected")
+    
+    if len(overkill) > 0:
+        # Find most common current model
+        models = [o.get("current_model", "") for o in overkill]
+        if models:
+            common_model = max(set(models), key=models.count)
+            issues.append(f"{len(overkill)} call(s) using {common_model} for simple tasks — switch to cheaper model")
+    
+    if len(bloat) > 0:
+        total_waste = sum(
+            b.get("current_tokens", 0) - b.get("estimated_necessary_tokens", 0) 
+            for b in bloat
+        )
+        if total_waste > 0:
+            issues.append(f"{total_waste:,} unnecessary tokens detected across {len(bloat)} call(s)")
+    
+    return issues[:3]  # Return top 3
 
 
 def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dict]] = None) -> dict:
     """
     Calculates an efficiency score (0-100) based on detected inefficiencies.
     
-    Now also calculates:
-    - Sub-scores for each category
-    - Optimized predictions for each category
-    - Overall optimized score
-    - Savings breakdown
+    Updated to use severity-weighted penalties:
+    - HIGH severity: Full penalty
+    - MEDIUM severity: 60% penalty
+    - LOW severity: 30% penalty
     
-    Penalties:
-    - Redundancy: -15 points per entry
-    - Model Overkill: -10 points per entry
-    - Context Bloat: -5 points per 1000 wasted tokens
+    Returns:
+        dict with score, grade, breakdown, sub_scores, optimized predictions, and savings
     """
     score = 100
     
@@ -235,32 +362,43 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
     if isinstance(bloat_items, dict):
         bloat_items = bloat_items.get("items", [])
     
-    # Calculate penalty-based score (original logic)
-    redundancy_count = len(redundancies)
-    score -= (redundancy_count * 15)
+    # Calculate severity-weighted penalties
+    redundancy_penalty = 0.0
+    for finding in redundancies:
+        weight = get_severity_weight(finding)
+        redundancy_penalty += BASE_PENALTIES["redundancy"] * weight
     
-    overkill_count = len(overkill)
-    score -= (overkill_count * 10)
+    overkill_penalty = 0.0
+    for finding in overkill:
+        weight = get_severity_weight(finding)
+        overkill_penalty += BASE_PENALTIES["model_overkill"] * weight
     
-    total_bloat_tokens = 0
+    bloat_penalty = 0.0
     for item in bloat_items:
+        weight = get_severity_weight(item)
         current = item.get("current_tokens", 0)
         necessary = item.get("estimated_necessary_tokens", 0)
+        
         if necessary > 0 and current > necessary:
-            total_bloat_tokens += (current - necessary)
-        elif item.get("unnecessary_token_count"):
-             total_bloat_tokens += item.get("unnecessary_token_count", 0)
+            wasted_tokens = current - necessary
+        elif item.get("waste_percentage"):
+            wasted_tokens = current * (item.get("waste_percentage", 0) / 100)
         else:
-            total_bloat_tokens += 500  # Conservative default
-            
-    bloat_penalty = int(total_bloat_tokens * 0.005)
+            wasted_tokens = 500  # Conservative default
+        
+        # Penalty per 1000 wasted tokens, weighted by severity
+        bloat_penalty += (wasted_tokens / 1000) * BASE_PENALTIES["prompt_bloat"] * weight
+    
+    # Apply penalties
+    score -= redundancy_penalty
+    score -= overkill_penalty
     score -= bloat_penalty
     
     # Clamp score between 0 and 100
-    score = max(0, min(100, score))
+    score = int(max(0, min(100, score)))
     
-    # Calculate sub-scores (NEW)
-    total_calls = len(events) if events else 5  # Default to 5 if events not provided
+    # Calculate sub-scores
+    total_calls = len(events) if events else max(5, len(redundancies) + len(overkill) + len(bloat_items))
     
     sub_scores = {
         "redundancy": calculate_redundancy_score(redundancies, total_calls),
@@ -268,7 +406,7 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
         "context_efficiency": calculate_context_efficiency_score(bloat_items, events) if events else 50
     }
     
-    # Calculate optimized sub-scores (NEW)
+    # Calculate optimized sub-scores (after fixes applied)
     optimized_sub_scores = {
         "redundancy": 100,  # All redundancies eliminated via caching
         "model_fit": 100,   # All models appropriate after switching
@@ -285,7 +423,7 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
          optimized_sub_scores["context_efficiency"]) / 3
     )
     
-    # Calculate savings breakdown (NEW)
+    # Calculate savings breakdown
     savings_breakdown = calculate_savings_breakdown(analysis_results, events) if events else {
         "redundancy_savings": 0.0,
         "model_fit_savings": 0.0,
@@ -293,17 +431,22 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
         "total_savings": 0.0
     }
     
+    # Extract severity counts and top issues
+    severity_counts = extract_severity_counts(analysis_results)
+    top_issues = extract_top_issues(analysis_results)
+    
     return {
         "score": score,
         "grade": calculate_letter_grade(score),
         "breakdown": {
-            "redundancy_penalty": redundancy_count * 15,
-            "overkill_penalty": overkill_count * 10,
-            "bloat_penalty": bloat_penalty
+            "redundancy_penalty": round(redundancy_penalty, 1),
+            "overkill_penalty": round(overkill_penalty, 1),
+            "bloat_penalty": round(bloat_penalty, 1)
         },
         "sub_scores": sub_scores,
         "optimized_sub_scores": optimized_sub_scores,
         "optimized_score": optimized_score,
-        "savings_breakdown": savings_breakdown
+        "savings_breakdown": savings_breakdown,
+        "severity_counts": severity_counts,
+        "top_issues": top_issues
     }
-
