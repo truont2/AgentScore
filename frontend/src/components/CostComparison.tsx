@@ -17,6 +17,21 @@ export function CostComparison({
   const savings = currentCost - optimizedCost;
   const savingsPercent = currentCost > 0 ? Math.round((savings / currentCost) * 100) : 0;
 
+  const formatCurrency = (val: number) => {
+    // For large numbers (> $1,000), drop decimals. 
+    // For huge numbers (> $100,000), use 'k' notation.
+    if (val >= 100000) return `$${(val / 1000).toFixed(1)}k`;
+    if (val >= 1000) return `$${val.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    return `$${val.toFixed(2)}`;
+  };
+
+  const getFontSize = (val: number) => {
+    // Dynamic font size scaling
+    if (val > 100000) return 'text-xl';
+    if (val > 10000) return 'text-xl';
+    return 'text-2xl';
+  };
+
   return (
     <div className="bg-card border border-border rounded-md p-5 pr-12">
       <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-5">
@@ -28,8 +43,8 @@ export function CostComparison({
         {/* Current */}
         <div className="col-span-2 space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Current</p>
-          <p className="text-2xl font-semibold font-mono text-foreground tracking-tight">
-            ${currentCost.toFixed(2)}
+          <p className={cn("font-semibold font-mono text-foreground tracking-tight whitespace-nowrap", getFontSize(currentCost))}>
+            {formatCurrency(currentCost)}
           </p>
           <p className="text-xs text-muted-foreground font-mono">
             {currentCalls} calls
@@ -44,8 +59,8 @@ export function CostComparison({
         {/* Optimized */}
         <div className="col-span-2 space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Optimized</p>
-          <p className="text-2xl font-semibold font-mono text-score-good tracking-tight">
-            ${optimizedCost.toFixed(2)}
+          <p className={cn("font-semibold font-mono text-score-good tracking-tight whitespace-nowrap", getFontSize(optimizedCost))}>
+            {formatCurrency(optimizedCost)}
           </p>
           <p className="text-xs text-muted-foreground font-mono">
             {optimizedCalls} calls
@@ -60,8 +75,8 @@ export function CostComparison({
         {/* Saved */}
         <div className="col-span-1 space-y-1">
           <p className="text-[10px] text-score-good uppercase tracking-wide">Saved</p>
-          <p className="text-2xl font-semibold font-mono text-score-good tracking-tight">
-            ${savings.toFixed(2)}
+          <p className={cn("font-semibold font-mono text-score-good tracking-tight whitespace-nowrap", getFontSize(savings))}>
+            {formatCurrency(savings)}
           </p>
           <p className="text-xs text-score-good font-semibold">
             {savingsPercent}%
