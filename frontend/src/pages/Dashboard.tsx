@@ -19,8 +19,9 @@ interface BackendWorkflow {
 }
 
 export default function Dashboard() {
-  const [workflows, setWorkflows] = useState<Workflow[]>(mockWorkflows);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchWorkflows = async () => {
@@ -39,7 +40,7 @@ export default function Dashboard() {
             callCount: bw.total_calls || 0,
             totalCost: bw.total_cost || 0,
             optimizedCost: 0, // Placeholder
-            efficiencyScore: bw.efficiency_score || null, // Map from backend
+            efficiencyScore: bw.efficiency_score || null,
             redundancyScore: null,
             modelFitScore: null,
             contextEfficiencyScore: null,
@@ -50,11 +51,16 @@ export default function Dashboard() {
           }));
 
           setWorkflows(mappedWorkflows);
+        } else {
+          // Connected but no data
+          setIsConnected(true);
         }
       } catch (error) {
         console.warn('Backend connection failed, using mock data:', error);
         setIsConnected(false);
-        // Fallback to mock data (already set as initial state)
+        setWorkflows(mockWorkflows);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -76,6 +82,17 @@ export default function Dashboard() {
       totalSavings: totalSavings < 0.01 && totalSavings > 0 ? totalSavings.toFixed(5) : totalSavings.toFixed(2),
     };
   })();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

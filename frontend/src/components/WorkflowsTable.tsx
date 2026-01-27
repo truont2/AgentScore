@@ -10,7 +10,8 @@ import {
 import { ScoreBadge } from './ScoreBadge';
 import { StatusBadge } from './StatusBadge';
 import type { Workflow } from '@/data/mockData';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface WorkflowsTableProps {
   workflows: Workflow[];
@@ -45,6 +46,7 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
             <TableHead className="text-muted-foreground text-right">Cost</TableHead>
             <TableHead className="text-muted-foreground text-center">Score</TableHead>
             <TableHead className="text-muted-foreground">Status</TableHead>
+            <TableHead className="text-right sr-only">Actions</TableHead>
             <TableHead className="w-10"></TableHead>
           </TableRow>
         </TableHeader>
@@ -72,6 +74,25 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
               </TableCell>
               <TableCell>
                 <StatusBadge status={workflow.status} />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    variant={workflow.status === 'analyzed' ? "secondary" : "default"}
+                    size="sm"
+                    className="h-8 text-xs font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/workflow/${workflow.id}`);
+                    }}
+                  >
+                    {workflow.status === 'analyzed' ? (
+                      <>View Results</>
+                    ) : (
+                      <><Play className="w-3 h-3 mr-1.5" /> Run Analysis</>
+                    )}
+                  </Button>
+                </div>
               </TableCell>
               <TableCell>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />

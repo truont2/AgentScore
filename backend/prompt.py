@@ -173,6 +173,13 @@ Return ONLY valid JSON. No markdown, no explanation text.
       }
     }
   ],
+      "confidence": 0.95,
+      "common_fix": {
+        "summary": "Cache or pass forward the translation result from call_1 instead of re-requesting",
+        "code": "# Store result from first call\\nterm_cache = {}\\nterm_cache['myocardial_infarction'] = call_1_result\\n\\n# Reuse instead of calling again\\nif 'MI' in query or 'myocardial' in query:\\n    return term_cache['myocardial_infarction']"
+      }
+    }
+  ],
   "model_overkill": [
     {
       "call_id": "call_2",
