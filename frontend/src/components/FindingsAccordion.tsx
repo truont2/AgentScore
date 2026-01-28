@@ -32,9 +32,9 @@ function FindingCard({ finding, type }: FindingCardProps) {
             {finding.savings}
           </Badge>
         </div>
-        
+
         <p className="text-sm text-muted-foreground">{finding.details}</p>
-        
+
         <div className="flex flex-wrap gap-2 text-xs">
           {type === 'redundancy' && finding.callIds && (
             <div className="flex items-center gap-1.5">
@@ -46,13 +46,13 @@ function FindingCard({ finding, type }: FindingCardProps) {
               ))}
             </div>
           )}
-          
+
           {type === 'redundancy' && finding.confidence && (
             <Badge variant="outline" className="text-muted-foreground">
               {finding.confidence}% confidence
             </Badge>
           )}
-          
+
           {type === 'model' && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-score-poor/10 text-score-poor border-score-poor/30">
@@ -67,7 +67,7 @@ function FindingCard({ finding, type }: FindingCardProps) {
               )}
             </div>
           )}
-          
+
           {type === 'context' && finding.currentTokens && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Tokens:</span>
@@ -81,7 +81,7 @@ function FindingCard({ finding, type }: FindingCardProps) {
             </div>
           )}
         </div>
-        
+
         {finding.fix && (
           <FixSuggestion fix={finding.fix} defaultOpen={false} />
         )}
@@ -121,6 +121,7 @@ export function FindingsAccordion({ redundancyFindings, modelOverkillFindings, c
         <AccordionItem
           key={section.id}
           value={section.id}
+          id={section.id}
           className="border border-border rounded-lg bg-card overflow-hidden"
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
@@ -133,12 +134,12 @@ export function FindingsAccordion({ redundancyFindings, modelOverkillFindings, c
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">{section.title}</span>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={cn(
                     'text-xs',
-                    section.findings.length > 0 
-                      ? 'bg-score-warning/10 text-score-warning' 
+                    section.findings.length > 0
+                      ? 'bg-score-warning/10 text-score-warning'
                       : 'bg-muted text-muted-foreground'
                   )}
                 >
