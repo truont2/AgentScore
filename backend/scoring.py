@@ -348,46 +348,73 @@ def compute_workflow_graph_metrics(workflow_id: str, supabase_client):
             if tgt in inbound_counts: 
                 inbound_counts[tgt] += 1
 
-        # 3. Identify Dead Branches (no outbound edges, not a root-only flow)
-        dead_branch_waste = 0.0
-        dead_nodes = []
+        # 3. Identify Dead Branches using Backwards Reachability
+        # Finding the Intended Output (latest chronological leaf)
+        leaf_nodes = [rid for rid, count in outbound_counts.items() if count == 0]
         
-        # A node is "dead" if it has no outbound edges AND there are other nodes that DO have outbound edges
-        # (meaning it's a leaf that wasn't intended to be a final output, or just wasted research)
-        has_any_outbound = any(count > 0 for count in outbound_counts.values())
+        # Sort leaves by created_at to find the "latest" one
+        rid_to_time = {str(e["run_id"]): e["created_at"] for e in events}
+        leaf_nodes.sort(key=lambda rid: rid_to_time[rid], reverse=True)
         
-        for rid, count in outbound_counts.items():
-            if count == 0 and has_any_outbound:
-                # If it's a leaf, check if it's the 'final' node (latest)
-                # For this demo, we'll simplify: if it's a leaf and not the latest node, it's potentially dead
-                # Or even better: if it's a leaf and has no "final" tag
-                dead_branch_waste += node_costs[rid]
-                dead_nodes.append(rid)
+        intended_output = leaf_nodes[0] if leaf_nodes else None
+        alive_nodes = set()
+        
+        if intended_output:
+            # Reverse adjacency for backwards traversal
+            rev_adj = {rid: [] for rid in node_latencies}
+            for src, targets in adj.items():
+                for tgt in targets:
+                    rev_adj[tgt].append(src)
+            
+            # BFS backwards from intended_output
+            queue = [intended_output]
+            alive_nodes.add(intended_output)
+            while queue:
+                curr = queue.pop(0)
+                for p in rev_adj.get(curr, []):
+                    if p not in alive_nodes:
+                        alive_nodes.add(p)
+                        queue.append(p)
 
-        # 4. Critical Path (Longest Path)
-        # Using simple DP for DAG
+        dead_nodes = [rid for rid in node_latencies if rid not in alive_nodes]
+        dead_branch_waste = sum(node_costs[rid] for rid in dead_nodes)
+
+        # 4. Critical Path (Longest Path in the graph)
+        # Using DP/DAG longest path
         dist = {rid: 0 for rid in node_latencies}
+        parent_map = {rid: None for rid in node_latencies}
+        
         for rid in node_latencies:
             dist[rid] = node_latencies[rid]
             
         # Topo sort (simple version for CP)
-        # We'll just iterate a few times since it's a small graph
+        # Assuming events were sorted by time, they are likely roughly topological
+        # But for robustness we iterate
         for _ in range(len(node_latencies)):
             for src in adj:
                 for tgt in adj[src]:
                     if dist[tgt] < dist[src] + node_latencies[tgt]:
                         dist[tgt] = dist[src] + node_latencies[tgt]
+                        parent_map[tgt] = src
         
         critical_path_latency = max(dist.values()) if dist else 0
+        
+        # Identify the specific nodes on the critical path for highlighting
+        critical_nodes = set()
+        if dist:
+            end_node = max(dist, key=dist.get)
+            curr = end_node
+            while curr:
+                critical_nodes.add(curr)
+                curr = parent_map[curr]
 
         # 5. Information Efficiency
-        # Ratio of useful tokens (transferred) vs total tokens
         total_tokens = sum(e.get("tokens_in", 0) + e.get("tokens_out", 0) for e in events)
-        # This is a bit complex without detailed token tracking, so we'll use a score-based proxy
         info_efficiency = 0
         if total_tokens > 0:
-            useful_score = sum(edge.get("overlap_score", 0) for edge in detected_edges)
-            info_efficiency = (useful_score * 100) / (len(events) or 1) # Proxy percentage
+            # Proxy: Useful overlaps in alive vs dead branches
+            useful_score = sum(edge.get("overlap_score", 0) for edge in detected_edges if str(edge["target_id"]) in alive_nodes)
+            info_efficiency = (useful_score * 100) / (len(events) or 1)
 
         # 6. Update Database
         update_data = {
@@ -403,13 +430,14 @@ def compute_workflow_graph_metrics(workflow_id: str, supabase_client):
         for rid in node_latencies:
             ntype = "normal"
             if rid in dead_nodes: ntype = "dead"
-            # Mark as critical if it's on the path that produced max latency
-            if dist[rid] == critical_path_latency: ntype = "critical"
+            if rid in critical_nodes: ntype = "critical"
             
             supabase_client.table("events").update({"node_type": ntype}).eq("run_id", rid).execute()
 
         return update_data
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Error computing graph metrics: {e}")
         return None
 

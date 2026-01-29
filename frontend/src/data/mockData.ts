@@ -47,6 +47,13 @@ export interface Workflow {
     redundancyFindings: Finding[];
     modelOverkillFindings: Finding[];
     contextBloatFindings: Finding[];
+    nodes?: any[];
+    edges?: any[];
+    metrics?: {
+        dead_branch_cost: number;
+        critical_path_latency: number;
+        info_efficiency: number;
+    };
 }
 
 export const workflows: Workflow[] = [
@@ -464,6 +471,32 @@ export const demoLegacy: Workflow = {
     modelFitScore: 28,
     contextEfficiencyScore: 24,
     status: 'analyzed',
+    nodes: [
+        { id: '1', label: 'Intent Classif.', model: 'gpt-4', cost: 0.03, latency: 3200, tokens_in: 850, isOverkill: true, recommendedModel: 'gpt-4o-mini' },
+        { id: '2', label: 'PII Scrubbing', model: 'gpt-4', cost: 0.02, latency: 1800, tokens_in: 1200, isRedundant: true, redundantWithId: '7' },
+        { id: '3', label: 'Entity Extract', model: 'gpt-4', cost: 0.05, latency: 5500, tokens_in: 3200, isBloated: true, hasSecurityRisk: true, vulnerabilityType: 'PII Leak' },
+        { id: '4', label: 'Knowledge Look.', model: 'gpt-4', cost: 0.08, latency: 8500, tokens_in: 12500, isBloated: true },
+        { id: '5', label: 'Response Gen.', model: 'gpt-4', cost: 0.12, latency: 12000, tokens_in: 15000, hasSecurityRisk: true, vulnerabilityType: 'Prompt Injection' },
+        { id: '6', label: 'Legacy Parse', model: 'gpt-4', cost: 0.04, latency: 2500, tokens_in: 2000, isRedundant: true, redundantWithId: '3' },
+        { id: '7', label: 'Redunt. Classif.', model: 'gpt-4', cost: 0.03, latency: 1100, tokens_in: 900, isRedundant: true, redundantWithId: '1' },
+        { id: '8', label: 'Format Valid.', model: 'gpt-4', cost: 0.02, latency: 1900, tokens_in: 1100, isOverkill: true, recommendedModel: 'gpt-3.5-turbo' },
+        { id: '9', label: 'Debug Log', model: 'gpt-4', cost: 0.01, latency: 800, tokens_in: 600, isRedundant: true, redundantWithId: '5' }
+    ],
+    edges: [
+        { source: '1', target: '2', score: 0.95 },
+        { source: '2', target: '3', score: 0.92 },
+        { source: '3', target: '4', score: 0.88 },
+        { source: '4', target: '5', score: 0.98 },
+        { source: '1', target: '6', score: 0.15 },
+        { source: '2', target: '7', score: 0.12 },
+        { source: '3', target: '8', score: 0.08 },
+        { source: '4', target: '9', score: 0.05 }
+    ],
+    metrics: {
+        dead_branch_cost: 0.89,
+        critical_path_latency: 15200,
+        info_efficiency: 26
+    },
     redundancyFindings: [
         {
             id: 'r1',
@@ -588,12 +621,30 @@ export const demoOptimized: Workflow = {
     timestamp: new Date().toISOString(),
     callCount: 154200,
     totalCost: 2145.20,
-    optimizedCost: 1980.50, // Slightly lower optimized cost to show room for improvement
-    efficiencyScore: 89,    // Lowered from 94
+    optimizedCost: 1980.50,
+    efficiencyScore: 89,
     redundancyScore: 98,
     modelFitScore: 85,
     contextEfficiencyScore: 88,
     status: 'analyzed',
+    nodes: [
+        { id: '1', label: 'Intent Classification', model: 'gpt-4o-mini', cost: 0.0005, latency: 400, tokens_in: 850, type: 'critical' },
+        { id: '2', label: 'PII Scrubbing', model: 'gpt-4o-mini', cost: 0.0005, latency: 350, tokens_in: 1200, type: 'critical' },
+        { id: '3', label: 'Entity Extraction', model: 'gpt-4o-mini', cost: 0.002, latency: 1200, tokens_in: 3200, type: 'critical' },
+        { id: '4', label: 'Knowledge Lookup (RAG)', model: 'gpt-4o-mini', cost: 0.001, latency: 1500, tokens_in: 1200, type: 'critical' },
+        { id: '5', label: 'Response Generation', model: 'gpt-4o-mini', cost: 0.005, latency: 2500, tokens_in: 2500, type: 'critical' }
+    ],
+    edges: [
+        { source: '1', target: '2', score: 0.99 },
+        { source: '2', target: '3', score: 0.98 },
+        { source: '3', target: '4', score: 0.97 },
+        { source: '4', target: '5', score: 0.99 }
+    ],
+    metrics: {
+        dead_branch_cost: 0.00,
+        critical_path_latency: 5950,
+        info_efficiency: 92
+    },
     redundancyFindings: [],
     modelOverkillFindings: [
         {

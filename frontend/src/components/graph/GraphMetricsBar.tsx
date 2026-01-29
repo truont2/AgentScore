@@ -3,49 +3,48 @@ import { Card } from '@/components/ui/card';
 
 interface GraphMetricsBarProps {
   deadBranchCost: number;
-  criticalPathLatency: number;
+  criticalPathLatency?: number;
   informationEfficiency: number;
   parallelizationPotential: number;
 }
 
 const GraphMetricsBar = ({
   deadBranchCost,
-  criticalPathLatency,
   informationEfficiency,
   parallelizationPotential,
 }: GraphMetricsBarProps) => {
   const metrics = [
     {
       icon: AlertTriangle,
-      label: 'Dead Branch Cost',
+      label: 'Abandoned Cost',
       value: `$${deadBranchCost.toFixed(2)}`,
-      subtext: 'Wasted on unused outputs',
-      colorClass: 'text-destructive',
-      bgClass: 'bg-destructive/10',
+      subtext: 'Output generated but ignored',
+      colorClass: 'text-rose-500',
+      bgClass: 'bg-rose-500/10',
     },
     {
       icon: Zap,
-      label: 'Critical Path',
-      value: `${criticalPathLatency.toFixed(1)}s`,
-      subtext: 'Minimum latency bottleneck',
-      colorClass: 'text-score-warning',
-      bgClass: 'bg-score-warning/10',
+      label: 'Financial Leak',
+      value: `${((1 - parallelizationPotential) * 100).toFixed(0)}%`,
+      subtext: 'Potential savings from optimization',
+      colorClass: 'text-amber-500',
+      bgClass: 'bg-amber-500/10',
     },
     {
       icon: BarChart3,
-      label: 'Info Efficiency',
+      label: 'Resource Util.',
       value: `${Math.round(informationEfficiency * 100)}%`,
-      subtext: 'Output actually used downstream',
+      subtext: 'Efficiency of paid tokens',
       colorClass: 'text-primary',
       bgClass: 'bg-primary/10',
     },
     {
-      icon: GitBranch,
-      label: 'Parallelization',
-      value: `${Math.round(parallelizationPotential * 100)}%`,
-      subtext: 'Time saveable with optimization',
-      colorClass: 'text-score-good',
-      bgClass: 'bg-score-good/10',
+      icon: GitBranch, // Could use a different icon like Coins if available, but keeping existing imports
+      label: 'Wasted Tokens',
+      value: '22%', // Placeholder or passed prop if available
+      subtext: 'Bloat in prompts & context',
+      colorClass: 'text-emerald-500',
+      bgClass: 'bg-emerald-500/10',
     },
   ];
 
@@ -54,18 +53,18 @@ const GraphMetricsBar = ({
       {metrics.map((metric) => (
         <Card
           key={metric.label}
-          className="p-4 bg-card border-border/50 hover:border-border transition-colors"
+          className="p-4 bg-white border-slate-200/60 hover:border-slate-300 transition-colors shadow-sm"
         >
           <div className="flex items-start gap-3">
             <div className={`p-2 rounded-lg ${metric.bgClass}`}>
               <metric.icon className={`w-4 h-4 ${metric.colorClass}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground truncate">{metric.label}</p>
-              <p className={`text-xl font-bold ${metric.colorClass} font-mono`}>
+              <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 truncate">{metric.label}</p>
+              <p className={`text-xl font-black ${metric.colorClass} font-mono mt-0.5`}>
                 {metric.value}
               </p>
-              <p className="text-xs text-muted-foreground/70 mt-0.5">{metric.subtext}</p>
+              <p className="text-[10px] font-bold text-slate-400 mt-1">{metric.subtext}</p>
             </div>
           </div>
         </Card>

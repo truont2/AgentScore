@@ -33,7 +33,7 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
   const navigate = useNavigate();
 
   // Prepend demo workflows
-  const displayWorkflows = [demoLegacy, demoOptimized, ...workflows];
+  const displayWorkflows: Workflow[] = [demoLegacy, demoOptimized, ...workflows];
 
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-card">
@@ -77,15 +77,16 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-emerald-500"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-2 border-emerald-500/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/workflow/${workflow.id}`); // This now defaults to Graph tab
+                      navigate(`/workflow/${workflow.id}?tab=graph`);
                     }}
                   >
-                    <Search className="w-4 h-4" />
+                    <Search className="w-3.5 h-3.5" />
+                    View Graph
                   </Button>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>

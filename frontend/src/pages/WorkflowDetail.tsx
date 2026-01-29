@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Play,
@@ -8,10 +8,7 @@ import {
   RefreshCw,
   Sparkles,
   Loader2,
-  AlertTriangle,
-  Activity,
-  DollarSign,
-  Info
+  AlertTriangle
 } from 'lucide-react';
 
 import { Header } from '@/components/Header';
@@ -28,8 +25,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/StatCard";
 import WorkflowGraph from "@/components/WorkflowGraph";
+import GraphMetricsBar from "@/components/graph/GraphMetricsBar";
 
 import { type Workflow, type Finding } from '@/data/mockData';
 
@@ -60,6 +57,7 @@ interface BackendAnalysis {
 
 interface GraphData {
   nodes: any[];
+  calls?: any[];
   edges: any[];
   metrics: {
     dead_branch_cost: number;
@@ -70,7 +68,6 @@ interface GraphData {
 
 export default function WorkflowDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [rawWorkflowData, setRawWorkflowData] = useState<BackendWorkflowDetail | null>(null);
   const [graphData, setGraphData] = useState<GraphData | null>(null);
@@ -89,15 +86,23 @@ export default function WorkflowDetail() {
         const demoWf = getWorkflowById(id);
         if (demoWf) {
           setWorkflow(demoWf);
+          if (demoWf.nodes) {
+            setGraphData({
+              nodes: demoWf.nodes,
+              edges: demoWf.edges || [],
+              metrics: demoWf.metrics || { dead_branch_cost: 0, critical_path_latency: 0, info_efficiency: 0 },
+              calls: demoWf.nodes
+            });
+          }
           return;
         }
       }
 
       // 1. Fetch Workflow Basic Info & Graph Data concurrently
       const [wfRes, graphRes, analysisRes] = await Promise.all([
-        fetch(`http://127.0.0.1:8000/workflows/${id}`),
-        fetch(`http://127.0.0.1:8000/workflows/${id}/graph`),
-        fetch(`http://127.0.0.1:8000/workflows/${id}/analysis`)
+        fetch(`http://localhost:8000/workflows/${id}`),
+        fetch(`http://localhost:8000/workflows/${id}/graph`),
+        fetch(`http://localhost:8000/workflows/${id}/analysis`)
       ]);
 
       if (!wfRes.ok) throw new Error('Failed to fetch workflow details');
@@ -106,7 +111,11 @@ export default function WorkflowDetail() {
       setRawWorkflowData(wfData);
 
       if (graphRes.ok) {
-        setGraphData(await graphRes.json());
+        const gData = await graphRes.json();
+        setGraphData({
+          ...gData,
+          calls: gData.nodes // Map nodes to calls for GeminiAnalysis compatibility
+        });
       }
 
       const analysisList: BackendAnalysis[] = analysisRes.ok ? await analysisRes.json() : [];
@@ -189,7 +198,7 @@ export default function WorkflowDetail() {
       setAnalyzing(true);
       setAnalysisAttempted(true);
 
-      const res = await fetch(`http://127.0.0.1:8000/workflows/${id}/analyze`, {
+      const res = await fetch(`http://localhost:8000/workflows/${id}/analyze`, {
         method: 'POST',
       });
 
@@ -317,7 +326,7 @@ export default function WorkflowDetail() {
         <Tabs defaultValue="analysis" className="w-full">
           <TabsList className="bg-muted/50 border border-border p-1 mb-8">
             <TabsTrigger value="analysis" className="data-[state=active]:bg-background">Optimization Analysis</TabsTrigger>
-            <TabsTrigger value="graph" className="data-[state=active]:bg-background">Execution Graph</TabsTrigger>
+            <TabsTrigger value="graph" className="data-[state=active]:bg-background">Execution Trace</TabsTrigger>
             <TabsTrigger value="events" className="data-[state=active]:bg-background">Event Log</TabsTrigger>
           </TabsList>
 
@@ -360,8 +369,6 @@ export default function WorkflowDetail() {
                     <CostComparison
                       currentCost={workflow.totalCost}
                       optimizedCost={workflow.optimizedCost}
-                      currentCalls={workflow.callCount}
-                      optimizedCalls={workflow.callCount - (workflow.redundancyFindings?.length || 0)}
                     />
                   </div>
 
@@ -453,54 +460,42 @@ export default function WorkflowDetail() {
 
           <TabsContent value="graph">
             <div className="space-y-8">
-              {/* Graph Metrics (Static Cards) */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Cost"
-                  value={`$${workflow.totalCost?.toFixed(4) || '0.00'}`}
-                  icon={<DollarSign className="w-4 h-4" />}
-                />
-                <StatCard
-                  title="Critical Path"
-                  value={`${graphData?.metrics.critical_path_latency || rawWorkflowData?.latency_ms || 0}ms`}
-                  icon={<Clock className="w-4 h-4" />}
-                />
-                <StatCard
-                  title="Dead Branch Waste"
-                  value={`$${graphData?.metrics.dead_branch_cost.toFixed(4) || '0.00'}`}
-                  icon={<Activity className="w-4 h-4 text-rose-500" />}
-                  trend={graphData?.metrics.dead_branch_cost > 0 ? 'down' : 'neutral'}
-                />
-                <StatCard
-                  title="Info Efficiency"
-                  value={`${graphData?.metrics.info_efficiency.toFixed(1) || 0}%`}
-                  icon={<Info className="w-4 h-4 text-indigo-500" />}
-                  trend={graphData?.metrics.info_efficiency > 70 ? 'up' : 'neutral'}
-                />
-              </div>
 
-              <Card className="border-border bg-card overflow-hidden">
-                <CardHeader className="border-b bg-muted/30">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <GitBranch className="w-5 h-5 text-emerald-500" />
-                    Dependency Graph
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {graphData ? (
-                    <WorkflowGraph
-                      nodes={graphData.nodes}
-                      edges={graphData.edges}
-                      onNodeClick={(node) => console.log("Clicked node:", node)}
-                    />
-                  ) : (
-                    <div className="h-96 flex items-center justify-center text-muted-foreground italic">
-                      No graph data available for this workflow.
-                      <Button variant="link" onClick={fetchData}>Retry Loading Graph</Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {graphData && (
+                <div className="animate-fade-in-up">
+                  <GraphMetricsBar
+                    deadBranchCost={graphData.metrics.dead_branch_cost}
+                    criticalPathLatency={graphData.metrics.critical_path_latency}
+                    informationEfficiency={graphData.metrics.info_efficiency / 100}
+                    parallelizationPotential={0.42} // Simulated metric
+                  />
+                </div>
+              )}
+
+              <div className="animate-fade-in-up">
+                <Card className="border-border bg-card overflow-hidden">
+                  <CardHeader className="border-b bg-muted/30">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <GitBranch className="w-5 h-5 text-emerald-500" />
+                      Execution Cost Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {graphData ? (
+                      <WorkflowGraph
+                        nodes={graphData.nodes}
+                        edges={graphData.edges}
+                        onNodeClick={(node) => console.log("Clicked node:", node)}
+                      />
+                    ) : (
+                      <div className="h-96 flex items-center justify-center text-muted-foreground italic">
+                        No graph data available for this workflow.
+                        <Button variant="link" onClick={fetchData}>Retry Loading Graph</Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 

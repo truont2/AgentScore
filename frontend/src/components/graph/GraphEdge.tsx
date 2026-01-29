@@ -1,4 +1,4 @@
-import { type GraphCall, type GraphEdge as GraphEdgeType } from '@/data/dependencyGraphData';
+import type { GraphCall, GraphEdge as GraphEdgeType } from '@/data/dependencyGraphData';
 import { useMemo } from 'react';
 import { NODE_HEIGHT } from './GraphNode';
 
@@ -21,8 +21,8 @@ const GraphEdge = ({
   showDeadBranches,
   showCriticalPath,
 }: GraphEdgeProps) => {
-  const isDeadBranch = sourceCall.isDeadBranch || targetCall.isDeadBranch;
-  const isCriticalPath = sourceCall.isCriticalPath && targetCall.isCriticalPath;
+  const isDeadBranch = (sourceCall as any).isDeadBranch || (targetCall as any).isDeadBranch;
+  const isCriticalPath = (sourceCall as any).isCriticalPath && (targetCall as any).isCriticalPath;
 
   const getEdgeColor = () => {
     if (isDeadBranch && showDeadBranches) return '#ef4444';
@@ -31,7 +31,7 @@ const GraphEdge = ({
   };
 
   const color = getEdgeColor();
-  const strokeWidth = Math.max(1, edge.overlap * 3);
+  const strokeWidth = Math.max(1, (edge as any).overlap * 3 || 2);
   const opacity = isDeadBranch && showDeadBranches ? 0.5 : 1;
 
   // Calculate bezier curve
@@ -42,9 +42,6 @@ const GraphEdge = ({
   const pathD = useMemo(() => {
     return `M ${sourcePos.x} ${startY} C ${sourcePos.x} ${midY}, ${targetPos.x} ${midY}, ${targetPos.x} ${endY}`;
   }, [sourcePos.x, targetPos.x, startY, midY, endY]);
-
-  // Animation for flowing particles
-  // const animationId = `flow-${edge.source}-${edge.target}`;
 
   return (
     <g opacity={opacity}>
@@ -58,27 +55,14 @@ const GraphEdge = ({
         className="transition-all duration-300"
       />
 
-      {/* Arrow marker */}
-      <defs>
-        <marker
-          id={`arrow-${edge.source}-${edge.target}`}
-          markerWidth="8"
-          markerHeight="8"
-          refX="4"
-          refY="4"
-          orient="auto"
-        >
-          <path d="M 0 0 L 8 4 L 0 8 z" fill={color} />
-        </marker>
-      </defs>
-
-      {/* Path with arrow */}
+      {/* Main edge path */}
       <path
         d={pathD}
         fill="none"
-        stroke="transparent"
-        strokeWidth={strokeWidth + 4}
-        markerEnd={`url(#arrow-${edge.source}-${edge.target})`}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        className="transition-all duration-300"
       />
 
       {/* Animated flowing particles */}

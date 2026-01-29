@@ -16,6 +16,7 @@ class EventCreate(BaseModel):
     tokens_out: Optional[int] = 0
     cost: Optional[float] = 0.0
     latency_ms: Optional[int] = None
+    parent_relationships: Optional[List[Dict[str, Any]]] = None
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
 
 class BatchEvents(BaseModel):

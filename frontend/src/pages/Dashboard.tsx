@@ -25,7 +25,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchWorkflows = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/workflows');
+        const response = await fetch('http://localhost:8000/workflows');
         if (!response.ok) throw new Error('Failed to fetch');
 
         const data: BackendWorkflow[] = await response.json();

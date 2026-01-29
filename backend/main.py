@@ -82,13 +82,28 @@ def receive_event(event: EventCreate, background_tasks: BackgroundTasks):
     print(f"DEBUG: Calculated Cost: {event_dict.get('cost')} for model {event_dict.get('model')} (Tokens: {event_dict.get('tokens_in')}/{event_dict.get('tokens_out')})")
 
     # Insert single event
+    # We pop parent_relationships as it's kept in a separate join table
+    parent_relationships = event_dict.pop("parent_relationships", None)
     data = [event_dict]
 
     try:
         response = supabase.table("events").insert(data).execute()
         
-        # Update workflow statistics after event insertion
+        # Insert Call Edges if provided
         workflow_id = event_dict["workflow_id"]
+        if parent_relationships:
+            edge_data = []
+            for rel in parent_relationships:
+                edge_data.append({
+                    "workflow_id": workflow_id,
+                    "source_id": rel["parent_id"],
+                    "target_id": event_dict["run_id"],
+                    "overlap_score": rel.get("score", 1.0),
+                    "overlap_type": rel.get("type", "exact")
+                })
+            supabase.table("call_edges").insert(edge_data).execute()
+
+        # Update workflow statistics after event insertion
         
         # Aggregate statistics from all events for this workflow
         events_response = supabase.table("events")\
@@ -269,6 +284,42 @@ def get_workflow_analysis(id: str):
 @app.get("/workflows/{id}/graph")
 def get_workflow_graph(id: str):
     """Returns the dependency graph for a workflow (nodes and edges)."""
+    # GOLDEN DEMO INTERCEPTOR
+    GOLDEN_ID = "00000000-0000-4000-8000-000000000000"
+    if id == GOLDEN_ID:
+        # Perfectly curated demo data
+        nodes = [
+            {"id": "00000000-0000-4000-8000-000000000001", "label": "Market Analysis", "model": "gemini-2.1-flash-lite", "cost": 0.0001, "latency": 850, "type": "critical"},
+            {"id": "00000000-0000-4000-8000-000000000002", "label": "User Insights", "model": "gemini-2.1-flash-lite", "cost": 0.0001, "latency": 920, "type": "critical"},
+            
+            # THE GHOST BRANCH (WASTED)
+            {"id": "00000000-0000-4000-8000-000000000010", "label": "Legacy Audit", "model": "gemini-2.5-pro", "cost": 0.0025, "latency": 1500, "type": "dead"},
+            {"id": "00000000-0000-4000-8000-000000000011", "label": "Legacy Audit Support", "model": "gemini-2.5-pro", "cost": 0.0022, "latency": 1400, "type": "dead"},
+            {"id": "00000000-0000-4000-8000-000000000012", "label": "Format Legacy PDF", "model": "gemini-2.5-flash", "cost": 0.0002, "latency": 500, "type": "dead"},
+
+            {"id": "00000000-0000-4000-8000-000000000003", "label": "Product Strategy", "model": "gemini-2.5-pro", "cost": 0.0015, "latency": 2500, "type": "critical"},
+            {"id": "00000000-0000-4000-8000-000000000004", "label": "Final Localization", "model": "gemini-2.5-flash", "cost": 0.0002, "latency": 1200, "type": "critical"},
+        ]
+        edges = [
+            {"id": "e1", "source": "00000000-0000-4000-8000-000000000001", "target": "00000000-0000-4000-8000-000000000003", "score": 1, "type": "exact"},
+            {"id": "e2", "source": "00000000-0000-4000-8000-000000000002", "target": "00000000-0000-4000-8000-000000000003", "score": 0.9, "type": "partial"},
+            
+            # GHOST BRANCH EDGES
+            {"id": "eg1", "source": "00000000-0000-4000-8000-000000000010", "target": "00000000-0000-4000-8000-000000000011", "score": 1, "type": "exact"},
+            {"id": "eg2", "source": "00000000-0000-4000-8000-000000000011", "target": "00000000-0000-4000-8000-000000000012", "score": 1, "type": "exact"},
+
+            {"id": "e3", "source": "00000000-0000-4000-8000-000000000003", "target": "00000000-0000-4000-8000-000000000004", "score": 1, "type": "exact"},
+        ]
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "metrics": {
+                "dead_branch_cost": 0.0049,
+                "critical_path_latency": 5470,
+                "info_efficiency": 88.5,
+            }
+        }
+
     try:
         wf_res = supabase.table("workflows").select("*").eq("id", id).execute()
         if not wf_res.data:
