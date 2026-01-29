@@ -43,18 +43,7 @@ export function SavingsProjector({ currentCost, optimizedCost }: SavingsProjecto
                 <h2 className="text-lg font-semibold text-foreground">Projected Savings</h2>
             </div>
 
-            {/* Current Cost Summary */}
-            <div className="flex items-baseline justify-between mb-6 pb-6 border-b border-border/50">
-                <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Current workflow cost</p>
-                    <p className="text-2xl font-bold font-mono text-foreground">${currentCost.toFixed(2)}</p>
-                </div>
-                <div className="text-muted-foreground text-2xl">→</div>
-                <div className="space-y-1 text-right">
-                    <p className="text-sm text-muted-foreground">Optimized cost</p>
-                    <p className="text-2xl font-bold font-mono text-score-good">${optimizedCost.toFixed(2)}</p>
-                </div>
-            </div>
+
 
             <div className="bg-score-good/5 border border-score-good/20 rounded-lg px-4 py-3 mb-6">
                 <p className="text-center">
