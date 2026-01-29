@@ -346,6 +346,24 @@ export default function WorkflowDetail() {
                 redundancySavings={workflow.redundancyFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
                 modelShapeSavings={workflow.modelOverkillFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
                 contextSavings={workflow.contextBloatFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                issueCounts={{
+                  redundancy: workflow.redundancyFindings.length,
+                  model: workflow.modelOverkillFindings.length,
+                  context: workflow.contextBloatFindings.length
+                }}
+                onViewDetails={(section) => {
+                  const element = document.getElementById(section);
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Optionally trigger a click to ensure it's open if it's an accordion trigger
+                    // But FindingsAccordion items have ids, we'll assume we scroll to the item
+                    // To be safe, we can target the trigger button inside if needed
+                    const trigger = element.querySelector('button');
+                    if (trigger && trigger.getAttribute('data-state') === 'closed') {
+                      (trigger as HTMLElement).click();
+                    }
+                  }
+                }}
               />
 
               {/* Savings Projector */}

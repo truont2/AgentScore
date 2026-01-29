@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
-export type TimePeriod = 'hour' | 'day' | 'week' | 'month';
+export type TimePeriod = 'hour' | 'day' | 'week' | 'month' | 'year';
 
 interface FrequencyInputProps {
     frequency: number;
@@ -54,6 +54,7 @@ export function FrequencyInput({
                         <SelectItem value="day">Day</SelectItem>
                         <SelectItem value="week">Week</SelectItem>
                         <SelectItem value="month">Month</SelectItem>
+                        <SelectItem value="year">Year</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

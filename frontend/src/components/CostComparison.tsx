@@ -84,27 +84,7 @@ export function CostComparison({
         </div>
       </div>
 
-      {/* Waste bar visualization */}
-      <div className="mt-6 pt-4 border-t border-border">
-        <div className="flex justify-between text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">
-          <span>Spend Breakdown</span>
-          <span className="text-score-poor">{savingsPercent}% waste</span>
-        </div>
-        <div className="h-2 rounded-sm overflow-hidden flex bg-secondary">
-          <div
-            className="bg-score-poor/80 transition-all duration-500"
-            style={{ width: `${savingsPercent}%` }}
-          />
-          <div
-            className="bg-score-good transition-all duration-500"
-            style={{ width: `${100 - savingsPercent}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-[10px] mt-1.5">
-          <span className="text-score-poor">Recoverable</span>
-          <span className="text-score-good">Necessary</span>
-        </div>
-      </div>
+
     </div>
   );
 }
