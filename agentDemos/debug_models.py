@@ -4,7 +4,7 @@ import google.generativeai as genai
 from pathlib import Path
 from dotenv import load_dotenv
 
-env_path = Path(__file__).resolve().parent.parent / "sdk" / "kaizen" / ".env"
+env_path = Path(__file__).resolve().parent.parent / "sdk" / "agentscore" / ".env"
 load_dotenv(dotenv_path=env_path)
 
 api_key = os.getenv("GEMINI_AGENT_KEY")

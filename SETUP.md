@@ -1,4 +1,4 @@
-# Kaizen Setup Guide
+# AgentScore Setup Guide
 
 ## Quick Start (Recommended)
 
@@ -54,10 +54,10 @@ SUPABASE_KEY=your_supabase_anon_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-**sdk/kaizen/.env:**
+**sdk/agentscore/.env:**
 ```bash
 GEMINI_API_KEY=your_gemini_api_key
-KAIZEN_BACKEND_URL=http://localhost:8000
+AGENTSCORE_BACKEND_URL=http://localhost:8000
 ```
 
 ## Running the Project
@@ -102,7 +102,7 @@ This will create a workflow with 5 AI calls demonstrating all three waste types.
 This project uses a single virtual environment in the root directory (`/venv`) for all Python components:
 
 - **Backend** - FastAPI server
-- **SDK** - Kaizen client library
+- **SDK** - AgentScore client library
 - **Agent Demos** - Example agents
 
 **Benefits:**
@@ -142,7 +142,7 @@ Or use the migration in `Project-context.md` to add columns without deleting dat
 ## Project Structure
 
 ```
-Kaizen/
+AgentScore/
 ├── venv/                      # Single virtual environment (gitignored)
 ├── backend/
 │   ├── requirements.txt       # Backend dependencies
@@ -150,7 +150,7 @@ Kaizen/
 ├── sdk/
 │   ├── requirements.txt       # SDK dependencies
 │   ├── setup.py              # Makes SDK installable
-│   └── kaizen/
+│   └── agentscore/
 ├── agentDemos/               # Demo agents using the SDK
 ├── frontend/                 # React dashboard
 └── setup.sh                  # Automated setup script

@@ -4,7 +4,7 @@
 
 set -e  # Exit on error
 
-echo "🚀 Setting up Kaizen development environment..."
+echo "🚀 Setting up AgentScore development environment..."
 echo ""
 
 # Check if Python 3 is installed
@@ -61,7 +61,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Copy .env.example files and add your API keys:"
 echo "     - backend/.env (SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY)"
-echo "     - sdk/kaizen/.env (GEMINI_API_KEY, KAIZEN_BACKEND_URL)"
+echo "     - sdk/agentscore/.env (GEMINI_API_KEY, AGENTSCORE_BACKEND_URL)"
 echo ""
 echo "  2. Start the backend server:"
 echo "     source venv/bin/activate"

@@ -5,13 +5,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
+from agentscore import AgentScoreCallbackHandler, reset_trace_id, get_trace_id
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 
-# Explicitly load .env from sdk/kaizen
-env_path = Path(__file__).resolve().parent.parent / "sdk" / "kaizen" / ".env"
+# Explicitly load .env from sdk/agentscore
+env_path = Path(__file__).resolve().parent.parent / "sdk" / "agentscore" / ".env"
 load_dotenv(dotenv_path=env_path)
 
 
@@ -25,7 +25,7 @@ a 10,000x cost multiplier for UI demonstration purposes.
 """
 
 
-class DemoCallbackHandler(KaizenCallbackHandler):
+class DemoCallbackHandler(AgentScoreCallbackHandler):
    """
    Subclass that hijacks the model name reporting to append '-demo'.
    This signals the backend to apply the 10,000x cost multiplier.
@@ -72,7 +72,7 @@ async def invoke_with_retry(llm, messages, retries=3, delay=30):
            raise e
 
 
-async def run_redundant_calls(handler: KaizenCallbackHandler):
+async def run_redundant_calls(handler: AgentScoreCallbackHandler):
    print("\n--- [Agent] Flaw: Type 1 - Redundant Calls ---")
   
    llm = ChatGoogleGenerativeAI(
@@ -99,7 +99,7 @@ async def run_redundant_calls(handler: KaizenCallbackHandler):
 
 
 
-async def run_model_overkill(handler: KaizenCallbackHandler):
+async def run_model_overkill(handler: AgentScoreCallbackHandler):
    print("\n--- [Agent] Flaw: Type 2 - Model Overkill ---")
   
    expensive_model = "gemini-2.5-flash"
@@ -120,7 +120,7 @@ async def run_model_overkill(handler: KaizenCallbackHandler):
 
 
 
-async def run_prompt_bloat(handler: KaizenCallbackHandler):
+async def run_prompt_bloat(handler: AgentScoreCallbackHandler):
    print("\n--- [Agent] Flaw: Type 3 - Prompt Bloat ---")
   
    llm = ChatGoogleGenerativeAI(
@@ -194,7 +194,7 @@ async def main():
    print("  DEMO FINISHED")
    print("=" * 60)
    print(f"Trace ID: {trace_id}")
-   print("Use this ID to analyze the workflow in the Kaizen dashboard.")
+   print("Use this ID to analyze the workflow in the AgentScore dashboard.")
    print("=" * 60)
 
 

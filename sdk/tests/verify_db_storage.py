@@ -8,7 +8,7 @@ import os
 sys.path.append(os.path.join(os.getcwd(), 'sdk'))
 
 try:
-    from kaizen.callback import KaizenCallbackHandler
+    from agentscore.callback import AgentScoreCallbackHandler
     from langchain_core.outputs import LLMResult, ChatGeneration
     from langchain_core.messages import AIMessage
 except ImportError as e:
@@ -17,7 +17,7 @@ except ImportError as e:
 
 def verify_db_storage():
     print("Initializing Handler with http://localhost:3000 ...")
-    handler = KaizenCallbackHandler(backend_url="http://localhost:3000")
+    handler = AgentScoreCallbackHandler(backend_url="http://localhost:3000")
     
     run_id = uuid.uuid4()
     parent_run_id = uuid.uuid4()

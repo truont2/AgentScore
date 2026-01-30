@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
-from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
+from agentscore import AgentScoreCallbackHandler, reset_trace_id, get_trace_id
 
 # Load environment variables
-load_dotenv(dotenv_path="sdk/kaizen/.env")
+load_dotenv(dotenv_path="sdk/agentscore/.env")
 
 # 1. Define a simple tool
 @tool
@@ -25,7 +25,7 @@ async def main():
     reset_trace_id()
     
     # 2. Setup Handler
-    handler = KaizenCallbackHandler()
+    handler = AgentScoreCallbackHandler()
     
     # 3. Setup LLM with Tools
     llm = ChatGoogleGenerativeAI(
