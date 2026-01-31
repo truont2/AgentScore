@@ -1,6 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Play, Clock, GitBranch, RefreshCw, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Play,
+  GitBranch,
+  RefreshCw,
+  Loader2,
+  AlertTriangle
+} from 'lucide-react';
 
 import { Header } from '@/components/Header';
 import { ScoreGauge } from '@/components/ScoreGauge';
@@ -10,10 +17,12 @@ import { FindingsAccordion } from '@/components/FindingsAccordion';
 import { StatusBadge } from '@/components/StatusBadge';
 import { SavingsProjector } from '@/components/projections/SavingsProjector';
 import { WorkflowInfoSidebar } from '@/components/WorkflowInfoSidebar';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import WorkflowGraph from "@/components/WorkflowGraph";
+import GraphMetricsBar from "@/components/graph/GraphMetricsBar";
 
 import { type Workflow, type Finding } from '@/data/mockData';
 
@@ -25,6 +34,8 @@ interface BackendWorkflowDetail {
   total_calls: number;
   total_cost: number;
   created_at: string;
+  latency_ms?: number;
+  events?: any[];
 }
 
 interface BackendAnalysis {
@@ -37,45 +48,105 @@ interface BackendAnalysis {
   redundancies?: { items: any[] };
   model_overkill?: { items: any[] };
   prompt_bloat?: { items: any[] };
+  security_risks?: { items: any[] };
   created_at: string;
+}
+
+interface GraphData {
+  nodes: any[];
+  calls?: any[];
+  edges: any[];
+  metrics: {
+    dead_branch_cost: number;
+    critical_path_latency: number;
+    info_efficiency: number;
+  };
 }
 
 export default function WorkflowDetail() {
   const { id } = useParams<{ id: string }>();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
     if (!id) return;
     try {
-
       // 0. Check for Demo IDs
       if (id === 'demo-legacy' || id === 'demo-optimized') {
-        // The data is fully populated in mockData.ts
-        // We can just rely on the getWorkflowById helper or import directly
-        // but since `fetchData` constructs the state, we should probably just set it directly here
-        // However, mockData already returns the Frontend interface, so we can just set it.
-
         const { getWorkflowById } = await import('@/data/mockData');
         const demoWf = getWorkflowById(id);
         if (demoWf) {
           setWorkflow(demoWf);
+          if (demoWf.nodes) {
+            setGraphData({
+              nodes: demoWf.nodes,
+              edges: demoWf.edges || [],
+              metrics: demoWf.metrics || { dead_branch_cost: 0, critical_path_latency: 0, info_efficiency: 0 },
+              calls: demoWf.nodes
+            });
+          }
           return;
         }
       }
 
-      // 1. Fetch Workflow Basic Info
-      const wfRes = await fetch(`http://127.0.0.1:8000/workflows/${id}`);
+      // 1. Fetch Workflow Basic Info & Graph Data concurrently
+      const [wfRes, graphRes, analysisRes] = await Promise.all([
+        fetch(`http://localhost:8000/workflows/${id}`),
+        fetch(`http://localhost:8000/workflows/${id}/graph`),
+        fetch(`http://localhost:8000/workflows/${id}/analysis`)
+      ]);
+
       if (!wfRes.ok) throw new Error('Failed to fetch workflow details');
+
       const wfData: BackendWorkflowDetail = await wfRes.json();
 
-      // 2. Fetch Latest Analysis
-      const analysisRes = await fetch(`http://127.0.0.1:8000/workflows/${id}/analysis`);
       const analysisList: BackendAnalysis[] = analysisRes.ok ? await analysisRes.json() : [];
       const latestAnalysis = analysisList.length > 0 ? analysisList[0] : null;
+
+      if (graphRes.ok) {
+        const gData = await graphRes.json();
+
+        let mergedCalls = gData.nodes;
+
+        // Merge Analysis Findings into Graph Nodes
+        if (latestAnalysis) {
+          const redundancies = latestAnalysis.redundancies?.items || [];
+          const overkill = latestAnalysis.model_overkill?.items || [];
+          const bloat = latestAnalysis.prompt_bloat?.items || [];
+          const security = latestAnalysis.security_risks?.items || [];
+
+          mergedCalls = gData.nodes.map((node: any, idx: number) => {
+            // Analysis uses "call_1", "call_2" which corresponds to 1-based index (idx + 1)
+            const callId = `call_${idx + 1}`;
+
+            const rFinding = redundancies.find((f: any) => f.call_ids?.includes(callId));
+            const oFinding = overkill.find((f: any) => f.call_id === callId);
+            const bFinding = bloat.find((f: any) => f.call_id === callId);
+            const sFinding = security.find((f: any) => f.call_id === callId);
+
+            return {
+              ...node,
+              isRedundant: !!rFinding,
+              redundantWithId: rFinding ? rFinding.call_ids.find((id: string) => id !== callId) : undefined,
+              isOverkill: !!oFinding,
+              recommendedModel: oFinding?.recommended_model,
+              isBloated: !!bFinding,
+              hasSecurityRisk: !!sFinding,
+              vulnerabilityType: sFinding?.risk_type,
+              reason: rFinding?.reason || oFinding?.reason || bFinding?.reason || sFinding?.reason // Capture the reason!
+            };
+          });
+        }
+
+        setGraphData({
+          ...gData,
+          nodes: mergedCalls,
+          calls: mergedCalls
+        });
+      }
 
       // 3. Map to Frontend Workflow Interface
       const mappedWorkflow: Workflow = {
@@ -139,7 +210,6 @@ export default function WorkflowDetail() {
       setWorkflow(mappedWorkflow);
     } catch (err) {
       console.error(err);
-      setError('Failed to load workflow data.');
     } finally {
       setLoading(false);
     }
@@ -158,7 +228,7 @@ export default function WorkflowDetail() {
 
     setAnalyzing(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/workflows/${id}/analyze`, {
+      const response = await fetch(`http://localhost:8000/workflows/${id}/analyze`, {
         method: 'POST',
       });
 
@@ -226,8 +296,7 @@ export default function WorkflowDetail() {
   }
 
   const isAnalyzed = workflow.status === 'analyzed';
-  // Use potential score logic or default
-  const optimizedScore = isAnalyzed ? 87 : null;
+  const optimizedScore = isAnalyzed ? Math.min((workflow.efficiencyScore || 0) + 20, 99) : null;
 
   // Calculate issue counts based on savings (safely parsing string "$2.50")
   const parseSavings = (s?: string) => s ? parseFloat(s.replace(/[^0-9.]/g, '')) : 0;
@@ -241,10 +310,9 @@ export default function WorkflowDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
-
-      <main className="container mx-auto px-6 py-8 max-w-7xl">
+      <main className="container mx-auto px-6 pt-8 pb-32 max-w-7xl">
         {/* Back Link */}
         <Link
           to="/"
@@ -267,7 +335,6 @@ export default function WorkflowDetail() {
                 <span className="font-mono">{new Date(workflow.timestamp).toLocaleDateString()}</span>
               </p>
             </div>
-
             <div className="flex items-center gap-3">
               <StatusBadge status={workflow.status} />
               {isAnalyzed && (
@@ -313,108 +380,138 @@ export default function WorkflowDetail() {
             </div>
           </div>
         ) : isAnalyzed && workflow.efficiencyScore !== null ? (
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            {/* Main Content - 3 columns */}
-            <div className="xl:col-span-3 space-y-6">
-              {/* Hero Stats Bar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Score */}
-                <div className="bg-card border border-border rounded-lg p-5">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
-                    Efficiency Score
-                  </h3>
-                  <ScoreGauge
-                    score={workflow.efficiencyScore}
-                    potentialScore={optimizedScore || undefined}
-                  />
+          <div className="w-full">
+            <Tabs defaultValue="analysis" className="w-full">
+              <TabsList className="bg-muted/50 border border-border p-1 mb-6">
+                <TabsTrigger value="analysis" className="data-[state=active]:bg-background">Optimization Analysis</TabsTrigger>
+                <TabsTrigger value="trace" className="data-[state=active]:bg-background">Execution Trace</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="analysis" className="space-y-6 focus-visible:outline-none pb-12 overflow-visible">
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                  {/* Analysis Main Content */}
+                  <div className="xl:col-span-3 space-y-6">
+                    {/* Hero Stats Bar */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-card border border-border rounded-lg p-5">
+                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+                          Efficiency Score
+                        </h3>
+                        <ScoreGauge
+                          score={workflow.efficiencyScore}
+                          potentialScore={optimizedScore || undefined}
+                        />
+                      </div>
+                      <CostComparison
+                        currentCost={workflow.totalCost}
+                        optimizedCost={workflow.optimizedCost}
+                        currentCalls={workflow.callCount}
+                        optimizedCalls={Math.round(workflow.callCount * 0.7)} // Estimate
+                      />
+                    </div>
+
+                    {/* Waste Detection Cards */}
+                    <ScoreBreakdown
+                      redundancyScore={workflow.redundancyScore || 0}
+                      modelFitScore={workflow.modelFitScore || 0}
+                      contextEfficiencyScore={workflow.contextEfficiencyScore || 0}
+                      redundancySavings={workflow.redundancyFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                      modelShapeSavings={workflow.modelOverkillFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                      contextSavings={workflow.contextBloatFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                      issueCounts={{
+                        redundancy: workflow.redundancyFindings.length,
+                        model: workflow.modelOverkillFindings.length,
+                        context: workflow.contextBloatFindings.length
+                      }}
+                      onViewDetails={(section) => {
+                        const element = document.getElementById(section);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          const trigger = element.querySelector('button');
+                          if (trigger && trigger.getAttribute('data-state') === 'closed') {
+                            (trigger as HTMLElement).click();
+                          }
+                        }
+                      }}
+                    />
+
+                    {/* Savings Projector */}
+                    <SavingsProjector
+                      currentCost={workflow.totalCost}
+                      optimizedCost={workflow.optimizedCost}
+                    />
+
+                    {/* Findings Section */}
+                    <div className="space-y-4">
+                      <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        Issues Detected
+                      </h2>
+                      <FindingsAccordion
+                        redundancyFindings={workflow.redundancyFindings}
+                        modelOverkillFindings={workflow.modelOverkillFindings}
+                        contextBloatFindings={workflow.contextBloatFindings}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sidebar - Integrated into Analysis Tab only */}
+                  <div className="xl:col-span-1">
+                    <div className="sticky top-8">
+                      <WorkflowInfoSidebar
+                        name={workflow.name}
+                        callCount={workflow.callCount}
+                        totalCost={workflow.totalCost}
+                        timestamp={workflow.timestamp}
+                        issuesCount={issuesCount}
+                        potentialScore={optimizedScore || 100}
+                      />
+                    </div>
+                  </div>
                 </div>
+              </TabsContent>
 
-                {/* Cost Comparison */}
-                <CostComparison
-                  currentCost={workflow.totalCost}
-                  optimizedCost={workflow.optimizedCost}
-                  currentCalls={workflow.callCount}
-                  optimizedCalls={Math.round(workflow.callCount * 0.7)} // Estimate
-                />
-              </div>
-
-              {/* Waste Detection Cards */}
-              <ScoreBreakdown
-                redundancyScore={workflow.redundancyScore || 0}
-                modelFitScore={workflow.modelFitScore || 0}
-                contextEfficiencyScore={workflow.contextEfficiencyScore || 0}
-                redundancySavings={workflow.redundancyFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
-                modelShapeSavings={workflow.modelOverkillFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
-                contextSavings={workflow.contextBloatFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
-                issueCounts={{
-                  redundancy: workflow.redundancyFindings.length,
-                  model: workflow.modelOverkillFindings.length,
-                  context: workflow.contextBloatFindings.length
-                }}
-                onViewDetails={(section) => {
-                  const element = document.getElementById(section);
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Optionally trigger a click to ensure it's open if it's an accordion trigger
-                    // But FindingsAccordion items have ids, we'll assume we scroll to the item
-                    // To be safe, we can target the trigger button inside if needed
-                    const trigger = element.querySelector('button');
-                    if (trigger && trigger.getAttribute('data-state') === 'closed') {
-                      (trigger as HTMLElement).click();
-                    }
-                  }
-                }}
-              />
-
-              {/* Savings Projector */}
-              <SavingsProjector
-                currentCost={workflow.totalCost}
-                optimizedCost={workflow.optimizedCost}
-              />
-
-              {/* Actions */}
-              <div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <GitBranch className="w-4 h-4" />
-                  View Dependency Graph
-                </Button>
-              </div>
-
-              {/* Findings Section */}
-              <div className="space-y-4">
-                <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                  Issues Detected
-                </h2>
-                <FindingsAccordion
-                  redundancyFindings={workflow.redundancyFindings}
-                  modelOverkillFindings={workflow.modelOverkillFindings}
-                  contextBloatFindings={workflow.contextBloatFindings}
-                />
-              </div>
-            </div>
-
-            {/* Sidebar - 1 column */}
-            <div className="xl:col-span-1">
-              <div className="sticky top-20">
-                <WorkflowInfoSidebar
-                  name={workflow.name}
-                  callCount={workflow.callCount}
-                  totalCost={workflow.totalCost}
-                  timestamp={workflow.timestamp}
-                  issuesCount={issuesCount}
-                  potentialScore={optimizedScore || 100}
-                />
-              </div>
-            </div>
+              <TabsContent value="trace" className="space-y-6 focus-visible:outline-none pb-12 overflow-visible">
+                {graphData && (
+                  <GraphMetricsBar
+                    deadBranchCost={graphData.metrics.dead_branch_cost}
+                    criticalPathLatency={graphData.metrics.critical_path_latency}
+                    informationEfficiency={graphData.metrics.info_efficiency / 100}
+                    financialLeak={workflow.totalCost > 0 ? (workflow.totalCost - workflow.optimizedCost) / workflow.totalCost : 0}
+                    wastedTokens={workflow.contextEfficiencyScore ? (100 - workflow.contextEfficiencyScore) / 100 : 0}
+                  />
+                )}
+                <Card className="border-border bg-card">
+                  <CardHeader className="border-b bg-muted/30">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <GitBranch className="w-5 h-5 text-emerald-500" />
+                      Execution Cost Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    {graphData ? (
+                      <div className="w-full">
+                        <WorkflowGraph
+                          nodes={graphData.nodes}
+                          edges={graphData.edges}
+                          onNodeClick={(node) => console.log("Clicked node:", node)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-96 flex items-center justify-center text-muted-foreground italic text-sm">
+                        No graph data available.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         ) : (
           /* Analysis Required / Retry State */
           <div className="bg-card border border-border rounded-lg p-12 text-center">
             <div className="flex flex-col items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="p-3 bg-red-500/10 rounded-full">
-                  <AlertTriangle className="w-8 h-8 text-red-500" />
-                </div>
+              <div className="p-4 rounded-full bg-red-500/10">
+                <AlertTriangle className="w-10 h-10 text-red-500" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-foreground mb-2">
