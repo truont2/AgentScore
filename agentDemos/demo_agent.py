@@ -4,16 +4,16 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from kaizen import KaizenCallbackHandler, get_trace_id
+from agentscore import AgentScoreCallbackHandler, get_trace_id
 
 # Load environment variables (expecting GEMINI_API_KEY)
-load_dotenv(dotenv_path="sdk/kaizen/.env")
+load_dotenv(dotenv_path="sdk/agentscore/.env")
 
 async def main():
     print("--- Starting Demo Agent ---")
     
     # 1. Initialize the callback handler
-    kaizen_callback = KaizenCallbackHandler()
+    kaizen_callback = AgentScoreCallbackHandler()
     
     # 2. Initialize the LLM (Gemini) with our callback
     llm = ChatGoogleGenerativeAI(

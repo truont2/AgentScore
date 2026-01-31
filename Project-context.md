@@ -187,7 +187,7 @@ UPDATE workflows w SET
 **4. Fixed Missing Events Bug**
 - **Problem:** Only 4 of 5 events were reaching the database (prompt bloat call missing)
 - **Cause:** Callback handler used `daemon=True` threads that didn't wait for completion
-- **Fix:** Updated `KaizenCallbackHandler` to use `thread.join(timeout=self.timeout)` to wait for each event to send
+- **Fix:** Updated `AgentScoreCallbackHandler` to use `thread.join(timeout=self.timeout)` to wait for each event to send
 
 **5. Updated Analysis Prompt**
 - Removed hardcoded `recommended_model` list - Gemini now intelligently picks the best model
@@ -232,7 +232,7 @@ Final test showed all three waste types detected:
 ```
 Vulnerable Agent (flash-lite + flash)
     ↓
-KaizenCallbackHandler (captures 5 events)
+AgentScoreCallbackHandler (captures 5 events)
     ↓
 FastAPI Backend (/events endpoint)
     ↓
@@ -257,10 +257,10 @@ The backend should start at `http://localhost:8000`
 
 **Step 2: Verify Environment Variables**
 
-Make sure `sdk/kaizen/.env` contains:
+Make sure `sdk/agentscore/.env` contains:
 ```bash
 GEMINI_API_KEY=your_api_key_here
-KAIZEN_BACKEND_URL=http://localhost:8000
+AGENTSCORE_BACKEND_URL=http://localhost:8000
 ```
 
 **Step 3: Run the Vulnerable Agent**
@@ -644,7 +644,7 @@ Stores the analysis results from Gemini.
 ### Installation
 
 ```python
-from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
+from agentscore import AgentScoreCallbackHandler, reset_trace_id, get_trace_id
 ```
 
 ### Basic Usage with LangChain
@@ -652,11 +652,11 @@ from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
 ```python
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
-from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
+from agentscore import AgentScoreCallbackHandler, reset_trace_id, get_trace_id
 
 # Initialize
 reset_trace_id()  # Generates new UUID for this workflow
-handler = KaizenCallbackHandler()
+handler = AgentScoreCallbackHandler()
 
 print(f"Trace ID: {get_trace_id()}")
 
@@ -829,8 +829,8 @@ Total optimized cost = Original cost - All savings
 ```
 kaizen/
 ├── sdk/
-│   └── kaizen/
-│       ├── __init__.py          # Exports: KaizenCallbackHandler, reset_trace_id, get_trace_id
+│   └── agentscore/
+│       ├── __init__.py          # Exports: AgentScoreCallbackHandler, reset_trace_id, get_trace_id
 │       ├── callback.py          # LangChain callback handler
 │       ├── pricing.py           # Model pricing calculations
 │       └── .env                 # GEMINI_API_KEY, BACKEND_URL
@@ -883,9 +883,9 @@ kaizen/
 ### Environment Variables
 
 ```bash
-# sdk/kaizen/.env
+# sdk/agentscore/.env
 GEMINI_API_KEY=your_gemini_api_key
-KAIZEN_BACKEND_URL=http://localhost:8000
+AGENTSCORE_BACKEND_URL=http://localhost:8000
 
 # backend/.env
 SUPABASE_URL=your_supabase_url
