@@ -61,7 +61,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
             <div className="grid grid-cols-12 gap-4 pl-10 pr-6 py-3 bg-slate-900 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest z-10">
                 <div className="col-span-4">Agent Cost Trace</div>
                 <div className="col-span-2 text-center">Execution Cost</div>
-                <div className="col-span-2 text-center">Agent Audit</div>
+                <div className="col-span-2 text-center">Assessment</div>
                 <div className="col-span-4">Gantt Latency Profile ({metrics.totalLatency}ms)</div>
             </div>
 
@@ -255,7 +255,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
                     {/* Model Overkill Legend */}
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-[8px] font-black text-amber-500">O</div>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Model Overkill</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-normal">Model Overkill</span>
                     </div>
                 </div>
                 <div className="flex flex-col items-end">

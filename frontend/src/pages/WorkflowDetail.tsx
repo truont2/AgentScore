@@ -48,6 +48,7 @@ interface BackendAnalysis {
   redundancies?: { items: any[] };
   model_overkill?: { items: any[] };
   prompt_bloat?: { items: any[] };
+  security_risks?: { items: any[] };
   created_at: string;
 }
 
@@ -102,16 +103,50 @@ export default function WorkflowDetail() {
 
       const wfData: BackendWorkflowDetail = await wfRes.json();
 
-      if (graphRes.ok) {
-        const gData = await graphRes.json();
-        setGraphData({
-          ...gData,
-          calls: gData.nodes // Map nodes to calls for GeminiAnalysis compatibility
-        });
-      }
-
       const analysisList: BackendAnalysis[] = analysisRes.ok ? await analysisRes.json() : [];
       const latestAnalysis = analysisList.length > 0 ? analysisList[0] : null;
+
+      if (graphRes.ok) {
+        const gData = await graphRes.json();
+
+        let mergedCalls = gData.nodes;
+
+        // Merge Analysis Findings into Graph Nodes
+        if (latestAnalysis) {
+          const redundancies = latestAnalysis.redundancies?.items || [];
+          const overkill = latestAnalysis.model_overkill?.items || [];
+          const bloat = latestAnalysis.prompt_bloat?.items || [];
+          const security = latestAnalysis.security_risks?.items || [];
+
+          mergedCalls = gData.nodes.map((node: any, idx: number) => {
+            // Analysis uses "call_1", "call_2" which corresponds to 1-based index (idx + 1)
+            const callId = `call_${idx + 1}`;
+
+            const rFinding = redundancies.find((f: any) => f.call_ids?.includes(callId));
+            const oFinding = overkill.find((f: any) => f.call_id === callId);
+            const bFinding = bloat.find((f: any) => f.call_id === callId);
+            const sFinding = security.find((f: any) => f.call_id === callId);
+
+            return {
+              ...node,
+              isRedundant: !!rFinding,
+              redundantWithId: rFinding ? rFinding.call_ids.find((id: string) => id !== callId) : undefined,
+              isOverkill: !!oFinding,
+              recommendedModel: oFinding?.recommended_model,
+              isBloated: !!bFinding,
+              hasSecurityRisk: !!sFinding,
+              vulnerabilityType: sFinding?.risk_type,
+              reason: rFinding?.reason || oFinding?.reason || bFinding?.reason || sFinding?.reason // Capture the reason!
+            };
+          });
+        }
+
+        setGraphData({
+          ...gData,
+          nodes: mergedCalls,
+          calls: mergedCalls
+        });
+      }
 
       // 3. Map to Frontend Workflow Interface
       const mappedWorkflow: Workflow = {

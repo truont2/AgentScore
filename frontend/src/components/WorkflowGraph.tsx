@@ -19,6 +19,7 @@ interface RawBackendNode {
     vulnerabilityType?: string;
     redundantWithId?: string;
     recommendedModel?: string;
+    reason?: string;
 }
 
 interface RawBackendEdge {
@@ -56,6 +57,7 @@ export default function WorkflowGraph({ nodes: rawNodes, edges: rawEdges, onNode
             vulnerabilityType: n.vulnerabilityType,
             redundantWithId: n.redundantWithId,
             recommendedModel: n.recommendedModel,
+            reason: n.reason,
             parents: rawEdges.filter(e => e.target === n.id).map(e => e.source)
         }));
 
