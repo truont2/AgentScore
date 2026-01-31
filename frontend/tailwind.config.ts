@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Manrope', 'sans-serif'],
+        mono: ['Manrope', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",

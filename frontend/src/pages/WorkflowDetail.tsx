@@ -339,7 +339,7 @@ export default function WorkflowDetail() {
                   Analyzing Workflow...
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Kaizen is detecting patterns and calculating savings...
+                  AgentScore is detecting patterns and calculating savings...
                 </p>
               </div>
             </div>
@@ -356,9 +356,8 @@ export default function WorkflowDetail() {
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                   {/* Analysis Main Content */}
                   <div className="xl:col-span-3 space-y-6">
-                    {/* Hero Stats Bar (Main Layout) */}
+                    {/* Hero Stats Bar */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Score */}
                       <div className="bg-card border border-border rounded-lg p-5">
                         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
                           Efficiency Score
@@ -368,8 +367,6 @@ export default function WorkflowDetail() {
                           potentialScore={optimizedScore || undefined}
                         />
                       </div>
-
-                      {/* Cost Comparison */}
                       <CostComparison
                         currentCost={workflow.totalCost}
                         optimizedCost={workflow.optimizedCost}
@@ -386,6 +383,21 @@ export default function WorkflowDetail() {
                       redundancySavings={workflow.redundancyFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
                       modelShapeSavings={workflow.modelOverkillFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
                       contextSavings={workflow.contextBloatFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                      issueCounts={{
+                        redundancy: workflow.redundancyFindings.length,
+                        model: workflow.modelOverkillFindings.length,
+                        context: workflow.contextBloatFindings.length
+                      }}
+                      onViewDetails={(section) => {
+                        const element = document.getElementById(section);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          const trigger = element.querySelector('button');
+                          if (trigger && trigger.getAttribute('data-state') === 'closed') {
+                            (trigger as HTMLElement).click();
+                          }
+                        }
+                      }}
                     />
 
                     {/* Savings Projector */}
@@ -395,7 +407,7 @@ export default function WorkflowDetail() {
                     />
 
                     {/* Findings Section */}
-                    <div className="space-y-4 mb-20">
+                    <div className="space-y-4">
                       <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                         Issues Detected
                       </h2>

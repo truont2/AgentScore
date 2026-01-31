@@ -77,11 +77,17 @@ export function ScoreBreakdown({
   contextEfficiencyScore,
   redundancySavings,
   modelShapeSavings,
-  contextSavings
-}: ScoreBreakdownProps) {
-  const redundancyIssues = Math.max(0, Math.round((100 - redundancyScore) / 8));
-  const modelIssues = Math.max(0, Math.round((100 - modelFitScore) / 10));
-  const contextIssues = Math.max(0, Math.round((100 - contextEfficiencyScore) / 12));
+  contextSavings,
+  issueCounts,
+  onViewDetails
+}: ScoreBreakdownProps & {
+  issueCounts?: { redundancy: number; model: number; context: number };
+  onViewDetails?: (section: string) => void;
+}) {
+  // Use real counts if provided, otherwise fallback to heuristic (legacy support)
+  const redundancyIssues = issueCounts ? issueCounts.redundancy : Math.max(0, Math.round((100 - redundancyScore) / 8));
+  const modelIssues = issueCounts ? issueCounts.model : Math.max(0, Math.round((100 - modelFitScore) / 10));
+  const contextIssues = issueCounts ? issueCounts.context : Math.max(0, Math.round((100 - contextEfficiencyScore) / 12));
 
   const formatWaste = (val?: number, score?: number, factor?: number) => {
     if (val !== undefined) return `$${val.toFixed(2)}`;
@@ -99,27 +105,33 @@ export function ScoreBreakdown({
         The Three Sins
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <SinCard
-          icon={<RefreshCw className="w-4 h-4" />}
-          label="Redundant Calls"
-          issueCount={redundancyIssues}
-          waste={redundancyWaste}
-          status={getStatusColor(redundancyScore)}
-        />
-        <SinCard
-          icon={<Zap className="w-4 h-4" />}
-          label="Model Overkill"
-          issueCount={modelIssues}
-          waste={modelWaste}
-          status={getStatusColor(modelFitScore)}
-        />
-        <SinCard
-          icon={<FileText className="w-4 h-4" />}
-          label="Prompt Bloat"
-          issueCount={contextIssues}
-          waste={contextWaste}
-          status={getStatusColor(contextEfficiencyScore)}
-        />
+        <div onClick={() => onViewDetails?.('redundancy')}>
+          <SinCard
+            icon={<RefreshCw className="w-4 h-4" />}
+            label="Redundant Calls"
+            issueCount={redundancyIssues}
+            waste={redundancyWaste}
+            status={getStatusColor(redundancyScore)}
+          />
+        </div>
+        <div onClick={() => onViewDetails?.('model')}>
+          <SinCard
+            icon={<Zap className="w-4 h-4" />}
+            label="Model Overkill"
+            issueCount={modelIssues}
+            waste={modelWaste}
+            status={getStatusColor(modelFitScore)}
+          />
+        </div>
+        <div onClick={() => onViewDetails?.('context')}>
+          <SinCard
+            icon={<FileText className="w-4 h-4" />}
+            label="Prompt Bloat"
+            issueCount={contextIssues}
+            waste={contextWaste}
+            status={getStatusColor(contextEfficiencyScore)}
+          />
+        </div>
       </div>
     </div>
   );

@@ -3,10 +3,10 @@ import asyncio
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from kaizen import KaizenCallbackHandler, reset_trace_id, get_trace_id
+from agentscore import AgentScoreCallbackHandler, reset_trace_id, get_trace_id
 
 # Load environment variables
-load_dotenv(dotenv_path="../sdk/kaizen/.env")
+load_dotenv(dotenv_path="../sdk/agentscore/.env")
 
 """
 OPTIMIZED Agent: Medical Report Summarizer
@@ -33,7 +33,7 @@ async def get_mi_definition(llm) -> str:
     return MI_DEFINITION_CACHE["mi_definition"]
 
 
-async def run_optimized_redundancy(handler: KaizenCallbackHandler):
+async def run_optimized_redundancy(handler: AgentScoreCallbackHandler):
     """
     FIX 1: Redundant Calls → Single cached call
     
@@ -61,7 +61,7 @@ async def run_optimized_redundancy(handler: KaizenCallbackHandler):
     print("  ✓ Reused cached definition 2 more times (0 additional API calls)")
 
 
-async def run_optimized_model_selection(handler: KaizenCallbackHandler):
+async def run_optimized_model_selection(handler: AgentScoreCallbackHandler):
     """
     FIX 2: Model Overkill → Use appropriate model for task complexity
     
@@ -88,7 +88,7 @@ async def run_optimized_model_selection(handler: KaizenCallbackHandler):
     print(f"  ✓ Same quality output, fraction of the cost!")
 
 
-async def run_optimized_prompt(handler: KaizenCallbackHandler):
+async def run_optimized_prompt(handler: AgentScoreCallbackHandler):
     """
     FIX 3: Prompt Bloat → Send only relevant context
     
@@ -135,7 +135,7 @@ async def main():
     MI_DEFINITION_CACHE.clear()
     
     reset_trace_id()
-    handler = KaizenCallbackHandler()
+    handler = AgentScoreCallbackHandler()
     trace_id = get_trace_id()
     print(f"\nSession Trace ID: {trace_id}")
     print("-" * 60)

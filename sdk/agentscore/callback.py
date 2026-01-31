@@ -1,4 +1,5 @@
 import json
+import os
 import threading
 import requests
 from datetime import datetime
@@ -11,7 +12,7 @@ from langchain_core.agents import AgentAction, AgentFinish
 
 from .utils import get_trace_id
 
-class KaizenCallbackHandler(BaseCallbackHandler):
+class AgentScoreCallbackHandler(BaseCallbackHandler):
     """
     A LangChain Callback Handler that captures LLM interaction data
     (prompts, completions, usage) and logs it for analysis.
@@ -20,9 +21,9 @@ class KaizenCallbackHandler(BaseCallbackHandler):
     of a single workflow together, even in async environments.
     """
 
-    def __init__(self, backend_url: str = "http://localhost:8000", timeout: int = 10):
+    def __init__(self, backend_url: Optional[str] = None, timeout: int = 10):
         super().__init__()
-        self.backend_url = backend_url
+        self.backend_url = backend_url or os.getenv("AGENTSCORE_BACKEND_URL", "http://localhost:8000")
         self.timeout = timeout
         self._pending_starts: Dict[str, dict] = {}
         self._threads: List[threading.Thread] = []
