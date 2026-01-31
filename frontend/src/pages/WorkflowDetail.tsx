@@ -1,12 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Play,
-  Clock,
   GitBranch,
   RefreshCw,
-  Sparkles,
   Loader2,
   AlertTriangle
 } from 'lucide-react';
@@ -19,12 +17,10 @@ import { FindingsAccordion } from '@/components/FindingsAccordion';
 import { StatusBadge } from '@/components/StatusBadge';
 import { SavingsProjector } from '@/components/projections/SavingsProjector';
 import { WorkflowInfoSidebar } from '@/components/WorkflowInfoSidebar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import WorkflowGraph from "@/components/WorkflowGraph";
 import GraphMetricsBar from "@/components/graph/GraphMetricsBar";
 
@@ -69,12 +65,9 @@ interface GraphData {
 export default function WorkflowDetail() {
   const { id } = useParams<{ id: string }>();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
-  const [rawWorkflowData, setRawWorkflowData] = useState<BackendWorkflowDetail | null>(null);
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysisAttempted, setAnalysisAttempted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
@@ -108,7 +101,6 @@ export default function WorkflowDetail() {
       if (!wfRes.ok) throw new Error('Failed to fetch workflow details');
 
       const wfData: BackendWorkflowDetail = await wfRes.json();
-      setRawWorkflowData(wfData);
 
       if (graphRes.ok) {
         const gData = await graphRes.json();
@@ -183,42 +175,47 @@ export default function WorkflowDetail() {
       setWorkflow(mappedWorkflow);
     } catch (err) {
       console.error(err);
-      setError('Failed to load workflow data.');
+    } finally {
+      setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    setLoading(true);
-    fetchData().finally(() => setLoading(false));
+    fetchData();
   }, [fetchData]);
 
-  const handleAnalyze = useCallback(async () => {
-    if (!id) return;
-    try {
-      setAnalyzing(true);
-      setAnalysisAttempted(true);
+  const attemptRef = useRef(false);
+  const [autoAnalysisFailed, setAutoAnalysisFailed] = useState(false);
 
-      const res = await fetch(`http://localhost:8000/workflows/${id}/analyze`, {
+  // Handle Analysis Trigger
+  const handleAnalyze = useCallback(async () => {
+    if (!id) return false;
+
+    setAnalyzing(true);
+    try {
+      const response = await fetch(`http://localhost:8000/workflows/${id}/analyze`, {
         method: 'POST',
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Analysis failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Analysis failed');
       }
 
       toast({
         title: "Analysis Complete",
-        description: "Gemini has successfully analyzed this workflow.",
+        description: "Efficiency report generated successfully.",
       });
 
       await fetchData();
+      return true;
     } catch (err: any) {
       toast({
         title: "Analysis Failed",
         description: err.message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setAnalyzing(false);
     }
@@ -226,35 +223,38 @@ export default function WorkflowDetail() {
 
   // Auto-Analyze Effect
   useEffect(() => {
-    if (workflow && workflow.status === 'pending' && workflow.callCount > 0 && !analyzing && !analysisAttempted) {
-      handleAnalyze();
+    if (
+      workflow &&
+      workflow.status === 'pending' &&
+      workflow.callCount > 0 &&
+      !analyzing &&
+      !attemptRef.current
+    ) {
+      attemptRef.current = true;
+      setTimeout(async () => {
+        const success = await handleAnalyze();
+        if (!success) {
+          console.error("Auto-analysis failed");
+          setAutoAnalysisFailed(true);
+        }
+      }, 100);
     }
-  }, [workflow, analyzing, analysisAttempted, handleAnalyze]);
+  }, [workflow, analyzing, handleAnalyze]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-6 py-8 space-y-6">
-          <Skeleton className="h-8 w-64 mb-6" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Skeleton className="h-64 rounded-xl" />
-            <div className="space-y-6">
-              <Skeleton className="h-32 rounded-xl" />
-              <Skeleton className="h-32 rounded-xl" />
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
-  if (error || !workflow) {
+  if (!workflow) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-6 py-8 flex items-center justify-center">
-          <p className="text-muted-foreground">{error || "Workflow not found"}</p>
+        <main className="container mx-auto px-6 py-8">
+          <p className="text-muted-foreground">Workflow not found</p>
         </main>
       </div>
     );
@@ -263,284 +263,226 @@ export default function WorkflowDetail() {
   const isAnalyzed = workflow.status === 'analyzed';
   const optimizedScore = isAnalyzed ? Math.min((workflow.efficiencyScore || 0) + 20, 99) : null;
 
+  // Calculate issue counts based on savings (safely parsing string "$2.50")
+  const parseSavings = (s?: string) => s ? parseFloat(s.replace(/[^0-9.]/g, '')) : 0;
+
   const issuesCount = {
-    high: (workflow.redundancyFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) > 0.05).length || 0) +
-      (workflow.modelOverkillFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) > 0.05).length || 0),
-    medium: (workflow.contextBloatFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) > 0.05).length || 0),
-    low: (workflow.redundancyFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) <= 0.05).length || 0) +
-      (workflow.contextBloatFindings?.filter(f => f.savings && parseFloat(f.savings.replace('$', '')) <= 0.05).length || 0)
+    high: workflow.redundancyFindings.filter(f => parseSavings(f.savings) > 0.05).length +
+      workflow.modelOverkillFindings.filter(f => parseSavings(f.savings) > 0.05).length,
+    medium: workflow.contextBloatFindings.filter(f => parseSavings(f.savings) > 0.05).length,
+    low: workflow.redundancyFindings.filter(f => parseSavings(f.savings) <= 0.05).length +
+      workflow.contextBloatFindings.filter(f => parseSavings(f.savings) <= 0.05).length
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-
-      <main className="container mx-auto px-6 py-8 pb-20">
+      <main className="container mx-auto px-6 pt-8 pb-32 max-w-7xl">
         {/* Back Link */}
         <Link
-          to="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+          Back to Workflows
         </Link>
 
         {/* Workflow Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold">{workflow.name}</h1>
-              <StatusBadge status={analyzing ? 'pending' : (workflow.status as 'pending' | 'analyzed')} />
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">{workflow.name}</h1>
+              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                <span>Document processing pipeline</span>
+                <span className="text-border">·</span>
+                <span className="font-mono">{workflow.callCount} calls</span>
+                <span className="text-border">·</span>
+                <span className="font-mono">{new Date(workflow.timestamp).toLocaleDateString()}</span>
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {workflow.callCount} AI calls • ${workflow.totalCost < 0.01 && workflow.totalCost > 0 ? workflow.totalCost.toFixed(5) : workflow.totalCost.toFixed(2)} total cost
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {isAnalyzed && (
-              <Button
-                onClick={handleAnalyze}
-                disabled={analyzing}
-                variant="outline"
-                className="gap-2"
-              >
-                {analyzing ? (
-                  <>
-                    <Sparkles className="w-4 h-4 animate-pulse" />
-                    Gemini is analyzing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" />
-                    Re-run Analysis
-                  </>
-                )}
-              </Button>
-            )}
-            <Button className="bg-emerald-600 hover:bg-emerald-700">Download Report</Button>
+            <div className="flex items-center gap-3">
+              <StatusBadge status={workflow.status} />
+              {isAnalyzed && (
+                <Button
+                  onClick={handleAnalyze}
+                  disabled={analyzing}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  {analyzing ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Re-run Analysis
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Content Tabs */}
-        <Tabs defaultValue="analysis" className="w-full">
-          <TabsList className="bg-muted/50 border border-border p-1 mb-8">
-            <TabsTrigger value="analysis" className="data-[state=active]:bg-background">Optimization Analysis</TabsTrigger>
-            <TabsTrigger value="graph" className="data-[state=active]:bg-background">Execution Trace</TabsTrigger>
-            <TabsTrigger value="events" className="data-[state=active]:bg-background">Event Log</TabsTrigger>
-          </TabsList>
+        {/* LOADING / AUTO-ANALYZING STATE (Custom Logic) */}
+        {!isAnalyzed && (analyzing || (!autoAnalysisFailed && workflow.callCount > 0)) ? (
+          <div className="bg-card border border-border rounded-lg p-12 text-center animate-pulse">
+            <div className="flex flex-col items-center gap-6">
+              <div className="p-4 rounded-full bg-primary/10">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">
+                  Analyzing Workflow...
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Kaizen is detecting patterns and calculating savings...
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : isAnalyzed && workflow.efficiencyScore !== null ? (
+          <div className="w-full">
+            <Tabs defaultValue="analysis" className="w-full">
+              <TabsList className="bg-muted/50 border border-border p-1 mb-6">
+                <TabsTrigger value="analysis" className="data-[state=active]:bg-background">Optimization Analysis</TabsTrigger>
+                <TabsTrigger value="trace" className="data-[state=active]:bg-background">Execution Trace</TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="analysis">
-            {isAnalyzed && workflow.efficiencyScore !== null ? (
-              <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                {/* Main Content - 3 columns */}
-                <div className="xl:col-span-3 space-y-8">
-                  {/* Hero Section - Score + Breakdown */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Score Card - THE HERO */}
-                    <Card className="p-8 bg-card border-border flex flex-col items-center justify-center animate-fade-in-up">
-                      <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">
-                        Efficiency Score
-                      </h2>
-                      <ScoreGauge
-                        score={workflow.efficiencyScore}
-                        optimizedScore={optimizedScore || undefined}
-                        showTransformation={true}
+              <TabsContent value="analysis" className="space-y-6 focus-visible:outline-none pb-12 overflow-visible">
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                  {/* Analysis Main Content */}
+                  <div className="xl:col-span-3 space-y-6">
+                    {/* Hero Stats Bar (Main Layout) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Score */}
+                      <div className="bg-card border border-border rounded-lg p-5">
+                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+                          Efficiency Score
+                        </h3>
+                        <ScoreGauge
+                          score={workflow.efficiencyScore}
+                          potentialScore={optimizedScore || undefined}
+                        />
+                      </div>
+
+                      {/* Cost Comparison */}
+                      <CostComparison
+                        currentCost={workflow.totalCost}
+                        optimizedCost={workflow.optimizedCost}
+                        currentCalls={workflow.callCount}
+                        optimizedCalls={Math.round(workflow.callCount * 0.7)} // Estimate
                       />
-                      {optimizedScore && (
-                        <p className="text-sm text-muted-foreground mt-4">
-                          Apply recommendations to reach <span className="text-score-good font-semibold">{optimizedScore}</span>
-                        </p>
-                      )}
-                    </Card>
+                    </div>
 
-                    {/* Score Breakdown */}
-                    <Card className="p-6 bg-card border-border animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                      <ScoreBreakdown
-                        redundancyScore={workflow.redundancyScore || 0}
-                        modelFitScore={workflow.modelFitScore || 0}
-                        contextEfficiencyScore={workflow.contextEfficiencyScore || 0}
-                      />
-                    </Card>
-                  </div>
-
-                  {/* Cost Comparison */}
-                  <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                    <CostComparison
-                      currentCost={workflow.totalCost}
-                      optimizedCost={workflow.optimizedCost}
+                    {/* Waste Detection Cards */}
+                    <ScoreBreakdown
+                      redundancyScore={workflow.redundancyScore || 0}
+                      modelFitScore={workflow.modelFitScore || 0}
+                      contextEfficiencyScore={workflow.contextEfficiencyScore || 0}
+                      redundancySavings={workflow.redundancyFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                      modelShapeSavings={workflow.modelOverkillFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
+                      contextSavings={workflow.contextBloatFindings.reduce((acc, f) => acc + parseSavings(f.savings), 0)}
                     />
-                  </div>
 
-                  {/* Savings Projector */}
-                  <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                    {/* Savings Projector */}
                     <SavingsProjector
                       currentCost={workflow.totalCost}
                       optimizedCost={workflow.optimizedCost}
                     />
+
+                    {/* Findings Section */}
+                    <div className="space-y-4 mb-20">
+                      <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        Issues Detected
+                      </h2>
+                      <FindingsAccordion
+                        redundancyFindings={workflow.redundancyFindings}
+                        modelOverkillFindings={workflow.modelOverkillFindings}
+                        contextBloatFindings={workflow.contextBloatFindings}
+                      />
+                    </div>
                   </div>
 
-                  {/* Findings Section */}
-                  <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                    <h2 className="text-xl font-semibold">The Three Sins</h2>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Issues identified in your workflow that are costing you money
-                    </p>
-                    <FindingsAccordion
-                      redundancyFindings={workflow.redundancyFindings}
-                      modelOverkillFindings={workflow.modelOverkillFindings}
-                      contextBloatFindings={workflow.contextBloatFindings}
-                    />
+                  {/* Sidebar - Integrated into Analysis Tab only */}
+                  <div className="xl:col-span-1">
+                    <div className="sticky top-8">
+                      <WorkflowInfoSidebar
+                        name={workflow.name}
+                        callCount={workflow.callCount}
+                        totalCost={workflow.totalCost}
+                        timestamp={workflow.timestamp}
+                        issuesCount={issuesCount}
+                        potentialScore={optimizedScore || 100}
+                      />
+                    </div>
                   </div>
                 </div>
+              </TabsContent>
 
-                {/* Sidebar - 1 column */}
-                <div className="xl:col-span-1">
-                  <div className="sticky top-8">
-                    <WorkflowInfoSidebar
-                      name={workflow.name}
-                      callCount={workflow.callCount}
-                      totalCost={workflow.totalCost}
-                      timestamp={workflow.timestamp}
-                      issuesCount={issuesCount}
-                      potentialScore={optimizedScore || 100}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Pending / Analyzing State */
-              <Card className="p-12 bg-card border-border text-center">
-                <div className="flex flex-col items-center gap-6">
-                  {analyzing ? (
-                    <>
-                      <div className="p-4 rounded-full bg-primary/10 animate-pulse">
-                        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold mb-2">Analyzing Workflow...</h2>
-                        <p className="text-muted-foreground max-w-md">
-                          Kaizen is analyzing your agent's tokens and costs. This usually takes just a few seconds.
-                        </p>
-                      </div>
-                    </>
-                  ) : workflow.callCount === 0 ? (
-                    <>
-                      <div className="p-4 rounded-full bg-muted">
-                        <Clock className="w-10 h-10 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold mb-2">Waiting for Events</h2>
-                        <p className="text-muted-foreground max-w-md">
-                          No AI events detected yet. Run your agent script to generate data.
-                        </p>
-                      </div>
-                      <Button variant="outline" onClick={fetchData} className="mt-4">
-                        Refresh Data
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-4 rounded-full bg-score-warning/10">
-                        <AlertTriangle className="w-10 h-10 text-score-warning" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold mb-2">Analysis Required</h2>
-                        <p className="text-muted-foreground max-w-md">This workflow is ready for analysis.</p>
-                      </div>
-                      <Button onClick={handleAnalyze} size="lg" className="mt-2">
-                        <Play className="w-4 h-4 mr-2" /> Start Analysis
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="graph">
-            <div className="space-y-8">
-
-              {graphData && (
-                <div className="animate-fade-in-up">
+              <TabsContent value="trace" className="space-y-6 focus-visible:outline-none pb-12 overflow-visible">
+                {graphData && (
                   <GraphMetricsBar
                     deadBranchCost={graphData.metrics.dead_branch_cost}
                     criticalPathLatency={graphData.metrics.critical_path_latency}
                     informationEfficiency={graphData.metrics.info_efficiency / 100}
-                    parallelizationPotential={0.42} // Simulated metric
+                    financialLeak={workflow.totalCost > 0 ? (workflow.totalCost - workflow.optimizedCost) / workflow.totalCost : 0}
+                    wastedTokens={workflow.contextEfficiencyScore ? (100 - workflow.contextEfficiencyScore) / 100 : 0}
                   />
-                </div>
-              )}
-
-              <div className="animate-fade-in-up">
-                <Card className="border-border bg-card overflow-hidden">
+                )}
+                <Card className="border-border bg-card">
                   <CardHeader className="border-b bg-muted/30">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <GitBranch className="w-5 h-5 text-emerald-500" />
                       Execution Cost Timeline
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent className="p-4">
                     {graphData ? (
-                      <WorkflowGraph
-                        nodes={graphData.nodes}
-                        edges={graphData.edges}
-                        onNodeClick={(node) => console.log("Clicked node:", node)}
-                      />
+                      <div className="w-full">
+                        <WorkflowGraph
+                          nodes={graphData.nodes}
+                          edges={graphData.edges}
+                          onNodeClick={(node) => console.log("Clicked node:", node)}
+                        />
+                      </div>
                     ) : (
-                      <div className="h-96 flex items-center justify-center text-muted-foreground italic">
-                        No graph data available for this workflow.
-                        <Button variant="link" onClick={fetchData}>Retry Loading Graph</Button>
+                      <div className="h-96 flex items-center justify-center text-muted-foreground italic text-sm">
+                        No graph data available.
                       </div>
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        ) : (
+          /* Analysis Required / Retry State */
+          <div className="bg-card border border-border rounded-lg p-12 text-center">
+            <div className="flex flex-col items-center gap-6">
+              <div className="p-4 rounded-full bg-red-500/10">
+                <AlertTriangle className="w-10 h-10 text-red-500" />
               </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">
+                  Analysis Required
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  {workflow.callCount === 0 ? "No events detected yet. Run your agent to generate data." : "Automatic analysis failed or hasn't run."}
+                </p>
+              </div>
+              {workflow.callCount > 0 && (
+                <Button size="sm" className="mt-2" onClick={handleAnalyze}>
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Analysis
+                </Button>
+              )}
             </div>
-          </TabsContent>
-
-          <TabsContent value="events">
-            <Card className="border-border bg-card">
-              <CardHeader className="border-b">
-                <CardTitle className="text-lg">Event Log</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {rawWorkflowData?.events?.map((e: any, i: number) => (
-                    <div key={e.run_id} className="p-6 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="secondary" className="font-mono">CALL #{i + 1}</Badge>
-                          <span className="text-sm font-medium">{e.model}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString()}</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Prompt</p>
-                          <div className="p-3 rounded-lg bg-muted/50 border border-border font-mono text-xs max-h-48 overflow-y-auto whitespace-pre-wrap">
-                            {e.prompt}
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Response</p>
-                          <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 font-mono text-xs max-h-48 overflow-y-auto whitespace-pre-wrap">
-                            {e.response}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex gap-4 text-[10px] text-muted-foreground">
-                        <span>Latency: {e.latency_ms}ms</span>
-                        <span>Cost: ${e.cost?.toFixed(5)}</span>
-                        <span>Tokens: {e.tokens_in} in / {e.tokens_out} out</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </main>
     </div>
   );

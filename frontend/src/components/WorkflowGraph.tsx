@@ -4,10 +4,33 @@ import GraphDetailsPanel from './graph/GraphDetailsPanel';
 import GeminiAnalysis from './graph/GeminiAnalysis';
 import type { DependencyGraphData, GraphCall } from '@/data/dependencyGraphData';
 
+interface RawBackendNode {
+    id: string;
+    label?: string;
+    model?: string;
+    cost?: number;
+    latency?: number;
+    tokens_in?: number;
+    type?: string;
+    isRedundant?: boolean;
+    isOverkill?: boolean;
+    isBloated?: boolean;
+    hasSecurityRisk?: boolean;
+    vulnerabilityType?: string;
+    redundantWithId?: string;
+    recommendedModel?: string;
+}
+
+interface RawBackendEdge {
+    source: string;
+    target: string;
+    score?: number;
+}
+
 interface WorkflowGraphProps {
-    nodes: any[];
-    edges: any[];
-    onNodeClick: (node: any) => void;
+    nodes: RawBackendNode[];
+    edges: RawBackendEdge[];
+    onNodeClick: (node: GraphCall) => void;
 }
 
 export default function WorkflowGraph({ nodes: rawNodes, edges: rawEdges, onNodeClick }: WorkflowGraphProps) {
@@ -74,9 +97,11 @@ export default function WorkflowGraph({ nodes: rawNodes, edges: rawEdges, onNode
                     onSelectCall={handleSelectCall}
                 />
             </div>
-            <div className="lg:col-span-1 flex flex-col gap-4">
-                <GeminiAnalysis data={graphData} />
-                <GraphDetailsPanel selectedCall={selectedCall} />
+            <div className="lg:col-span-1">
+                <div className="sticky top-4 flex flex-col gap-4 max-h-[calc(100vh-120px)] overflow-y-auto pr-1 custom-scrollbar">
+                    <GeminiAnalysis data={graphData} />
+                    <GraphDetailsPanel selectedCall={selectedCall} />
+                </div>
             </div>
         </div>
     );

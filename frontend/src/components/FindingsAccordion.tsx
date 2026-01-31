@@ -1,9 +1,3 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Zap, Package, AlertTriangle } from 'lucide-react';
@@ -32,9 +26,9 @@ function FindingCard({ finding, type }: FindingCardProps) {
             {finding.savings}
           </Badge>
         </div>
-        
+
         <p className="text-sm text-muted-foreground">{finding.details}</p>
-        
+
         <div className="flex flex-wrap gap-2 text-xs">
           {type === 'redundancy' && finding.callIds && (
             <div className="flex items-center gap-1.5">
@@ -46,13 +40,13 @@ function FindingCard({ finding, type }: FindingCardProps) {
               ))}
             </div>
           )}
-          
+
           {type === 'redundancy' && finding.confidence && (
             <Badge variant="outline" className="text-muted-foreground">
               {finding.confidence}% confidence
             </Badge>
           )}
-          
+
           {type === 'model' && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-score-poor/10 text-score-poor border-score-poor/30">
@@ -67,7 +61,7 @@ function FindingCard({ finding, type }: FindingCardProps) {
               )}
             </div>
           )}
-          
+
           {type === 'context' && finding.currentTokens && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Tokens:</span>
@@ -81,7 +75,7 @@ function FindingCard({ finding, type }: FindingCardProps) {
             </div>
           )}
         </div>
-        
+
         {finding.fix && (
           <FixSuggestion fix={finding.fix} defaultOpen={false} />
         )}
@@ -116,53 +110,48 @@ export function FindingsAccordion({ redundancyFindings, modelOverkillFindings, c
   ];
 
   return (
-    <Accordion type="multiple" defaultValue={['redundancy', 'model', 'context']} className="space-y-3">
+    <div className="space-y-8">
       {sections.map((section) => (
-        <AccordionItem
-          key={section.id}
-          value={section.id}
-          className="border border-border rounded-lg bg-card overflow-hidden"
-        >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                'p-2 rounded-md',
-                section.findings.length > 0 ? 'bg-score-warning/10 text-score-warning' : 'bg-muted text-muted-foreground'
-              )}>
-                {section.icon}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{section.title}</span>
-                <Badge 
-                  variant="secondary" 
-                  className={cn(
-                    'text-xs',
-                    section.findings.length > 0 
-                      ? 'bg-score-warning/10 text-score-warning' 
-                      : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {section.findings.length} {section.findings.length === 1 ? 'issue' : 'issues'}
-                </Badge>
-              </div>
+        <div key={section.id} className="space-y-4">
+          <div className="flex items-center gap-3 px-1">
+            <div className={cn(
+              'p-2 rounded-md',
+              section.findings.length > 0 ? 'bg-score-warning/10 text-score-warning' : 'bg-muted text-muted-foreground'
+            )}>
+              {section.icon}
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-lg">{section.title}</span>
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'text-xs',
+                  section.findings.length > 0
+                    ? 'bg-score-warning/10 text-score-warning'
+                    : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {section.findings.length} {section.findings.length === 1 ? 'issue' : 'issues'}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="space-y-4">
             {section.findings.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 bg-muted/20 rounded-lg border border-dashed border-border justify-center">
                 <AlertTriangle className="w-4 h-4" />
                 <span>No issues found in this category</span>
               </div>
             ) : (
-              <div className="space-y-3 pt-2">
+              <div className="grid grid-cols-1 gap-4">
                 {section.findings.map((finding) => (
                   <FindingCard key={finding.id} finding={finding} type={section.type} />
                 ))}
               </div>
             )}
-          </AccordionContent>
-        </AccordionItem>
+          </div>
+        </div>
       ))}
-    </Accordion>
+    </div>
   );
 }

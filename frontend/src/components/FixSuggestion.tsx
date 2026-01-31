@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import type { Fix } from '@/data/mockData';
 
 interface FixSuggestionProps {
@@ -33,13 +32,8 @@ export function FixSuggestion({ fix, defaultOpen = true }: FixSuggestionProps) {
                 )}
             </button>
 
-            <div
-                className={cn(
-                    'overflow-hidden transition-all duration-200',
-                    isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                )}
-            >
-                <div className="px-3 pb-3 space-y-3">
+            {isOpen && (
+                <div className="px-3 pb-3 space-y-3 animate-in fade-in duration-200">
                     <p className="text-sm text-muted-foreground">{fix.explanation}</p>
 
                     {fix.code && (
@@ -82,7 +76,7 @@ export function FixSuggestion({ fix, defaultOpen = true }: FixSuggestionProps) {
                         </div>
                     )}
                 </div>
-            </div>
+            )}
         </div>
     );
 }

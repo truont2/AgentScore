@@ -1,101 +1,110 @@
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { Card } from '@/components/ui/card';
-import { TrendingDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CostComparisonProps {
   currentCost: number;
   optimizedCost: number;
+  currentCalls?: number;
+  optimizedCalls?: number;
 }
 
-export function CostComparison({ currentCost, optimizedCost }: CostComparisonProps) {
+export function CostComparison({
+  currentCost,
+  optimizedCost,
+  currentCalls = 87,
+  optimizedCalls = 42
+}: CostComparisonProps) {
   const savings = currentCost - optimizedCost;
   const savingsPercent = currentCost > 0 ? Math.round((savings / currentCost) * 100) : 0;
 
-  const data = [
-    {
-      name: 'Actual Cost',
-      cost: currentCost,
-      color: '#ef4444',
-    },
-    {
-      name: 'Optimized',
-      cost: optimizedCost,
-      color: '#10b981',
-    },
-  ];
+  const formatCurrency = (val: number) => {
+    // For large numbers (> $1,000), drop decimals. 
+    // For huge numbers (> $100,000), use 'k' notation.
+    if (val >= 100000) return `$${(val / 1000).toFixed(1)}k`;
+    if (val >= 1000) return `$${val.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    return `$${val.toFixed(2)}`;
+  };
+
+  const getFontSize = (val: number) => {
+    // Dynamic font size scaling
+    if (val > 100000) return 'text-xl';
+    if (val > 10000) return 'text-xl';
+    return 'text-2xl';
+  };
 
   return (
-    <Card className="p-8 border-slate-200/60 shadow-lg bg-white relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-        <TrendingDown className="w-24 h-24 text-slate-900" />
-      </div>
+    <div className="bg-card border border-border rounded-md p-5 pr-12">
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-5">
+        Cost Analysis
+      </h3>
 
-      <div className="flex flex-col md:flex-row items-center gap-8">
-        {/* Chart Side */}
-        <div className="w-full md:w-1/2 h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }}
-              />
-              <YAxis hide />
-              <Tooltip
-                cursor={{ fill: 'transparent' }}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-slate-900 text-white border-0 rounded-lg p-2 shadow-xl text-xs font-mono">
-                        ${Number(payload[0].value).toFixed(2)}
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Bar dataKey="cost" barSize={60} radius={[8, 8, 0, 0]}>
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.9} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      {/* Three Column Layout */}
+      <div className="grid grid-cols-7 gap-2 items-center">
+        {/* Current */}
+        <div className="col-span-2 space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Current</p>
+          <p className={cn("font-semibold font-mono text-foreground tracking-tight whitespace-nowrap", getFontSize(currentCost))}>
+            {formatCurrency(currentCost)}
+          </p>
+          <p className="text-xs text-muted-foreground font-mono">
+            {currentCalls} calls
+          </p>
         </div>
 
-        {/* Insight Side */}
-        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left gap-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Efficiency Delta</h3>
-            <div className="flex items-baseline gap-3">
-              <span className="text-5xl font-black text-slate-900 tracking-tighter">
-                {savingsPercent}%
-              </span>
-              <span className="text-lg font-bold text-emerald-500 uppercase">Savings</span>
-            </div>
-          </div>
+        {/* Arrow */}
+        <div className="col-span-1 flex justify-center">
+          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </div>
 
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 w-full">
-            <p className="text-[13px] text-emerald-800 font-medium leading-relaxed">
-              Gemini identified <span className="font-bold underline">wasted compute</span> in redundancy loops and model overkill.
-              Applying recommendations will reduce per-run costs from <span className="font-bold text-rose-600">${currentCost.toFixed(2)}</span> to <span className="font-bold text-emerald-600">${optimizedCost.toFixed(2)}</span>.
-            </p>
-          </div>
+        {/* Optimized */}
+        <div className="col-span-2 space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Optimized</p>
+          <p className={cn("font-semibold font-mono text-score-good tracking-tight whitespace-nowrap", getFontSize(optimizedCost))}>
+            {formatCurrency(optimizedCost)}
+          </p>
+          <p className="text-xs text-muted-foreground font-mono">
+            {optimizedCalls} calls
+          </p>
+        </div>
 
-          <div className="flex gap-6 mt-2">
-            <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Monthly Projected Savings</p>
-              <p className="text-xl font-black text-slate-900 font-mono">${(savings * 1000).toFixed(2)}</p>
-            </div>
-            <div className="w-px h-10 bg-slate-100" />
-            <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Optimization Confidence</p>
-              <p className="text-xl font-black text-emerald-500 font-mono">98.4%</p>
-            </div>
-          </div>
+        {/* Equals */}
+        <div className="col-span-1 flex justify-center">
+          <span className="text-muted-foreground">=</span>
+        </div>
+
+        {/* Saved */}
+        <div className="col-span-1 space-y-1">
+          <p className="text-[10px] text-score-good uppercase tracking-wide">Saved</p>
+          <p className={cn("font-semibold font-mono text-score-good tracking-tight whitespace-nowrap", getFontSize(savings))}>
+            {formatCurrency(savings)}
+          </p>
+          <p className="text-xs text-score-good font-semibold">
+            {savingsPercent}%
+          </p>
         </div>
       </div>
-    </Card>
+
+      {/* Waste bar visualization */}
+      <div className="mt-6 pt-4 border-t border-border">
+        <div className="flex justify-between text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">
+          <span>Spend Breakdown</span>
+          <span className="text-score-poor">{savingsPercent}% waste</span>
+        </div>
+        <div className="h-2 rounded-sm overflow-hidden flex bg-secondary">
+          <div
+            className="bg-score-poor/80 transition-all duration-500"
+            style={{ width: `${savingsPercent}%` }}
+          />
+          <div
+            className="bg-score-good transition-all duration-500"
+            style={{ width: `${100 - savingsPercent}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] mt-1.5">
+          <span className="text-score-poor">Recoverable</span>
+          <span className="text-score-good">Necessary</span>
+        </div>
+      </div>
+    </div>
   );
 }
