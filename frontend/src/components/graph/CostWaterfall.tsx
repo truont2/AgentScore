@@ -12,21 +12,21 @@ interface CostWaterfallProps {
 const ROW_HEIGHT = 72; // Fixed height for redundancy bridge calculations
 
 const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps) => {
-    const items = data.calls || (data as any).nodes || [];
+    const calls = data.calls || [];
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Calculate total cost and latency for scaling
     const metrics = useMemo(() => {
-        const totalCost = items.reduce((sum: number, call: any) => sum + (call.cost || 0), 0);
-        const totalLatency = items.reduce((sum: number, call: any) => sum + (call.latency || 0), 0);
-        const maxCost = Math.max(...items.map((call: any) => call.cost || 0), 0.01);
+        const totalCost = data.totalCost || calls.reduce((sum: number, call: any) => sum + (call.cost || 0), 0);
+        const totalLatency = calls.reduce((sum: number, call: any) => sum + (call.latency || 0), 0);
+        const maxCost = Math.max(...calls.map((call: any) => call.cost || 0), 0.01);
         return { totalCost, totalLatency, maxCost };
-    }, [items]);
+    }, [calls, data.totalCost]);
 
     // Map items with relative positioning for Gantt view
-    const waterfallItems = useMemo(() => {
+    const callsWithPosition = useMemo(() => {
         let currentLatency = 0;
-        return items.map((call: any, index: number) => {
+        return calls.map((call: any, index: number) => {
             const callWithPos = {
                 ...call,
                 startTime: currentLatency,
@@ -35,14 +35,14 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
             currentLatency += (call.latency || 0);
             return callWithPos;
         });
-    }, [items]);
+    }, [calls]);
 
     // Extract redundancy pairs for the "Bridges"
     const redundancyBridges = useMemo(() => {
-        return waterfallItems
+        return callsWithPosition
             .filter(item => item.isRedundant && item.redundantWithId)
             .map(item => {
-                const targetNode = waterfallItems.find(t => t.id === item.redundantWithId);
+                const targetNode = callsWithPosition.find(t => t.id === item.redundantWithId);
                 if (!targetNode) return null;
                 return {
                     sourceIndex: item.index,
@@ -51,7 +51,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
                 };
             })
             .filter(Boolean);
-    }, [waterfallItems]);
+    }, [callsWithPosition]);
 
     return (
         <div className="w-full bg-slate-950 rounded-xl border border-slate-800 shadow-sm overflow-hidden flex flex-col h-[650px]">
@@ -114,7 +114,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
 
                 {/* Rows */}
                 <div className="relative z-10">
-                    {waterfallItems.map((call: any, idx: number) => {
+                    {callsWithPosition.map((call: any, idx: number) => {
                         // Check for Double Whammy status (Redundant node involved with Overkill)
                         const doubleWhammyBridge = redundancyBridges.find((b: any) => b.sourceIndex === idx && b.isDoubleWhammy);
                         const isDoubleWhammyNode = !!doubleWhammyBridge;
