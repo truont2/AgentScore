@@ -55,15 +55,7 @@ const GraphEdge = ({
         className="transition-all duration-300"
       />
 
-      {/* Main edge path */}
-      <path
-        d={pathD}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        className="transition-all duration-300"
-      />
+
 
       {/* Animated flowing particles */}
       <circle r="3" fill={color}>

@@ -47,6 +47,10 @@ export interface Workflow {
     redundancyFindings: Finding[];
     modelOverkillFindings: Finding[];
     contextBloatFindings: Finding[];
+    // Graph Data for Timeline
+    nodes?: any[];
+    edges?: any[];
+    metrics?: any;
 }
 
 export const workflows: Workflow[] = [
@@ -454,6 +458,20 @@ export const getWorkflowById = (id: string): Workflow | undefined => {
 
 export const demoLegacy: Workflow = {
     id: 'demo-legacy',
+    nodes: [
+        { id: '1', label: 'Input Ingress', model: 'gpt-4', cost: 0.12, latency: 250, timestamp: 0, tokens_in: 500 },
+        { id: '2', label: 'Intent Classifier', model: 'gpt-4', cost: 0.45, latency: 1300, timestamp: 300, tokens_in: 1200, isOverkill: true, recommendedModel: 'gpt-4o-mini' },
+        { id: '3', label: 'PII Scrubbing', model: 'gpt-3.5-turbo', cost: 0.05, latency: 400, timestamp: 1600, tokens_in: 1200 },
+        { id: '4', label: 'History Retrieval', model: 'gpt-4', cost: 0.85, latency: 3200, timestamp: 2100, tokens_in: 15000, isBloated: true },
+        { id: '5', label: 'Response Gen', model: 'gpt-4', cost: 0.98, latency: 4500, timestamp: 5400, tokens_in: 16500 },
+    ],
+    edges: [
+        { source: '1', target: '2' },
+        { source: '2', target: '3' },
+        { source: '3', target: '4' },
+        { source: '4', target: '5' },
+    ],
+    metrics: { dead_branch_cost: 0.45, critical_path_latency: 9900, info_efficiency: 0.35 },
     name: 'Enterprise Customer Support (Legacy)',
     timestamp: new Date().toISOString(),
     callCount: 154200,
@@ -584,6 +602,16 @@ def build_prompt(question):
 
 export const demoOptimized: Workflow = {
     id: 'demo-optimized',
+    nodes: [
+        { id: '1', label: 'Input Ingress', model: 'gpt-4o-mini', cost: 0.01, latency: 150, timestamp: 0, tokens_in: 500 },
+        { id: '2', label: 'Intent Classifier', model: 'gpt-4o-mini', cost: 0.02, latency: 400, timestamp: 200, tokens_in: 1200 },
+        { id: '3', label: 'Response Gen', model: 'gpt-4o', cost: 0.35, latency: 1800, timestamp: 700, tokens_in: 2500 },
+    ],
+    edges: [
+        { source: '1', target: '2' },
+        { source: '2', target: '3' },
+    ],
+    metrics: { dead_branch_cost: 0.0, critical_path_latency: 2500, info_efficiency: 0.88 },
     name: 'Enterprise Customer Support (Optimized)',
     timestamp: new Date().toISOString(),
     callCount: 154200,

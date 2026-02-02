@@ -20,6 +20,12 @@ interface RawBackendNode {
     redundantWithId?: string;
     recommendedModel?: string;
     reason?: string;
+    // Payload data
+    input?: string;
+    prompt?: string;
+    output?: string;
+    response?: string;
+    [key: string]: any;
 }
 
 interface RawBackendEdge {
@@ -47,7 +53,6 @@ export default function WorkflowGraph({ nodes: rawNodes, edges: rawEdges, onNode
             cost: n.cost || 0,
             latency: n.latency || 0,
             tokens: n.tokens_in || 0,
-            tokens_in: n.tokens_in || 0,
             isDeadBranch: n.type === 'dead' || n.isRedundant,
             isCriticalPath: n.type === 'critical',
             isRedundant: n.isRedundant,
@@ -58,6 +63,9 @@ export default function WorkflowGraph({ nodes: rawNodes, edges: rawEdges, onNode
             redundantWithId: n.redundantWithId,
             recommendedModel: n.recommendedModel,
             reason: n.reason,
+            // Pass through potential payload data for Details Panel
+            input: n.input || n.prompt,
+            output: n.output || n.response,
             parents: rawEdges.filter(e => e.target === n.id).map(e => e.source)
         }));
 
