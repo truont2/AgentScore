@@ -24,17 +24,19 @@ A workflow that costs **$3.40** might only need to cost **$1.00**. At scale, tha
 ## How It Works
 
 ### 1. Capture
-Add our lightweight SDK to your application. Wrap your AI client and mark workflow boundaries—AgentScore silently captures every LLM call in the background.
+Add our lightweight SDK to your application. We use a standard LangChain Callback Handler to silently capture every LLM call in the background.
 
 ```python
-from agentscore import AgentScore
+from langchain_openai import ChatOpenAI
+from agentscore import AgentScoreCallbackHandler
 
-lens = AgentScore()
-client = lens.wrap(OpenAI())
+# Add the handler to your LLM or Chain
+llm = ChatOpenAI(
+    callbacks=[AgentScoreCallbackHandler()]
+)
 
-lens.start_workflow("Process customer request")
 # Your multi-agent workflow runs normally
-lens.end_workflow()
+response = llm.invoke("Process customer request")
 ```
 
 ### 2. Analyze
@@ -139,96 +141,76 @@ AgentScore isn't just *using* Gemini—it **requires** Gemini's unique capabilit
 
 ---
 
-## Key Technical Decisions
+## Installation & Setup
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Workflow ID | Deterministic Trace IDs via ContextVars | 100% accurate grouping even with concurrent users |
-| SDK Pattern | Wrapper (`lens.wrap(client)`) | Safer than monkey-patching, won't break on library updates |
-| Database | PostgreSQL | Native concurrency handling for multi-user scenarios |
-| Analysis | Single Gemini call per workflow | Leverages long context window, simpler architecture |
-| Detection Criteria | Industry best practices (Anthropic, OpenAI) | Defensible methodology, not arbitrary rules |
-| Confidence Filter | 0.7 threshold | Shows only high-confidence recommendations |
-
----
-
-## MVP Features
-
-- ✅ Python SDK with OpenAI wrapper
-- ✅ Automatic capture of all LLM calls (prompt, response, cost, latency)
-- ✅ Thread-safe workflow tracing
-- ✅ FastAPI backend with event ingestion
-- ✅ Gemini-powered analysis detecting all three Agent Sins
-- ✅ Severity-weighted Efficiency Score calculation
-- ✅ React dashboard with workflow list and analysis views
-- ✅ Before/after cost comparison
-- ✅ Actionable recommendations with confidence scores
-
----
-
-## Post-MVP Roadmap
-
-### Phase 1: Expand Coverage
-- [ ] Anthropic (Claude) SDK support
-- [ ] Google (Gemini) SDK support
-- [ ] Native LangChain integration
-- [ ] PyPI package publication
-
-### Phase 2: Production Features
-- [ ] User authentication & team workspaces
-- [ ] Historical analytics and cost trends
-- [ ] Spending alerts and anomaly detection
-- [ ] CI/CD integration via API
-- [ ] Webhook notifications
-
-### Phase 3: Advanced Intelligence
-- [ ] **Auto-fix generation**: Generate code patches for detected issues
-- [ ] **A/B testing**: Compare optimization strategies
-- [ ] **Custom rules**: Define organization-specific optimization policies
-- [ ] **Benchmark comparisons**: See how your efficiency compares to anonymized industry data
-- [ ] **Real-time streaming**: Live efficiency monitoring during workflow execution
-
----
-
-## Differentiation
-
-| Tool | What It Does | What's Missing |
-|------|--------------|----------------|
-| LangSmith | Logs calls, basic debugging | No intelligent optimization |
-| Helicone | Cost tracking, metrics | Reports costs, doesn't find savings |
-| PromptLayer | Prompt versioning | Not multi-agent aware |
-| **AgentScore** | **AI-powered optimization** | **Tells you what to fix and how** |
-
-The key difference: Other tools tell you *how much you spent*. AgentScore tells you *how much you should have spent* and exactly how to get there.
-
----
-
-## Quick Start
+### 1. Install SDK
+Currently, you can install the SDK directly from GitHub:
 
 ```bash
-# Install SDK
-pip install agentscore
-
-# Initialize
-from agentscore import AgentScore
-from openai import OpenAI
-
-lens = AgentScore(api_key="your-api-key")
-client = lens.wrap(OpenAI())
-
-# Track workflow
-lens.start_workflow("My Agent Task")
-
-# Your agent code runs normally...
-response = client.chat.completions.create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-
-lens.end_workflow()
-
-# View results at dashboard.agentscore.dev
+pip install git+https://github.com/takaratruong/Kaizen.git#subdirectory=sdk
 ```
+
+### 2. Development Setup
+
+If you want to run the full stack (Dashboard + Backend) locally:
+
+**Prerequisites:**
+- Python 3.11+
+- Node.js 18+
+- Supabase account
+
+**Backend Setup:**
+```bash
+# Create venv
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r backend/requirements.txt
+pip install -e sdk/
+
+# Configure .env (in backend/)
+# SUPABASE_URL=...
+# SUPABASE_KEY=...
+# GEMINI_API_KEY=...
+
+# Run Server
+cd backend
+uvicorn main:app --reload
+```
+
+**Frontend Setup:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 3. Usage
+
+```python
+from langchain_openai import ChatOpenAI
+from agentscore import AgentScoreCallbackHandler, set_trace_id
+import uuid
+
+# 1. Initialize Callback
+handler = AgentScoreCallbackHandler()
+
+# 2. Set a workflow ID (optional, for grouping)
+set_trace_id(str(uuid.uuid4()))
+
+# 3. Use in your Chain/LLM
+llm = ChatOpenAI(callbacks=[handler])
+llm.invoke("Hello world")
+```
+
+## Troubleshooting
+
+### "Command not found: uvicorn"
+Make sure you've activated the virtual environment: `source venv/bin/activate`
+
+### Backend shows $0.00 for workflows
+Apply the database schema changes to Supabase. Run the SQL from `backend/schema.sql` in your Supabase SQL Editor.
 
 ---
 

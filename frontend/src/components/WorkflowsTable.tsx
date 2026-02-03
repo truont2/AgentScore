@@ -9,15 +9,13 @@ import {
 } from '@/components/ui/table';
 import { ScoreBadge } from './ScoreBadge';
 import { StatusBadge } from './StatusBadge';
-import type { Workflow } from '@/data/mockData';
+import type { Workflow } from '@/types';
 import { ChevronRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WorkflowsTableProps {
   workflows: Workflow[];
 }
-
-import { demoLegacy, demoOptimized } from '@/data/mockData';
 
 function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
@@ -32,8 +30,8 @@ function formatTimestamp(timestamp: string): string {
 export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
   const navigate = useNavigate();
 
-  // Prepend demo workflows
-  const displayWorkflows = [demoLegacy, demoOptimized, ...workflows];
+  // Display workflows directly
+  const displayWorkflows = workflows;
 
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-card">

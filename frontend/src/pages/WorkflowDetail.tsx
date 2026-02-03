@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WorkflowGraph from "@/components/WorkflowGraph";
 import GraphMetricsBar from "@/components/graph/GraphMetricsBar";
 
-import { type Workflow, type Finding } from '@/data/mockData';
+import { type Workflow, type Finding } from '@/types';
 
 // Backend Interfaces
 interface BackendWorkflowDetail {
@@ -74,24 +74,6 @@ export default function WorkflowDetail() {
   const fetchData = useCallback(async () => {
     if (!id) return;
     try {
-      // 0. Check for Demo IDs
-      if (id === 'demo-legacy' || id === 'demo-optimized') {
-        const { getWorkflowById } = await import('@/data/mockData');
-        const demoWf = getWorkflowById(id);
-        if (demoWf) {
-          setWorkflow(demoWf);
-          if (demoWf.nodes) {
-            setGraphData({
-              nodes: demoWf.nodes,
-              edges: demoWf.edges || [],
-              metrics: demoWf.metrics || { dead_branch_cost: 0, critical_path_latency: 0, info_efficiency: 0 },
-              calls: demoWf.nodes
-            });
-          }
-          return;
-        }
-      }
-
       // 1. Fetch Workflow Basic Info & Graph Data concurrently
       const [wfRes, graphRes, analysisRes] = await Promise.all([
         fetch(`http://localhost:8000/workflows/${id}`),

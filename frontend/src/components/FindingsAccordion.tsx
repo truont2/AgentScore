@@ -7,7 +7,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Zap, Package, AlertTriangle } from 'lucide-react';
-import type { Finding } from '@/data/mockData';
+import type { Finding } from '@/types';
 import { cn } from '@/lib/utils';
 import { FixSuggestion } from '@/components/FixSuggestion';
 

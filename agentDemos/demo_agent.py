@@ -13,12 +13,12 @@ async def main():
     print("--- Starting Demo Agent ---")
     
     # 1. Initialize the callback handler
-    kaizen_callback = AgentScoreCallbackHandler()
+    agent_score_callback = AgentScoreCallbackHandler()
     
     # 2. Initialize the LLM (Gemini) with our callback
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
-        callbacks=[kaizen_callback],
+        callbacks=[agent_score_callback],
         temperature=0.7,
         google_api_key=os.getenv("GEMINI_API_KEY")
     )

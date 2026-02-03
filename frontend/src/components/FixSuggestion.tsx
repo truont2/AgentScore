@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { Fix } from '@/data/mockData';
+import type { Fix } from '@/types';
 
 interface FixSuggestionProps {
     fix: Fix;
