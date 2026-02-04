@@ -77,13 +77,22 @@ class AgentScoreCallbackHandler(BaseCallbackHandler):
         if not model_name or model_name == "unknown":
             model_name = serialized.get("name", "unknown")
 
+        # Serialize messages to a list of dicts for better readability
+        serialized_messages = []
+        for inner_list in messages:
+            for msg in inner_list:
+                msg_dict = {"type": msg.type, "content": msg.content}
+                if hasattr(msg, "additional_kwargs") and msg.additional_kwargs:
+                    msg_dict["additional_kwargs"] = msg.additional_kwargs
+                serialized_messages.append(msg_dict)
+                
         self._pending_starts[str(run_id)] = {
             "run_id": str(run_id),
             "workflow_id": get_trace_id(),
             "parent_run_id": str(parent_run_id) if parent_run_id else None,
             "event_type": "llm_call",
             "model": model_name,
-            "prompt": str(messages[0]),
+            "prompt": serialized_messages, # Capture full structured logs
             "start_time": datetime.now(),
         }
 

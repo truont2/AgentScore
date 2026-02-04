@@ -31,22 +31,18 @@ export function FrequencyInput({
     onPeriodChange,
 }: FrequencyInputProps) {
     return (
-        <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-                How often does this workflow run?
-            </p>
-
-            <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 bg-card border border-border p-1 rounded-md shadow-sm">
                 <Input
                     type="number"
                     value={frequency}
                     onChange={(e) => onFrequencyChange(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-28 bg-background border-border text-foreground font-mono text-lg"
+                    className="w-20 border-0 focus-visible:ring-0 bg-transparent text-right font-mono text-base h-8 px-2"
                     min={1}
                 />
-                <span className="text-muted-foreground">runs per</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap font-medium px-1">runs /</span>
                 <Select value={period} onValueChange={(v) => onPeriodChange(v as TimePeriod)}>
-                    <SelectTrigger className="w-28 bg-background border-border">
+                    <SelectTrigger className="w-24 border-0 focus:ring-0 bg-transparent h-8 text-sm px-2 shadow-none">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -59,11 +55,11 @@ export function FrequencyInput({
                 </Select>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2">
                 {presets.map((preset) => (
                     <Button
                         key={preset.label}
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                             onFrequencyChange(preset.frequency);
@@ -71,8 +67,8 @@ export function FrequencyInput({
                         }}
                         className={
                             frequency === preset.frequency && period === preset.period
-                                ? 'border-primary bg-primary/10 text-primary'
-                                : 'border-border text-muted-foreground hover:text-foreground'
+                                ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium h-8 text-xs'
+                                : 'text-muted-foreground hover:text-foreground h-8 text-xs'
                         }
                     >
                         {preset.label}
@@ -80,5 +76,6 @@ export function FrequencyInput({
                 ))}
             </div>
         </div>
+
     );
 }
