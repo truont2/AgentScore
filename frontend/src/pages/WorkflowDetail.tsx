@@ -1,5 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+
+const env = import.meta.env.VITE_APP_ENV || 'development';
+const BACKEND_URL = env === 'production'
+  ? import.meta.env.VITE_BACKEND_ROUTE_PROD
+  : (import.meta.env.VITE_BACKEND_ROUTE_DEV || 'http://127.0.0.1:8000');
 import {
   ArrowLeft,
   Play,
@@ -79,9 +84,9 @@ export default function WorkflowDetail() {
     try {
       // 1. Fetch Workflow Basic Info & Graph Data concurrently
       const [wfRes, graphRes, analysisRes] = await Promise.all([
-        fetch(`http://localhost:8000/workflows/${id}`),
-        fetch(`http://localhost:8000/workflows/${id}/graph`),
-        fetch(`http://localhost:8000/workflows/${id}/analysis`)
+        fetch(`${BACKEND_URL}/workflows/${id}`),
+        fetch(`${BACKEND_URL}/workflows/${id}/graph`),
+        fetch(`${BACKEND_URL}/workflows/${id}/analysis`)
       ]);
 
       if (!wfRes.ok) throw new Error('Failed to fetch workflow details');
@@ -235,7 +240,7 @@ export default function WorkflowDetail() {
     setLoadingMessage("Initializing analysis...");
 
     try {
-      const response = await fetch(`http://localhost:8000/workflows/${id}/analyze`, {
+      const response = await fetch(`${BACKEND_URL}/workflows/${id}/analyze`, {
         method: 'POST',
       });
 

@@ -7,6 +7,7 @@ import { type Workflow } from '@/types';
 import { Layers, TrendingUp, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+
 // Backend workflow interface 
 interface BackendWorkflow {
   id: string;
@@ -26,7 +27,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchWorkflows = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/workflows');
+        const env = import.meta.env.VITE_APP_ENV || 'development';
+        const backendUrl = env === 'production'
+          ? import.meta.env.VITE_BACKEND_ROUTE_PROD
+          : (import.meta.env.VITE_BACKEND_ROUTE_DEV || 'http://127.0.0.1:8000');
+
+        const response = await fetch(`${backendUrl}/workflows`);
         if (!response.ok) throw new Error('Failed to fetch');
 
         const data: BackendWorkflow[] = await response.json();
