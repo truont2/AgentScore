@@ -10,7 +10,6 @@ import {
 import { ScoreBadge } from './ScoreBadge';
 import { StatusBadge } from './StatusBadge';
 import type { Workflow } from '@/types';
-import { ChevronRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WorkflowsTableProps {
