@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import WorkflowDetail from "./pages/WorkflowDetail";
-import DependencyGraph from "./pages/DependencyGraph";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,7 +22,7 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/workflow/:id" element={<WorkflowDetail />} />
-            <Route path="/workflow/:id/graph" element={<DependencyGraph />} />
+
           </Route>
 
           <Route path="*" element={<NotFound />} />
