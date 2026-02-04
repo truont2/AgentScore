@@ -35,6 +35,7 @@ export interface Finding {
 export interface Workflow {
     id: string;
     name: string;
+    description?: string;
     timestamp: string;
     callCount: number;
     totalCost: number;
@@ -51,4 +52,5 @@ export interface Workflow {
     nodes?: any[];
     edges?: any[];
     metrics?: any;
+    events?: any[];
 }

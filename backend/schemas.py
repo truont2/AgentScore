@@ -18,12 +18,11 @@ class EventCreate(BaseModel):
     latency_ms: Optional[int] = None
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
 
-class BatchEvents(BaseModel):
-    events: List[EventCreate]
 
 class Workflow(BaseModel):
     id: UUID
     name: Optional[str] = None
+    description: Optional[str] = None
     status: str
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
