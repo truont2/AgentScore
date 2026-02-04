@@ -18,12 +18,13 @@ Goal: ~28 calls, ~$4.12 (Highest Cost)
 Waste Types: Redundancy, Overkill, Bloat
 """
 
-async def invoke_with_retry(llm, messages, retries=3, delay=5):
+async def invoke_with_retry(llm, messages, retries=5, delay=65):
     for attempt in range(retries):
         try:
             return await llm.ainvoke(messages)
         except Exception as e:
             if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                print(f"  Rate limit hit. Retrying in {delay}s... (Attempt {attempt+1}/{retries})")
                 if attempt < retries - 1:
                     await asyncio.sleep(delay)
                     continue
@@ -43,7 +44,7 @@ async def run_code_review_workflow():
     )
     
     llm_expensive = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-demo", # Price multiplier active
+        model="gemini-2.5-flash", # Price multiplier active
         callbacks=[handler],
         google_api_key=os.getenv("GEMINI_AGENT_KEY")
     )

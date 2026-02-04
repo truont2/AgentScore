@@ -1,0 +1,62 @@
+{
+  "workflow": {
+    "id": "b36cf579-a893-4849-942b-24083c55ee76",
+    "name": "Workflow - Feb 04, 02:04 PM",
+    "status": "active",
+    "start_time": "2026-02-04T14:04:57.148901+00:00",
+    "end_time": "2026-02-04T14:05:10.703354+00:00",
+    "total_calls": 3,
+    "total_cost": 0.000202,
+    "created_at": "2026-02-04T22:04:57.828497+00:00",
+    "graph_computed": true,
+    "dead_branch_waste": 0.000157,
+    "critical_path_latency": 10350,
+    "information_efficiency": 0
+  },
+  "events": [
+    {
+      "run_id": "019c2aaf-bf40-78f3-8c24-e7c3dac5f805",
+      "workflow_id": "b36cf579-a893-4849-942b-24083c55ee76",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gemini-2.5-flash-lite",
+      "prompt": "[HumanMessage(content=\"Classify intent: My login isn't working on mobile...\", additional_kwargs={}, response_metadata={})]",
+      "response": "This intent can be classified as **Troubleshooting/Support Request**.\n\nHere's a breakdown of why and some more specific classifications you might consider depending on the context:\n\n**Primary Classification:**\n\n*   **Troubleshooting/Support Request:** The user is experiencing a problem and is seeking assistance to resolve it.\n\n**More Specific Classifications (depending on the system/application):**\n\n*   **Login Issue:** This is a very direct and accurate classification.\n*   **Account Access Problem:** Similar to login issue, but might encompass broader problems with accessing an account.\n*   **Mobile App Support:** If the context is specifically about a mobile application.\n*   **Technical Support:** A general category for any technical problem.\n*   **Bug Report (potential):** While not explicitly stated as a bug, a persistent login issue could be indicative of a bug.\n\n**Why it's not other intents:**\n\n*   **Information Request:** The user isn't asking for general information about how to log in, but rather reporting a failure.\n*   **Transactional:** The user isn't trying to *perform* a transaction, but rather to *enable* one by logging in.\n*   **Feedback:** While the user is providing feedback on a negative experience, the primary goal is resolution, not just general feedback.\n*   **Greeting/Chitchat:** This is a clear statement of a problem.\n\n**In summary, the most accurate and broadly applicable classification is \"Troubleshooting/Support Request\" with \"Login Issue\" being a very close and specific alternative.**",
+      "tokens_in": 14,
+      "tokens_out": 327,
+      "cost": 0.000132,
+      "latency_ms": 10350,
+      "created_at": "2026-02-04T14:04:57.148901+00:00"
+    },
+    {
+      "run_id": "019c2aaf-ebcf-7322-854b-cf389b8781ed",
+      "workflow_id": "b36cf579-a893-4849-942b-24083c55ee76",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gemini-2.5-flash-lite",
+      "prompt": "[HumanMessage(content=\"What does the user want? My login isn't working on mobile...\", additional_kwargs={}, response_metadata={})]",
+      "response": "The user wants to **log in to their account on their mobile device, but they are experiencing a problem that is preventing them from doing so.**\n\nIn essence, they are saying: **\"I am trying to access my account on my phone, but I can't get in.\"**",
+      "tokens_in": 16,
+      "tokens_out": 59,
+      "cost": 2.5e-05,
+      "latency_ms": 9511,
+      "created_at": "2026-02-04T14:05:07.705696+00:00"
+    },
+    {
+      "run_id": "019c2ab0-1276-72e3-97af-b636b8c71ba8",
+      "workflow_id": "b36cf579-a893-4849-942b-24083c55ee76",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gemini-2.5-flash-lite",
+      "prompt": "[HumanMessage(content='Classify intent: I requested a refund 3 days ago...', additional_kwargs={}, response_metadata={})]",
+      "response": "The intent of the utterance \"I requested a refund 3 days ago...\" is **to inquire about the status of a refund request**.\n\nHere's a breakdown of why:\n\n*   **\"Requested a refund\"**: This clearly indicates a past action related to seeking financial reimbursement.\n*   **\"3 days ago\"**: This provides a timeframe, implying that the user has been waiting for some time and is now looking for an update.\n\nTherefore, the underlying goal is to find out where the refund is in the process.",
+      "tokens_in": 14,
+      "tokens_out": 109,
+      "cost": 4.5e-05,
+      "latency_ms": 2614,
+      "created_at": "2026-02-04T14:05:10.703354+00:00"
+    }
+  ],
+  "analyses": [],
+  "exported_at": "2026-02-04T14:07:23.146465"
+}
