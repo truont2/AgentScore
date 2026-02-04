@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WorkflowGraph from "@/components/WorkflowGraph";
 import GraphMetricsBar from "@/components/graph/GraphMetricsBar";
 
-import { type Workflow, type Finding } from '@/data/mockData';
+import { type Workflow, type Finding } from '@/types';
 
 // Backend Interfaces
 interface BackendWorkflowDetail {
@@ -74,24 +74,6 @@ export default function WorkflowDetail() {
   const fetchData = useCallback(async () => {
     if (!id) return;
     try {
-      // 0. Check for Demo IDs
-      if (id === 'demo-legacy' || id === 'demo-optimized') {
-        const { getWorkflowById } = await import('@/data/mockData');
-        const demoWf = getWorkflowById(id);
-        if (demoWf) {
-          setWorkflow(demoWf);
-          if (demoWf.nodes) {
-            setGraphData({
-              nodes: demoWf.nodes,
-              edges: demoWf.edges || [],
-              metrics: demoWf.metrics || { dead_branch_cost: 0, critical_path_latency: 0, info_efficiency: 0 },
-              calls: demoWf.nodes
-            });
-          }
-          return;
-        }
-      }
-
       // 1. Fetch Workflow Basic Info & Graph Data concurrently
       const [wfRes, graphRes, analysisRes] = await Promise.all([
         fetch(`http://localhost:8000/workflows/${id}`),
@@ -219,9 +201,6 @@ export default function WorkflowDetail() {
     fetchData();
   }, [fetchData]);
 
-  const attemptRef = useRef(false);
-  const [autoAnalysisFailed, setAutoAnalysisFailed] = useState(false);
-
   // Handle Analysis Trigger
   const handleAnalyze = useCallback(async () => {
     if (!id) return false;
@@ -255,26 +234,6 @@ export default function WorkflowDetail() {
       setAnalyzing(false);
     }
   }, [id, fetchData, toast]);
-
-  // Auto-Analyze Effect
-  useEffect(() => {
-    if (
-      workflow &&
-      workflow.status === 'pending' &&
-      workflow.callCount > 0 &&
-      !analyzing &&
-      !attemptRef.current
-    ) {
-      attemptRef.current = true;
-      setTimeout(async () => {
-        const success = await handleAnalyze();
-        if (!success) {
-          console.error("Auto-analysis failed");
-          setAutoAnalysisFailed(true);
-        }
-      }, 100);
-    }
-  }, [workflow, analyzing, handleAnalyze]);
 
   if (loading) {
     return (
@@ -363,7 +322,7 @@ export default function WorkflowDetail() {
         </div>
 
         {/* LOADING / AUTO-ANALYZING STATE (Custom Logic) */}
-        {!isAnalyzed && (analyzing || (!autoAnalysisFailed && workflow.callCount > 0)) ? (
+        {!isAnalyzed && analyzing ? (
           <div className="bg-card border border-border rounded-lg p-12 text-center animate-pulse">
             <div className="flex flex-col items-center gap-6">
               <div className="p-4 rounded-full bg-primary/10">

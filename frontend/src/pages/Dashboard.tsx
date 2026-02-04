@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { StatCard } from '@/components/StatCard';
 import { WorkflowsTable } from '@/components/WorkflowsTable';
-import { workflows as mockWorkflows, type Workflow } from '@/data/mockData';
+import { type Workflow } from '@/types';
 import { Layers, TrendingUp, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -56,9 +56,9 @@ export default function Dashboard() {
           setIsConnected(true);
         }
       } catch (error) {
-        console.warn('Backend connection failed, using mock data:', error);
+        console.warn('Backend connection failed:', error);
         setIsConnected(false);
-        setWorkflows(mockWorkflows);
+        setWorkflows([]); // No mock fallback
       } finally {
         setIsLoading(false);
       }

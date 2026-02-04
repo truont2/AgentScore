@@ -9,15 +9,12 @@ import {
 } from '@/components/ui/table';
 import { ScoreBadge } from './ScoreBadge';
 import { StatusBadge } from './StatusBadge';
-import type { Workflow } from '@/data/mockData';
-import { ChevronRight, Play } from 'lucide-react';
+import type { Workflow } from '@/types';
 import { Button } from '@/components/ui/button';
 
 interface WorkflowsTableProps {
   workflows: Workflow[];
 }
-
-import { demoLegacy, demoOptimized } from '@/data/mockData';
 
 function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
@@ -32,8 +29,8 @@ function formatTimestamp(timestamp: string): string {
 export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
   const navigate = useNavigate();
 
-  // Prepend demo workflows
-  const displayWorkflows = [demoLegacy, demoOptimized, ...workflows];
+  // Display workflows directly
+  const displayWorkflows = workflows;
 
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-card">
@@ -54,8 +51,7 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
           {displayWorkflows.map((workflow) => (
             <TableRow
               key={workflow.id}
-              className="cursor-pointer hover:bg-muted/30 border-border transition-colors"
-              onClick={() => navigate(`/workflow/${workflow.id}`)}
+              className="hover:bg-muted/30 border-border transition-colors"
             >
               <TableCell className="font-medium text-foreground">
                 {workflow.name}
@@ -81,21 +77,11 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
                     variant={workflow.status === 'analyzed' ? "secondary" : "default"}
                     size="sm"
                     className="h-8 text-xs font-medium"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/workflow/${workflow.id}`);
-                    }}
+                    onClick={() => navigate(`/workflow/${workflow.id}`)}
                   >
-                    {workflow.status === 'analyzed' ? (
-                      <>View Results</>
-                    ) : (
-                      <><Play className="w-3 h-3 mr-1.5" /> Run Analysis</>
-                    )}
+                    See Details
                   </Button>
                 </div>
-              </TableCell>
-              <TableCell>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </TableCell>
             </TableRow>
           ))}
