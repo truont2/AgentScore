@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -44,14 +45,14 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
             <TableHead className="text-muted-foreground text-center">Score</TableHead>
             <TableHead className="text-muted-foreground">Status</TableHead>
             <TableHead className="text-right sr-only">Actions</TableHead>
-            <TableHead className="w-10"></TableHead>
+
           </TableRow>
         </TableHeader>
         <TableBody>
           {displayWorkflows.map((workflow) => (
             <TableRow
               key={workflow.id}
-              className="hover:bg-muted/30 border-border transition-colors"
+              className="border-border"
             >
               <TableCell className="font-medium text-foreground">
                 {workflow.name}
@@ -76,10 +77,11 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
                   <Button
                     variant={workflow.status === 'analyzed' ? "secondary" : "default"}
                     size="sm"
-                    className="h-8 text-xs font-medium"
+                    className="h-8 text-xs font-medium transition-all shadow-sm hover:shadow hover:scale-[1.02] hover:bg-primary/90 data-[variant=secondary]:hover:bg-secondary/80"
                     onClick={() => navigate(`/workflow/${workflow.id}`)}
                   >
                     See Details
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                   </Button>
                 </div>
               </TableCell>
