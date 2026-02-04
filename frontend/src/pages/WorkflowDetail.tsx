@@ -302,6 +302,7 @@ export default function WorkflowDetail() {
     outputTokens: event.tokens_out || 0,
     prompt: typeof event.prompt === 'string' ? event.prompt : JSON.stringify(event.prompt, null, 2),
     response: typeof event.response === 'string' ? event.response : JSON.stringify(event.response, null, 2),
+    raw: event
   }));
 
   // Statistics Calculation
