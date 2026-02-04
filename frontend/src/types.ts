@@ -37,6 +37,8 @@ export interface Workflow {
     name: string;
     description?: string;
     timestamp: string;
+    startTime?: string;
+    endTime?: string;
     callCount: number;
     totalCost: number;
     optimizedCost: number;

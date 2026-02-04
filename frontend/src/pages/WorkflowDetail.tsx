@@ -29,7 +29,10 @@ import { type Workflow, type Finding } from '@/types';
 interface BackendWorkflowDetail {
   id: string;
   name?: string;
+  description?: string;
   status: string;
+  start_time?: string;
+  end_time?: string;
   total_calls: number;
   total_cost: number;
   created_at: string;
@@ -134,8 +137,10 @@ export default function WorkflowDetail() {
       const mappedWorkflow: Workflow = {
         id: wfData.id,
         name: wfData.name || 'Untitled Workflow',
-        description: (wfData as any).description, // Type assertion as backend interface not yet updated in this file
+        description: wfData.description,
         timestamp: wfData.created_at,
+        startTime: wfData.start_time,
+        endTime: wfData.end_time,
         callCount: wfData.total_calls,
         totalCost: wfData.total_cost,
         status: (wfData.status === 'completed' || wfData.status === 'analyzed' || latestAnalysis) ? 'analyzed' : 'pending',
@@ -306,20 +311,44 @@ export default function WorkflowDetail() {
   }));
 
   // Statistics Calculation
-  const totalDurationMs = (graphData?.nodes || []).reduce((acc: number, node: any) => acc + (node.latency || 0), 0);
-  const formattedDuration = totalDurationMs < 1000 ? `${totalDurationMs}ms` : `${(totalDurationMs / 1000).toFixed(1)}s`;
+  // Statistics Calculation
+  let formattedDuration = "0ms";
 
-  const modelCounts = (graphData?.nodes || []).reduce((acc: Record<string, number>, node: any) => {
-    const model = node.model || "Unknown";
+  if (workflow?.startTime && workflow?.endTime) {
+    const start = new Date(workflow.startTime).getTime();
+    const end = new Date(workflow.endTime).getTime();
+    const duration = end - start;
+    formattedDuration = duration < 1000 ? `${duration}ms` : `${(duration / 1000).toFixed(1)}s`;
+  } else {
+    // Fallback to summing latencies from events if available
+    const totalDurationMs = (workflow?.events || []).reduce((acc: number, event: any) => acc + (event.latency_ms || 0), 0);
+    formattedDuration = totalDurationMs < 1000 ? `${totalDurationMs}ms` : `${(totalDurationMs / 1000).toFixed(1)}s`;
+  }
+
+  // Model Usage Calculation (using Events instead of Graph)
+  const modelCounts = (workflow?.events || []).reduce((acc: Record<string, number>, event: any) => {
+    const model = event.model || "Unknown";
     acc[model] = (acc[model] || 0) + 1;
     return acc;
   }, {});
-  const modelDisplay = Object.entries(modelCounts).map(([m, c]) => {
-    // Remove 'models/' prefix if present, then format standard names
-    const cleanName = m.replace('models/', '');
-    const shortName = cleanName.replace('gemini-', 'Gemini ').replace('gpt-', 'GPT-');
-    return `${shortName} (${c})`;
-  }).join("\n");
+
+  const modelEntries = Object.entries(modelCounts);
+  let modelDisplay = "N/A";
+
+  if (modelEntries.length > 0) {
+    if (modelEntries.length > 2) {
+      // If many models, show the most used one
+      const [mostUsedModel] = modelEntries.sort((a, b) => b[1] - a[1])[0];
+      const cleanName = mostUsedModel.replace('models/', '').replace('gemini-', 'Gemini ').replace('gpt-', 'GPT-');
+      modelDisplay = `${cleanName} (Most Used)`;
+    } else {
+      // Show all if few
+      modelDisplay = modelEntries.map(([m, c]) => {
+        const cleanName = m.replace('models/', '').replace('gemini-', 'Gemini ').replace('gpt-', 'GPT-');
+        return `${cleanName} (${c})`;
+      }).join("\n");
+    }
+  }
 
   // Render Logic for Analysis Tab State
   const renderAnalysisTabContent = () => {
