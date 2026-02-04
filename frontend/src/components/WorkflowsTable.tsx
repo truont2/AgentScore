@@ -10,7 +10,7 @@ import {
 import { ScoreBadge } from './ScoreBadge';
 import { StatusBadge } from './StatusBadge';
 import type { Workflow } from '@/data/mockData';
-import { ChevronRight, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WorkflowsTableProps {
@@ -47,7 +47,7 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
             <TableHead className="text-muted-foreground text-center">Score</TableHead>
             <TableHead className="text-muted-foreground">Status</TableHead>
             <TableHead className="text-right sr-only">Actions</TableHead>
-            <TableHead className="w-10"></TableHead>
+
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -93,9 +93,6 @@ export function WorkflowsTable({ workflows }: WorkflowsTableProps) {
                     )}
                   </Button>
                 </div>
-              </TableCell>
-              <TableCell>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </TableCell>
             </TableRow>
           ))}
