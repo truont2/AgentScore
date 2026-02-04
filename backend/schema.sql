@@ -31,6 +31,7 @@ create table events (
   tokens_out integer,
   cost float,
   latency_ms integer,
+  node_type text default 'normal',
   created_at timestamp with time zone default now()
 );
 

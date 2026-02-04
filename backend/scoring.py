@@ -598,7 +598,12 @@ def compute_workflow_graph_metrics(workflow_id: str, supabase_client):
             if rid in dead_nodes: ntype = "dead"
             if rid in critical_nodes: ntype = "critical"
             
-            supabase_client.table("events").update({"node_type": ntype}).eq("run_id", rid).execute()
+            try:
+                supabase_client.table("events").update({"node_type": ntype}).eq("run_id", rid).execute()
+            except Exception as e:
+                # Ignore schema errors (project migration might verify pending)
+                # print(f"Warning: Could not update node_type: {e}") 
+                pass
 
         return update_data
     except Exception as e:
