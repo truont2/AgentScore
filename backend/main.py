@@ -11,7 +11,7 @@ from prompt import ANALYSIS_PROMPT
 from scoring import calculate_efficiency_score, compute_workflow_graph_metrics
 
 from database import supabase
-from schemas import BatchEvents, Workflow, WorkflowDetail, AnalysisResult, EventCreate
+from schemas import Workflow, WorkflowDetail, AnalysisResult, EventCreate
 from pricing import calculate_cost
 
 app = FastAPI()
@@ -20,6 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
     "http://localhost:5173",
+    "https://agent-score.vercel.app",
+    "https://www.agent-score.vercel.app",
 ]
 
 app.add_middleware(
