@@ -20,6 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
     "http://localhost:5173",
+    "https://agent-score.vercel.app",
+    "https://www.agent-score.vercel.app",
 ]
 
 app.add_middleware(
