@@ -78,6 +78,22 @@ export default function WorkflowDetail() {
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Initializing analysis...");
   const { toast } = useToast();
+  const [progress, setProgress] = useState(0);
+  const [eta, setEta] = useState<string>("~45s");
+
+  // Smooth progress handling
+  const progressIntervalRef = useState<{ current: ReturnType<typeof setInterval> | null }>({ current: null })[0];
+
+  const clearProgressInterval = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => clearProgressInterval();
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -239,23 +255,104 @@ export default function WorkflowDetail() {
     setAnalyzing(true);
     setLoadingMessage("Initializing analysis...");
 
+
     try {
+      // Initialize manually
+      setProgress(0);
+      setEta("~45s");
+
       const response = await fetch(`${BACKEND_URL}/workflows/${id}/analyze`, {
         method: 'POST',
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Analysis failed');
+        throw new Error('Analysis request failed');
       }
 
-      toast({
-        title: "Analysis Complete",
-        description: "Efficiency report generated successfully.",
-      });
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      await fetchData();
-      return true;
+      if (!reader) throw new Error("No reader available");
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.error) {
+                throw new Error(data.error);
+              }
+
+              if (data.progress) {
+                const newProgress = data.progress;
+
+                // If we get a new progress update, clear any existing smoother
+                clearProgressInterval();
+
+                // Update specific status or jump
+                setProgress(newProgress);
+
+                // ETA Logic
+                if (newProgress < 20) setEta("~40s");
+                else if (newProgress < 40) setEta("~30s");
+                else if (newProgress < 80) setEta("~15s");
+                else if (newProgress < 95) setEta("~5s");
+                else setEta("Almost done...");
+
+                // START SMOOTHING if we encounter a long-wait step
+                // E.g. at 30% (Sending to Gemini), we want to creep up to ~75% over 30s
+                if (newProgress === 30) {
+                  let currentP = 30;
+                  const targetP = 78; // Don't hit 80 until real response comes
+                  const stepTime = 500; // Update every 500ms
+                  const totalSteps = (30000 / stepTime); // 30s duration
+                  const increment = (targetP - currentP) / totalSteps;
+
+                  progressIntervalRef.current = setInterval(() => {
+                    currentP = Math.min(targetP, currentP + increment);
+                    setProgress(Math.floor(currentP));
+
+                    // Update ETA dynamically
+                    const remaining = Math.max(0, 30 - ((currentP - 30) / increment * (stepTime / 1000)));
+                    if (remaining > 5) setEta(`~${Math.ceil(remaining)}s`);
+                  }, stepTime);
+                }
+              }
+
+              if (data.status) {
+                setLoadingMessage(data.status);
+              }
+
+              if (data.complete) {
+                clearProgressInterval();
+                setProgress(100);
+                setEta("Done!");
+
+                // Add a small delay so user sees 100% completion before switching view
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                toast({
+                  title: "Analysis Complete",
+                  description: "Efficiency report generated successfully.",
+                });
+                await fetchData();
+
+                // Ensure we know it's analyzed
+                return true;
+              }
+            } catch (e) {
+              console.error("Error parsing SSE data", e);
+            }
+          }
+        }
+      }
     } catch (err: any) {
       toast({
         title: "Analysis Failed",
@@ -264,6 +361,10 @@ export default function WorkflowDetail() {
       });
       return false;
     } finally {
+      clearProgressInterval();
+      // Only turn off analyzing if we actually finished or errored out completely
+      // If we returned true, we want to stay "analyzing" until the view switches or just let react unmount/re-render handle it?
+      // Actually, if we return true, fetchData has run. We set analyzing false to trigger re-render.
       setAnalyzing(false);
     }
   }, [id, fetchData, toast]);
@@ -355,7 +456,8 @@ export default function WorkflowDetail() {
     }
   }
 
-  // Render Logic for Analysis Tab State
+
+
   const renderAnalysisTabContent = () => {
     if (analyzing) {
       return (
@@ -363,6 +465,7 @@ export default function WorkflowDetail() {
           <div className="flex flex-col items-center max-w-md mx-auto">
             <div className="relative mb-8">
               <div className="w-16 h-16 rounded-full border-4 border-muted/30"></div>
+              {/* Spinner always rotates but we can also use progress for a radial indicator if desired */}
               <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
               <Search className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
             </div>
@@ -373,10 +476,20 @@ export default function WorkflowDetail() {
               "{loadingMessage}"
             </p>
 
-            <div className="w-full bg-muted/30 h-1.5 rounded-full overflow-hidden">
-              <div className="h-full bg-primary animate-progress-indeterminate"></div>
+            <div className="w-full space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>{progress}% Complete</span>
+                <span>ETA: {eta}</span>
+              </div>
+              <div className="w-full bg-muted/30 h-2 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500 ease-in-out"
+                  style={{ width: `${Math.max(5, progress)}%` }}
+                ></div>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">This typically takes 30-45 seconds</p>
+
+            <p className="text-xs text-muted-foreground mt-6 italic">Deep analysis of logic, costs, and redundancy patterns in progress.</p>
           </div>
         </div>
       );
