@@ -6,6 +6,7 @@ load_dotenv()
 
 from typing import List
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from google import genai
 from google.genai import types
 from datetime import datetime
@@ -192,95 +193,103 @@ def get_workflow_details(id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/workflows/{id}/analyze", response_model=AnalysisResult)
-def analyze_workflow(id: str):
-    """Triggers Gemini analysis on a workflow."""
+@app.post("/workflows/{id}/analyze")
+async def analyze_workflow(id: str):
+    """Triggers Gemini analysis on a workflow, streaming progress updates."""
     if not gemini_client:
         raise HTTPException(status_code=503, detail="Gemini API not configured")
 
-    try:
-        # 1. Fetch Workflow Data
-        wf_response = supabase.table("workflows").select("*").eq("id", id).execute()
-        if not wf_response.data:
-            raise HTTPException(status_code=404, detail="Workflow not found")
-        
-        events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
-        events = events_response.data
-        
-        if not events:
-             raise HTTPException(status_code=400, detail="No events found for this workflow to analyze")
+    def event_generator():
+        try:
+            # 1. Fetch Workflow Data
+            yield f"data: {json.dumps({'progress': 5, 'status': 'Initializing analysis...'})}\n\n"
+            
+            wf_response = supabase.table("workflows").select("*").eq("id", id).execute()
+            if not wf_response.data:
+                yield f"data: {json.dumps({'error': 'Workflow not found'})}\n\n"
+                return
+            
+            yield f"data: {json.dumps({'progress': 10, 'status': 'Fetching workflow events...'})}\n\n"
 
-        # 2. Construct Prompt using new schema fields
-        # Add explicit call numbers so Gemini can reference them
-        events_str = ""
-        calculated_total_cost = 0.0
-        for idx, e in enumerate(events, start=1):
-            role = e.get('event_type', 'unknown')
-            prompt_data = e.get('prompt', '')
-            response_data = e.get('response', '')
-            model = e.get('model', 'unknown')
-            cost = e.get('cost', 0)
-            run_id = e.get('run_id', '')
-            calculated_total_cost += cost
-            # Use strict mapping: Internal UUID <-> LLM-facing "call_N"
-            # We hide the UUID from Gemini to force it to use our simple ID
-            events_str += f"\n---\nID: call_{idx}\nEvent Type: [{role}]\nModel: {model}\nCost: ${cost}\nInput: {prompt_data}\nOutput: {response_data}\n"
+            events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
+            events = events_response.data
+            
+            if not events:
+                 yield f"data: {json.dumps({'error': 'No events found for this workflow'})}\n\n"
+                 return
 
-        prompt = ANALYSIS_PROMPT + "\n\n## WORKFLOW CALLS\n" + events_str
-        prompt += "\n\n**IMPORTANT: In your response, ALWAYS use the provided ID (e.g., 'call_1', 'call_2') as the call_id.**"
+            # 2. Construct Prompt
+            yield f"data: {json.dumps({'progress': 20, 'status': 'Preparing AI context...'})}\n\n"
+            
+            events_str = ""
+            calculated_total_cost = 0.0
+            for idx, e in enumerate(events, start=1):
+                role = e.get('event_type', 'unknown')
+                prompt_data = e.get('prompt', '')
+                response_data = e.get('response', '')
+                model = e.get('model', 'unknown')
+                cost = e.get('cost', 0)
+                calculated_total_cost += cost
+                events_str += f"\\n---\\nID: call_{idx}\\nEvent Type: [{role}]\\nModel: {model}\\nCost: ${cost}\\nInput: {prompt_data}\\nOutput: {response_data}\\n"
 
-        
-        
-        # 3. Call Gemini
-        response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
+            prompt = ANALYSIS_PROMPT + "\\n\\n## WORKFLOW CALLS\\n" + events_str
+            prompt += "\\n\\n**IMPORTANT: In your response, ALWAYS use the provided ID (e.g., 'call_1', 'call_2') as the call_id.**"
+
+            # 3. Call Gemini
+            yield f"data: {json.dumps({'progress': 30, 'status': 'Sending data to Gemini (this may take 30s)...'})}\n\n"
+            
+            # Using stream=True (optional, but we can't easily parse partial JSON)
+            # For now, we'll just wait for the result but keep the connection open
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
             )
-        )
-        
-        analysis_json = json.loads(response.text)
+            
+            yield f"data: {json.dumps({'progress': 80, 'status': 'Processing AI insights...'})}\n\n"
+            
+            analysis_json = json.loads(response.text)
 
-        # 4. Store Analysis
-        from scoring import calculate_efficiency_score
-        
-        # Fetch events again for scoring calculations (need token counts)
-        events_for_scoring = events  # Already fetched above
-        
-        # Calculate score with events for sub-scores and savings
-        score_data = calculate_efficiency_score(analysis_json, events=events_for_scoring)
-        
-        analysis_entry = {
-            "workflow_id": id,
-            "original_cost": analysis_json.get("original_cost") or calculated_total_cost,
-            "optimized_cost": analysis_json.get("optimized_cost") or (calculated_total_cost * 0.8), # Fallback if missing
-            "redundancies": {"items": analysis_json.get("redundancies") or analysis_json.get("redundant_calls") or []},
-            "model_overkill": {"items": analysis_json.get("model_overkill") or []},
-            "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},
-            "efficiency_score": score_data["score"],
-            "efficiency_grade": score_data["grade"],
-            "sub_scores": score_data["sub_scores"],
-            "optimized_sub_scores": score_data["optimized_sub_scores"],
-            "optimized_score": score_data["optimized_score"],
-            "savings_breakdown": score_data["savings_breakdown"]
-            # "created_at": datetime.now().isoformat() # defaulted in DB
-        }
-        
-        # Insert and return inserted data to get the ID and timestamp
-        res_insert = supabase.table("analyses").insert(analysis_entry).execute()
-        
-        # Update workflow status to analyzed
-        supabase.table("workflows").update({"status": "analyzed"}).eq("id", id).execute()
-        
-        return res_insert.data[0]
+            # 4. Store Analysis & Score
+            yield f"data: {json.dumps({'progress': 90, 'status': 'Calculating efficiency scores...'})}\n\n"
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Analysis failed: {e}")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+            from scoring import calculate_efficiency_score
+            
+            # Use events for scoring calculations
+            score_data = calculate_efficiency_score(analysis_json, events=events)
+            
+            analysis_entry = {
+                "workflow_id": id,
+                "original_cost": analysis_json.get("original_cost") or calculated_total_cost,
+                "optimized_cost": analysis_json.get("optimized_cost") or (calculated_total_cost * 0.8),
+                "redundancies": {"items": analysis_json.get("redundancies") or analysis_json.get("redundant_calls") or []},
+                "model_overkill": {"items": analysis_json.get("model_overkill") or []},
+                "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},
+                "efficiency_score": score_data["score"],
+                "efficiency_grade": score_data["grade"],
+                "sub_scores": score_data["sub_scores"],
+                "optimized_sub_scores": score_data["optimized_sub_scores"],
+                "optimized_score": score_data["optimized_score"],
+                "savings_breakdown": score_data["savings_breakdown"]
+            }
+            
+            # Insert analysis
+            supabase.table("analyses").insert(analysis_entry).execute()
+            
+            # Update workflow status
+            supabase.table("workflows").update({"status": "analyzed"}).eq("id", id).execute()
+            
+            yield f"data: {json.dumps({'progress': 100, 'status': 'Analysis complete!', 'complete': True})}\n\n"
+
+        except Exception as e:
+            print(f"Analysis failed: {e}")
+            traceback.print_exc()
+            error_msg = str(e)
+            yield f"data: {json.dumps({'error': error_msg})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.get("/workflows/{id}/analysis")
 def get_workflow_analysis(id: str):
