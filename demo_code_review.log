@@ -1,120 +1,38 @@
 /Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_core/_api/deprecation.py:26: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
   from pydantic.v1.fields import FieldInfo as FieldInfoV1
 
-Example 3: Code Review Assistant (Trace: 7c2c3ec3-741c-46b8-9192-211914c13214)
+Example 3: Code Review Assistant (Trace: e2cba3a4-72db-4581-8632-486ffd3d0122)
 Target: ~28 calls, ~$4.12
   Phase 1: Syntax Checks (Redundant)...
-  Rate limit hit. Retrying in 65s... (Attempt 1/5)
-  Rate limit hit. Retrying in 65s... (Attempt 2/5)
-  Rate limit hit. Retrying in 65s... (Attempt 3/5)
-  Rate limit hit. Retrying in 65s... (Attempt 4/5)
-  Rate limit hit. Retrying in 65s... (Attempt 5/5)
-Traceback (most recent call last):
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_google_genai/chat_models.py", line 3088, in _agenerate
-    await self.client.aio.models.generate_content(
-        **request,
-    )
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/models.py", line 7030, in generate_content
-    response = await self._generate_content(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        model=model, contents=contents, config=parsed_config
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/models.py", line 5836, in _generate_content
-    response = await self._api_client.async_request(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        'post', path, request_dict, http_options
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/_api_client.py", line 1432, in async_request
-    result = await self._async_request(
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-        http_request=http_request, http_options=http_options, stream=False
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/_api_client.py", line 1364, in _async_request
-    return await retry(self._async_request_once, http_request, stream)  # type: ignore[no-any-return]
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/tenacity/asyncio/__init__.py", line 111, in __call__
-    do = await self.iter(retry_state=retry_state)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/tenacity/asyncio/__init__.py", line 153, in iter
-    result = await action(retry_state)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/tenacity/_utils.py", line 99, in inner
-    return call(*args, **kwargs)
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/tenacity/__init__.py", line 420, in exc_check
-    raise retry_exc.reraise()
-          ~~~~~~~~~~~~~~~~~^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/tenacity/__init__.py", line 187, in reraise
-    raise self.last_attempt.result()
-          ~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/_base.py", line 443, in result
-    return self.__get_result()
-           ~~~~~~~~~~~~~~~~~^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/_base.py", line 395, in __get_result
-    raise self._exception
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/tenacity/asyncio/__init__.py", line 114, in __call__
-    result = await fn(*args, **kwargs)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/_api_client.py", line 1345, in _async_request_once
-    await errors.APIError.raise_for_async_response(client_response)
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/errors.py", line 203, in raise_for_async_response
-    await cls.raise_error_async(status_code, response_json, response)
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/google/genai/errors.py", line 225, in raise_error_async
-    raise ClientError(status_code, response_json, response)
-google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash-lite\nPlease retry in 16.093399476s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash-lite'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '16s'}]}}
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Users/hyun/Desktop/hackathon/AgentScore/agentDemos/demo_code_review.py", line 87, in <module>
-    asyncio.run(run_code_review_workflow())
-    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 204, in run
-    return runner.run(main)
-           ~~~~~~~~~~^^^^^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 127, in run
-    return self._loop.run_until_complete(task)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.2/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
-    return future.result()
-           ~~~~~~~~~~~~~^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/agentDemos/demo_code_review.py", line 62, in run_code_review_workflow
-    await invoke_with_retry(llm_cheap, [HumanMessage(content=f"Check syntax: {func}")])
-  File "/Users/hyun/Desktop/hackathon/AgentScore/agentDemos/demo_code_review.py", line 31, in invoke_with_retry
-    raise e
-  File "/Users/hyun/Desktop/hackathon/AgentScore/agentDemos/demo_code_review.py", line 24, in invoke_with_retry
-    return await llm.ainvoke(messages)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_core/language_models/chat_models.py", line 425, in ainvoke
-    llm_result = await self.agenerate_prompt(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<8 lines>...
-    )
-    ^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_core/language_models/chat_models.py", line 1132, in agenerate_prompt
-    return await self.agenerate(
-           ^^^^^^^^^^^^^^^^^^^^^
-        prompt_messages, stop=stop, callbacks=callbacks, **kwargs
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_core/language_models/chat_models.py", line 1090, in agenerate
-    raise exceptions[0]
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_core/language_models/chat_models.py", line 1359, in _agenerate_with_cache
-    result = await self._agenerate(
-             ^^^^^^^^^^^^^^^^^^^^^^
-        messages, stop=stop, run_manager=run_manager, **kwargs
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_google_genai/chat_models.py", line 3093, in _agenerate
-    _handle_client_error(e, request)
-    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
-  File "/Users/hyun/Desktop/hackathon/AgentScore/venv/lib/python3.14/site-packages/langchain_google_genai/chat_models.py", line 145, in _handle_client_error
-    raise ChatGoogleGenerativeAIError(msg) from e
-langchain_google_genai.chat_models.ChatGoogleGenerativeAIError: Error calling model 'gemini-2.5-flash-lite' (RESOURCE_EXHAUSTED): 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash-lite\nPlease retry in 16.093399476s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash-lite'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '16s'}]}}
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+  Phase 2: Logic Audit (Overkill)...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+  Phase 3: Style Check (Bloat)...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+  Phase 4: Summary Generation...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+Capturing Event ...
+  ✓ Workflow 3 Complete

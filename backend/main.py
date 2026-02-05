@@ -1,4 +1,9 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from typing import List
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from google import genai
