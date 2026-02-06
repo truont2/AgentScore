@@ -49,6 +49,7 @@ export default function Dashboard() {
             optimizedCost: 0, // Placeholder
             optimizedScore: bw.optimized_score || null,
             efficiencyScore: bw.efficiency_score || null,
+            potentialScore: null,
             redundancyScore: null,
             modelFitScore: null,
             contextEfficiencyScore: null,
