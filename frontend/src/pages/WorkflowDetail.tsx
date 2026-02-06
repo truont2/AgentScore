@@ -51,7 +51,7 @@ interface BackendAnalysis {
   original_cost: number;
   optimized_cost: number;
   efficiency_score: number;
-  efficiency_grade?: string;
+  optimized_score?: number; // Added field
   redundancies?: { items: any[] };
   model_overkill?: { items: any[] };
   prompt_bloat?: { items: any[] };
@@ -133,10 +133,31 @@ export default function WorkflowDetail() {
             const bFinding = bloat.find((f: any) => f.call_id === callId);
             const sFinding = security.find((f: any) => f.call_id === callId);
 
+            const findingRedundantId = rFinding ? rFinding.call_ids.find((id: string) => id !== callId) : undefined;
+            let resolvedRedundantId = undefined;
+            let resolvedRedundantIndex = undefined;
+
+            if (findingRedundantId) {
+              // Parse "call_3" -> index 2
+              try {
+                const parts = findingRedundantId.split('_');
+                if (parts.length === 2) {
+                  const targetIdx = parseInt(parts[1]) - 1;
+                  if (gData.nodes[targetIdx]) {
+                    resolvedRedundantId = gData.nodes[targetIdx].id;
+                    resolvedRedundantIndex = targetIdx + 1; // 1-based index
+                  }
+                }
+              } catch (e) {
+                console.error("Failed to parse redundant ID:", findingRedundantId);
+              }
+            }
+
             return {
               ...node,
               isRedundant: !!rFinding,
-              redundantWithId: rFinding ? rFinding.call_ids.find((id: string) => id !== callId) : undefined,
+              redundantWithId: resolvedRedundantId,
+              redundantWithIndex: resolvedRedundantIndex,
               isOverkill: !!oFinding,
               recommendedModel: oFinding?.recommended_model,
               isBloated: !!bFinding,
@@ -168,6 +189,7 @@ export default function WorkflowDetail() {
 
         optimizedCost: latestAnalysis?.optimized_cost || wfData.total_cost,
         efficiencyScore: latestAnalysis?.efficiency_score || null,
+        optimizedScore: latestAnalysis?.optimized_score || null,
         redundancyScore: latestAnalysis ? 85 : null,
         modelFitScore: latestAnalysis ? 90 : null,
         contextEfficiencyScore: latestAnalysis ? 75 : null,
@@ -390,7 +412,9 @@ export default function WorkflowDetail() {
   }
 
   const isAnalyzed = workflow.status === 'analyzed';
-  const optimizedScore = isAnalyzed ? Math.min((workflow.efficiencyScore || 0) + 20, 99) : null;
+  const optimizedScore = isAnalyzed
+    ? (workflow.optimizedScore !== null && workflow.optimizedScore !== undefined ? workflow.optimizedScore : Math.min((workflow.efficiencyScore || 0) + 20, 99))
+    : null;
 
   // Calculate issue counts based on savings (safely parsing string "$2.50")
   const parseSavings = (s?: string) => s ? parseFloat(s.replace(/[^0-9.]/g, '')) : 0;

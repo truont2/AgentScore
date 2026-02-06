@@ -1,4 +1,4 @@
-import { type GraphCall } from '@/data/dependencyGraphData';
+import { type GraphCall } from '@/types';
 import { Card } from '@/components/ui/card';
 import { ShieldAlert, Zap, Clock, DollarSign, Database, AlertTriangle } from 'lucide-react';
 
@@ -26,7 +26,7 @@ const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
 
   return (
     <Card className="p-6 bg-slate-950 border-slate-800 shadow-lg flex flex-col h-full max-h-[800px]">
-      <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
+      <div className="space-y-6 flex-1 overflow-y-auto scrollbar-hide pr-2">
         <div>
           <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 border-b border-slate-800 pb-2">Trace Step Details</h3>
 
@@ -45,8 +45,8 @@ const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
             )}
           </div>
 
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Step {(selectedCall.index || 0) + 1}</p>
           <p className="text-xl font-black text-slate-100 leading-tight break-words">{selectedCall.agent || 'Agent'}</p>
-          <p className="text-sm text-slate-400 mt-1 font-medium">{selectedCall.label || 'Agent Call'}</p>
         </div>
 
         {/* Security Alert Section */}
@@ -103,7 +103,9 @@ const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
               <div className="flex gap-3 items-start p-3 bg-rose-950/20 rounded-xl border border-rose-900/30">
                 <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Duplicate of <span className="font-bold text-rose-400">Call #{selectedCall.redundantWithId}</span>. Recommend caching or sharing state.
+                  Duplicate of <span className="font-bold text-rose-400">
+                    {selectedCall.redundantWithIndex ? `Step #${selectedCall.redundantWithIndex}` : `Call #${(selectedCall.redundantWithId || '').slice(0, 8)}...`}
+                  </span>. Recommend caching or sharing state.
                 </p>
               </div>
             )}
@@ -132,29 +134,35 @@ const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
         )}
 
         {/* Payload / Context Data */}
-        <div className="space-y-4 pt-2 border-t border-slate-800">
-          <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Payload Data</h4>
+        {(selectedCall.input || selectedCall.prompt || selectedCall.output || selectedCall.response) && (
+          <div className="space-y-4 pt-2 border-t border-slate-800">
+            <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Payload Data</h4>
 
-          {/* Input/Prompt */}
-          <div className="space-y-2">
-            <span className="text-[10px] text-slate-500 font-bold uppercase">Input / Prompt</span>
-            <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
-              <p className="text-[10px] text-slate-400 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto custom-scrollbar">
-                {selectedCall.input || selectedCall.prompt || <span className="italic text-slate-600">No input captured</span>}
-              </p>
-            </div>
-          </div>
+            {/* Input/Prompt */}
+            {(selectedCall.input || selectedCall.prompt) && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Input / Prompt</span>
+                <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
+                  <p className="text-[10px] text-slate-400 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto scrollbar-hide">
+                    {selectedCall.input || selectedCall.prompt}
+                  </p>
+                </div>
+              </div>
+            )}
 
-          {/* Output/Response */}
-          <div className="space-y-2">
-            <span className="text-[10px] text-slate-500 font-bold uppercase">Output / Response</span>
-            <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
-              <p className="text-[10px] text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
-                {selectedCall.output || selectedCall.response || <span className="italic text-slate-600">No response captured</span>}
-              </p>
-            </div>
+            {/* Output/Response */}
+            {(selectedCall.output || selectedCall.response) && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Output / Response</span>
+                <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
+                  <p className="text-[10px] text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto scrollbar-hide">
+                    {selectedCall.output || selectedCall.response}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </Card>
   );

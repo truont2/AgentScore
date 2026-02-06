@@ -1,4 +1,4 @@
-import type { GraphCall } from '@/data/dependencyGraphData';
+import type { GraphCall } from '@/types';
 
 interface GraphNodeProps {
   call: GraphCall;
@@ -147,7 +147,7 @@ const GraphNode = ({
         fill="#94a3b8"
         fontFamily="JetBrains Mono, monospace"
       >
-        {call.latency ? (call.latency / 1000).toFixed(1) : '0.0'}s • {call.tokens_in || 0}t
+        {call.latency ? (call.latency / 1000).toFixed(1) : '0.0'}s • {call.tokens || 0}t
       </text>
     </g>
   );

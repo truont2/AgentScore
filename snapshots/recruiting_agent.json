@@ -1,0 +1,242 @@
+{
+  "workflow": {
+    "id": "workflow-recruiting-v2",
+    "name": "Pipeline: Staff AI Engineer Sourcing (Q1)",
+    "status": "active",
+    "start_time": "2026-02-05T08:00:00.000000+00:00",
+    "end_time": "2026-02-05T09:30:00.000000+00:00",
+    "total_calls": 12,
+    "total_cost": 28.40,
+    "created_at": "2026-02-05T10:00:00.000000+00:00",
+    "graph_computed": true,
+    "dead_branch_waste": 12.50,
+    "critical_path_latency": 180000,
+    "information_efficiency": 18
+  },
+  "events": [
+    {
+      "run_id": "recruit_1",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "system",
+          "content": "You are an Executive AI Recruiter."
+        },
+        {
+          "type": "human",
+          "content": "I have uploaded 500 PDF resumes (Total 1.5GB text). Parse them all. Extract: Name, Current Role, Years of Transformers Exp, Patents."
+        }
+      ],
+      "response": "Parsing 500 resumes...\n1. John Doe: Staff Research Scientist, 5 yrs, 3 patents.\n2. Jane Smith: Senior ML Engineer, 3 yrs, 0 patents.\n... (Output truncated)",
+      "tokens_in": 750000,
+      "tokens_out": 15000,
+      "cost": 3.90,
+      "latency_ms": 45000,
+      "created_at": "2026-02-05T08:00:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_2",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_1",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Filter the list. I only want candidates with >4 years LLM experience and at least 1 patent. Then rank them by 'Culture Fit' based on their cover letters."
+        }
+      ],
+      "response": "Filtering...\nShortlist (Top 5):\n1. Dr. Alice Chen (Score: 98/100) - Strong open source ethos.\n2. Bob Wilson (Score: 94/100) - Pragmatic builder mindset.\n...",
+      "tokens_in": 765000,
+      "tokens_out": 2000,
+      "cost": 3.85,
+      "latency_ms": 12000,
+      "created_at": "2026-02-05T08:05:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_3",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_2",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Draft a personalized outreach email to Dr. Alice Chen. Reference her paper on 'Sparse Attention'."
+        }
+      ],
+      "response": "Subject: Your work on Sparse Attention / Opportunity at AgentScore\n\nHi Alice,\n\nI was reading your paper on Sparse Attention mechanisms and was blown away by the efficiency gains you achieved...",
+      "tokens_in": 20000,
+      "tokens_out": 500,
+      "cost": 0.11,
+      "latency_ms": 5000,
+      "created_at": "2026-02-05T08:10:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_4",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_2",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Draft email for Bob Wilson."
+        }
+      ],
+      "response": "Subject: Opportunity at AgentScore\n\nHi Bob,\n\nI saw your profile and...",
+      "tokens_in": 20000,
+      "tokens_out": 500,
+      "cost": 0.11,
+      "latency_ms": 4000,
+      "created_at": "2026-02-05T08:12:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_5",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_2",
+      "event_type": "llm_call",
+      "model": "o1-preview",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Analyze the compensation expectations of the Top 5 candidates vs our budget ($350k base). Can we afford them?"
+        }
+      ],
+      "response": "Market Analysis:\n- Dr. Alice Chen: Estimated market value $450k+ (Ex-Meta).\n- Bob Wilson: ~$320k.\n\nStrategy: You likely need to offer significant equity to close Alice. Bob fits the cash budget.",
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "cost": 2.50,
+      "latency_ms": 30000,
+      "created_at": "2026-02-05T08:20:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_6",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_5",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Generate a technical quiz for the screening call. Focus on CUDA kernels and Pytorch internals."
+        }
+      ],
+      "response": "1. Explain the difference between shared memory and global memory in a CUDA block.\n2. How does PyTorch Autograd handle in-place operations?\n...",
+      "tokens_in": 50000,
+      "tokens_out": 2000,
+      "cost": 0.26,
+      "latency_ms": 8000,
+      "created_at": "2026-02-05T08:25:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_7",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_6",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Wait, I forgot to filter for Remote work. Re-process the original 500 resumes. Who is open to Remote?"
+        }
+      ],
+      "response": "Re-scanning 500 resumes for 'Remote' keyword...\nFound 120 matches.\n1. ...",
+      "tokens_in": 755000,
+      "tokens_out": 5000,
+      "cost": 3.80,
+      "latency_ms": 40000,
+      "created_at": "2026-02-05T08:35:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_8",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_7",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Now filter THAT list for >4 years exp."
+        }
+      ],
+      "response": "Filtering 120 remote candidates...\nTop Remote Candidates:\n1. Sarah Jones...",
+      "tokens_in": 780000,
+      "tokens_out": 2000,
+      "cost": 3.92,
+      "latency_ms": 15000,
+      "created_at": "2026-02-05T08:40:00.000000+00:00"
+    },
+    {
+      "run_id": "recruit_9",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_8",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Compare the 'Remote' shortlist vs the 'Original' shortlist. Are there duplicates?"
+        }
+      ],
+      "response": "Yes, there is 80% overlap. Most top candidates requested Remote options.",
+      "tokens_in": 800000,
+      "tokens_out": 500,
+      "cost": 4.00,
+      "latency_ms": 10000,
+      "created_at": "2026-02-05T08:45:00.000000+00:00"
+    }
+  ],
+  "analyses": [
+    {
+      "workflow_id": "workflow-recruiting-v2",
+      "efficiency_score": 18,
+      "optimized_score": 88,
+      "efficiency_grade": "F",
+      "redundancies": {
+        "items": [
+          {
+            "call_ids": [
+              "recruit_7",
+              "recruit_8"
+            ],
+            "reason": "Re-processing the entire 750k context twice for simple metadata filtering that could have been done once.",
+            "savings": "$7.72",
+            "severity": "HIGH",
+            "confidence": 0.99
+          }
+        ]
+      },
+      "model_overkill": {
+        "items": [
+          {
+            "call_id": "recruit_9",
+            "current_model": "gpt-4o",
+            "recommended_model": "gpt-4o-mini",
+            "reason": "Simple list intersection check.",
+            "savings": "$3.95",
+            "severity": "MEDIUM",
+            "confidence": 0.90
+          }
+        ]
+      },
+      "prompt_bloat": {
+        "items": [
+          {
+            "call_id": "recruit_7",
+            "current_tokens": 755000,
+            "estimated_necessary_tokens": 50000,
+            "reason": "Resending full resume text instead of using structured JSON extracted in Step 1.",
+            "savings": "$3.50",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "waste_percentage": 93
+          }
+        ]
+      }
+    }
+  ]
+}

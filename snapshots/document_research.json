@@ -1,0 +1,175 @@
+{
+  "workflow": {
+    "id": "workflow-legal-v4",
+    "name": "Discovery: Class Action vs PharmaCorp (Case #99-004)",
+    "status": "active",
+    "start_time": "2026-02-05T15:00:00.000000+00:00",
+    "end_time": "2026-02-05T18:00:00.000000+00:00",
+    "total_calls": 14,
+    "total_cost": 42.80,
+    "created_at": "2026-02-05T18:00:00.000000+00:00",
+    "graph_computed": true,
+    "dead_branch_waste": 15.20,
+    "critical_path_latency": 360000,
+    "information_efficiency": 12
+  },
+  "events": [
+    {
+      "run_id": "legal_1",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "system",
+          "content": "You are a Forensic Legal Analyst."
+        },
+        {
+          "type": "human",
+          "content": "Ingest Batch A: 5,000 scanned emails (OCR raw text provided). Identify any communication mentioning 'Side Effect X' or 'Cover-up'."
+        }
+      ],
+      "response": "Processing Batch A (500MB)...\nFlagged Documents:\n1. Email from CEO to VP Research (2018-04-12): 'We need to bury the results of Study 101.'\n2. Internal Memo (2019-01-05): 'FDA submission must omit Appendix B.'\n... (400 relevant hits found)",
+      "tokens_in": 1200000,
+      "tokens_out": 25000,
+      "cost": 6.20,
+      "latency_ms": 60000,
+      "created_at": "2026-02-05T15:00:00.000000+00:00"
+    },
+    {
+      "run_id": "legal_2",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_1",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Ingest Batch B: 2,000 PDF Clinical Trial Reports. Correlate with the Flagged Emails."
+        }
+      ],
+      "response": "Cross-Referencing...\nMatch Found:\n- 'Study 101' referenced in Email 1 corresponds to 'Clinical Trial CT-2018-44' which shows 15% increase in cardiac events.",
+      "tokens_in": 1500000,
+      "tokens_out": 8000,
+      "cost": 7.60,
+      "latency_ms": 85000,
+      "created_at": "2026-02-05T15:15:00.000000+00:00"
+    },
+    {
+      "run_id": "legal_3",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_2",
+      "event_type": "llm_call",
+      "model": "o1-preview",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Based on these findings, construct a Timeline of Knowledge for the prosecution. This must be airtight."
+        }
+      ],
+      "response": "Timeline Construction:\n1. April 2018: Lab results confirm cardiac risk (Doc #4451).\n2. May 2018: Alert raised to Board (Doc #9921).\n3. June 2018: CEO authorizes suppression (Doc #112).\n4. July 2018: Drug launched with clean label.",
+      "tokens_in": 500000,
+      "tokens_out": 15000,
+      "cost": 8.50,
+      "latency_ms": 120000,
+      "created_at": "2026-02-05T15:30:00.000000+00:00"
+    },
+    {
+      "run_id": "legal_4",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_3",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Draft the Opening Statement using this timeline."
+        }
+      ],
+      "response": "Ladies and gentlemen of the jury, the evidence will show that PharmaCorp knew, as early as April 2018... [Full Speech Draft]",
+      "tokens_in": 50000,
+      "tokens_out": 4000,
+      "cost": 0.29,
+      "latency_ms": 12000,
+      "created_at": "2026-02-05T15:40:00.000000+00:00"
+    },
+    {
+      "run_id": "legal_5",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_3",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Wait, defense claims 'Study 101' referred to a different drug. Re-check ALL 7,000 documents for mentions of 'Project Titan' (codeword)."
+        }
+      ],
+      "response": "Rescanning entire corpus (2.7GB context)...\nFound association: 'Project Titan' IS 'Drug X'.\n'Study 101' is explicitly linked to 'Titan' in Doc #442.",
+      "tokens_in": 2700000,
+      "tokens_out": 2000,
+      "cost": 13.50,
+      "latency_ms": 90000,
+      "created_at": "2026-02-05T15:50:00.000000+00:00"
+    },
+    {
+      "run_id": "legal_6",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_5",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Did i miss anything else? Re-check everything for 'Dr. Smith'."
+        }
+      ],
+      "response": "Rescanning 2.7GB corpus...\nMentions of Dr. Smith found in 12 documents.",
+      "tokens_in": 2700000,
+      "tokens_out": 1000,
+      "cost": 13.50,
+      "latency_ms": 80000,
+      "created_at": "2026-02-05T16:00:00.000000+00:00"
+    }
+  ],
+  "analyses": [
+    {
+      "workflow_id": "workflow-legal-v4",
+      "efficiency_score": 12,
+      "optimized_score": 95,
+      "efficiency_grade": "F",
+      "redundancies": {
+        "items": [
+          {
+            "call_ids": [
+              "legal_5",
+              "legal_6"
+            ],
+            "reason": "Rescanning entire 2.7GB multi-million token corpus twice for simple keyword searches.",
+            "savings": "$27.00",
+            "severity": "HIGH",
+            "confidence": 0.99
+          }
+        ]
+      },
+      "model_overkill": {
+        "items": []
+      },
+      "prompt_bloat": {
+        "items": [
+          {
+            "call_id": "legal_5",
+            "current_tokens": 2700000,
+            "estimated_necessary_tokens": 5000,
+            "reason": "Using LLM as a keyword search engine (grep) over 2.7GB of text.",
+            "savings": "$13.48",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "waste_percentage": 99.9
+          }
+        ]
+      }
+    }
+  ]
+}

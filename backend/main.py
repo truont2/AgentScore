@@ -1,4 +1,9 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from typing import List
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import StreamingResponse
@@ -353,6 +358,8 @@ def get_workflow_graph(id: str):
                 "model": e.get("model", "unknown"),
                 "cost": float(e.get("cost", 0)),
                 "latency": e.get("latency_ms", 0),
+                "tokens_in": e.get("tokens_in", 0),
+                "tokens_out": e.get("tokens_out", 0),
                 "type": e.get("node_type", "normal") 
             })
 

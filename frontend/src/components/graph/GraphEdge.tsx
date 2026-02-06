@@ -1,4 +1,4 @@
-import type { GraphCall, GraphEdge as GraphEdgeType } from '@/data/dependencyGraphData';
+import type { GraphCall, GraphEdge as GraphEdgeType } from '@/types';
 import { useMemo } from 'react';
 import { NODE_HEIGHT } from './GraphNode';
 

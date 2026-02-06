@@ -1,0 +1,370 @@
+{
+  "workflow": {
+    "id": "workflow-migration-v2",
+    "name": "Project: Monolith to Microservices Migration",
+    "status": "active",
+    "start_time": "2026-02-05T09:00:00.000000+00:00",
+    "end_time": "2026-02-05T12:00:00.000000+00:00",
+    "total_calls": 15,
+    "total_cost": 24.50,
+    "created_at": "2026-02-05T12:00:00.000000+00:00",
+    "graph_computed": true,
+    "dead_branch_waste": 5.80,
+    "critical_path_latency": 240000,
+    "information_efficiency": 30
+  },
+  "events": [
+    {
+      "run_id": "step_1",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Scan the entire 2GB repository provided in context. Map out all dependencies between 'OrderService', 'InventoryService', and 'PaymentGateway'. Generate a dependency graph DOT file."
+        }
+      ],
+      "response": "digraph DependencyGraph {\n  node [shape=box];\n  OrderService -> InventoryService [label=\"gRPC: CheckStock\"];\n  OrderService -> PaymentGateway [label=\"REST: Charge\"];\n  InventoryService -> ShippingProvider [label=\"SOAP: ScheduleePickup\"];\n  // ... (1500 lines of Graphviz data) ...\n}",
+      "tokens_in": 250000,
+      "tokens_out": 8000,
+      "cost": 0.85,
+      "latency_ms": 15000,
+      "created_at": "2026-02-05T09:00:00.000000+00:00"
+    },
+    {
+      "run_id": "step_2",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_1",
+      "event_type": "llm_call",
+      "model": "o1-preview",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Based on the dependency graph, propose a 3-phase migration plan to split OrderService. Analyze the risks of distributed transactions."
+        }
+      ],
+      "response": "Phase 1: Strangler Fig Pattern\n- Deploy new OrderMicroservice alongside Monolith.\n- Use NGINX to route 1% of traffic.\n\nRisk Analysis:\n1. Data Consistency: Dual writes needed.\n2. Latency: Extra hop overhead estimated at 15ms.\n\nPhase 2: Database Partitioning...",
+      "tokens_in": 50000,
+      "tokens_out": 25000,
+      "cost": 3.50,
+      "latency_ms": 90000,
+      "created_at": "2026-02-05T09:05:00.000000+00:00"
+    },
+    {
+      "run_id": "step_3",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_2",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Generate the Protobuf definition for the new OrderService API."
+        }
+      ],
+      "response": "```protobuf\nsyntax = \"proto3\";\n\npackage order.v1;\n\nservice OrderService {\n  rpc CreateOrder(CreateOrderRequest) returns (Order);\n  rpc GetOrder(GetOrderRequest) returns (Order);\n}\n\nmessage CreateOrderRequest {\n  string user_id = 1;\n  repeated LineItem items = 2;\n}\n```",
+      "tokens_in": 100000,
+      "tokens_out": 3000,
+      "cost": 0.45,
+      "latency_ms": 8000,
+      "created_at": "2026-02-05T09:07:00.000000+00:00"
+    },
+    {
+      "run_id": "step_4",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_3",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Generate the Go boilerplate implementation for the OrderService based on that Proto file. Scaffold the handlers."
+        }
+      ],
+      "response": "```go\npackage main\n\nimport (\n  \"context\"\n  pb \"github.com/org/gen/proto/order/v1\"\n)\n\ntype server struct {\n  pb.UnimplementedOrderServiceServer\n}\n\nfunc (s *server) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.Order, error) {\n  // Implementation placeholder\n  return &pb.Order{Id: \"123\"}, nil\n}\n```",
+      "tokens_in": 120000,
+      "tokens_out": 5000,
+      "cost": 0.55,
+      "latency_ms": 12000,
+      "created_at": "2026-02-05T09:10:00.000000+00:00"
+    },
+    {
+      "run_id": "step_5",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_4",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Generate 50 unit tests for this boilerplate. Cover all edge cases for input validation."
+        }
+      ],
+      "response": "Here are the table-driven tests:\n```go\nfunc TestCreateOrder(t *testing.T) {\n  tests := []struct{\n    name string\n    input *pb.CreateOrderRequest\n    wantError bool\n  }{\n    {\"EmptyUser\", &pb.CreateOrderRequest{}, true},\n    {\"NegativeQty\", &pb.CreateOrderRequest{...}, true},\n    // ... 48 more tests ...\n  }\n}\n```",
+      "tokens_in": 150000,
+      "tokens_out": 12000,
+      "cost": 0.90,
+      "latency_ms": 25000,
+      "created_at": "2026-02-05T09:15:00.000000+00:00"
+    },
+    {
+      "run_id": "step_6",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_5",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "The tests failed with 'panic: nil pointer dereference'. Here is the stack trace."
+        }
+      ],
+      "response": "I see the issue. You are not checking if `req.Items` is nil before iterating. Here is the fix:\n```go\nif req.Items == nil {\n  return nil, status.Errorf(codes.InvalidArgument, \"missing items\")\n}\n```",
+      "tokens_in": 160000,
+      "tokens_out": 2000,
+      "cost": 0.48,
+      "latency_ms": 6000,
+      "created_at": "2026-02-05T09:20:00.000000+00:00"
+    },
+    {
+      "run_id": "step_7",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_3",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "I realized we forgot the 'ShippingAddress' field in the proto. Add it."
+        }
+      ],
+      "response": "Updated protobuf:\n```protobuf\nmessage CreateOrderRequest {\n  // ... previous fields\n  Address shipping_address = 3;\n}\n\nmessage Address {\n  string street = 1;\n  string city = 2;\n  string zip = 3;\n}\n```",
+      "tokens_in": 110000,
+      "tokens_out": 1000,
+      "cost": 0.35,
+      "latency_ms": 5000,
+      "created_at": "2026-02-05T09:22:00.000000+00:00"
+    },
+    {
+      "run_id": "step_8",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_7",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Regenerate the EXACT SAME Go boilerplate from Step 4 but with the new field. Do not change anything else."
+        }
+      ],
+      "response": "```go\n// Regenerated code including Address handling\nfunc (s *server) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) ...\n```",
+      "tokens_in": 130000,
+      "tokens_out": 5000,
+      "cost": 0.58,
+      "latency_ms": 12000,
+      "created_at": "2026-02-05T09:25:00.000000+00:00"
+    },
+    {
+      "run_id": "step_9",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_8",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Run the integration test suite. Here are the logs."
+        }
+      ],
+      "response": "Log analysis:\n[FAIL] TestOrderFlow: connection refused on port 50051.\n\nIt seems your gRPC server is not starting correctly in the Docker container. You need to expose the port in `docker-compose.yml`.",
+      "tokens_in": 500000,
+      "tokens_out": 1500,
+      "cost": 2.25,
+      "latency_ms": 15000,
+      "created_at": "2026-02-05T09:30:00.000000+00:00"
+    },
+    {
+      "run_id": "step_10",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_9",
+      "event_type": "llm_call",
+      "model": "o1-preview",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "The deployment is crashing with OOMKilled. We have 512MB limit. Analyze the heap dump summary."
+        }
+      ],
+      "response": "Heap Analysis:\n- 85% of memory is held by `json.Decoder` buffers.\n- You are loading the entire 500MB product catalog into memory on startup.\n\nSolution: Stream the catalog processing using `json.Token` or increase memory limit to 2GB.",
+      "tokens_in": 250000,
+      "tokens_out": 10000,
+      "cost": 4.50,
+      "latency_ms": 75000,
+      "created_at": "2026-02-05T09:40:00.000000+00:00"
+    },
+    {
+      "run_id": "step_11",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_10",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Implement the streaming JSON parser in Go."
+        }
+      ],
+      "response": "```go\ndec := json.NewDecoder(r)\nfor {\n  t, err := dec.Token()\n  if err == io.EOF { break }\n  // Process token\n}\n```",
+      "tokens_in": 400000,
+      "tokens_out": 3000,
+      "cost": 1.25,
+      "latency_ms": 10000,
+      "created_at": "2026-02-05T09:45:00.000000+00:00"
+    },
+    {
+      "run_id": "step_12",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_11",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Wait, I found a 3rd party library that does this. 'FastJSONStreamer'. Should I use it?"
+        }
+      ],
+      "response": "Refrain from introducing new dependencies for core functionality unless necessary. The standard library `encoding/json` is sufficient and safer for long-term maintenance.",
+      "tokens_in": 410000,
+      "tokens_out": 1000,
+      "cost": 1.22,
+      "latency_ms": 5000,
+      "created_at": "2026-02-05T09:48:00.000000+00:00"
+    },
+    {
+      "run_id": "step_13",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_12",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Okay, sticking to stdlib. Generate the Terraform for the final ECS deployment."
+        }
+      ],
+      "response": "```hcl\nresource \"aws_ecs_service\" \"order_service\" {\n  name            = \"order-service\"\n  cluster         = aws_ecs_cluster.main.id\n  task_definition = aws_ecs_task_definition.order.arn\n  desired_count   = 2\n}\n```",
+      "tokens_in": 420000,
+      "tokens_out": 4000,
+      "cost": 1.30,
+      "latency_ms": 11000,
+      "created_at": "2026-02-05T09:50:00.000000+00:00"
+    },
+    {
+      "run_id": "step_14",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_13",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "The deployment succeeded but latency is 500ms. Analyze the trace."
+        }
+      ],
+      "response": "Trace analysis indicates 450ms is spent in `PaymentGateway` connection establishment. You are not reusing the HTTP client.\n\nInitialize the client once as a global singleton:\n`var client = &http.Client{...}`",
+      "tokens_in": 600000,
+      "tokens_out": 2000,
+      "cost": 1.80,
+      "latency_ms": 14000,
+      "created_at": "2026-02-05T09:55:00.000000+00:00"
+    },
+    {
+      "run_id": "step_15",
+      "workflow_id": "workflow-migration-v2",
+      "parent_run_id": "step_14",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Fixed. Verify logic for the retry mechanism."
+        }
+      ],
+      "response": "The exponential backoff logic is correct:\n`time.Sleep(base * math.Pow(2, attempt))`.\n\nLGTM.",
+      "tokens_in": 610000,
+      "tokens_out": 500,
+      "cost": 1.81,
+      "latency_ms": 4000,
+      "created_at": "2026-02-05T10:00:00.000000+00:00"
+    }
+  ],
+  "analyses": [
+    {
+      "workflow_id": "workflow-migration-v2",
+      "efficiency_score": 30,
+      "optimized_score": 95,
+      "efficiency_grade": "D",
+      "redundancies": {
+        "items": [
+          {
+            "call_ids": [
+              "step_4",
+              "step_8"
+            ],
+            "reason": "Regenerating entire boilerplate code for a single field addition.",
+            "savings": "$0.58",
+            "severity": "HIGH",
+            "confidence": 0.98
+          }
+        ]
+      },
+      "model_overkill": {
+        "items": [
+          {
+            "call_id": "step_12",
+            "current_model": "gpt-4o",
+            "recommended_model": "gpt-4o-mini",
+            "reason": "Simple library recommendation question.",
+            "savings": "$1.20",
+            "severity": "MEDIUM",
+            "confidence": 0.92
+          },
+          {
+            "call_id": "step_15",
+            "current_model": "gpt-4o",
+            "recommended_model": "gpt-4o-mini",
+            "reason": "Simple logic verification.",
+            "savings": "$1.75",
+            "severity": "HIGH",
+            "confidence": 0.95
+          }
+        ]
+      },
+      "prompt_bloat": {
+        "items": [
+          {
+            "call_id": "step_9",
+            "current_tokens": 500000,
+            "estimated_necessary_tokens": 5000,
+            "reason": "Sending massive raw log dump for a simple connection error.",
+            "savings": "$2.20",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "waste_percentage": 99
+          },
+          {
+            "call_id": "step_14",
+            "current_tokens": 600000,
+            "estimated_necessary_tokens": 10000,
+            "reason": "Sending entire trace history for HTTP client reuse issue.",
+            "savings": "$1.75",
+            "severity": "MEDIUM",
+            "confidence": 0.85
+          }
+        ]
+      }
+    }
+  ]
+}

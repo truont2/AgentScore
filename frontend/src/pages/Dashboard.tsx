@@ -17,6 +17,7 @@ interface BackendWorkflow {
   total_cost: number;
   created_at: string;
   efficiency_score?: number;
+  optimized_score?: number;
 }
 
 export default function Dashboard() {
@@ -46,6 +47,7 @@ export default function Dashboard() {
             callCount: bw.total_calls || 0,
             totalCost: bw.total_cost || 0,
             optimizedCost: 0, // Placeholder
+            optimizedScore: bw.optimized_score || null,
             efficiencyScore: bw.efficiency_score || null,
             redundancyScore: null,
             modelFitScore: null,

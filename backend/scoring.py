@@ -30,19 +30,6 @@ def get_severity_weight(finding: Dict) -> float:
     return SEVERITY_WEIGHTS.get(severity, 0.6)
 
 
-def calculate_letter_grade(score: int) -> str:
-    """Convert numeric score to letter grade."""
-    if score >= 90:
-        return "A"
-    elif score >= 80:
-        return "B"
-    elif score >= 70:
-        return "C"
-    elif score >= 60:
-        return "D"
-    else:
-        return "F"
-
 
 def calculate_redundancy_score(redundancies: List[Dict], total_calls: int) -> int:
     """
@@ -254,7 +241,7 @@ def calculate_savings_breakdown(analysis_results: Dict, events: List[Dict]) -> D
                     context_efficiency_savings += savings * confidence
                     
                     # Inject savings into the finding item
-                    item["savings"] = f"${savings:.2f}"
+                    item["savings"] = f"${savings:.4f}"
     
     return {
         "redundancy_savings": round(redundancy_savings, 6),
@@ -357,6 +344,7 @@ def extract_top_issues(analysis_results: Dict) -> List[str]:
     return issues[:3]  # Return top 3
 
 
+
 def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dict]] = None) -> dict:
     """
     Calculates an efficiency score (0-100) based on detected inefficiencies.
@@ -441,8 +429,8 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
     # Calculate optimized overall score (weighted average)
     optimized_score = int(
         (optimized_sub_scores["redundancy"] + 
-         optimized_sub_scores["model_fit"] + 
-         optimized_sub_scores["context_efficiency"]) / 3
+        optimized_sub_scores["model_fit"] + 
+        optimized_sub_scores["context_efficiency"]) / 3
     )
     
     # Calculate savings breakdown
@@ -459,7 +447,7 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
     
     return {
         "score": score,
-        "grade": calculate_letter_grade(score),
+        "grade": None,
         "breakdown": {
             "redundancy_penalty": round(redundancy_penalty, 1),
             "overkill_penalty": round(overkill_penalty, 1),
@@ -598,7 +586,12 @@ def compute_workflow_graph_metrics(workflow_id: str, supabase_client):
             if rid in dead_nodes: ntype = "dead"
             if rid in critical_nodes: ntype = "critical"
             
-            supabase_client.table("events").update({"node_type": ntype}).eq("run_id", rid).execute()
+            try:
+                supabase_client.table("events").update({"node_type": ntype}).eq("run_id", rid).execute()
+            except Exception as e:
+                # Ignore schema errors (project migration might verify pending)
+                # print(f"Warning: Could not update node_type: {e}") 
+                pass
 
         return update_data
     except Exception as e:

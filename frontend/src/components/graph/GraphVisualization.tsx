@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { DependencyGraphData, GraphCall } from '@/data/dependencyGraphData';
+import type { DependencyGraphData, GraphCall } from '@/types';
 import GraphNode from './GraphNode';
 import GraphEdge from './GraphEdge';
 
