@@ -226,9 +226,20 @@ def calculate_savings_breakdown(analysis_results: dict, events: List[Dict]) -> d
                 real_current_model = event.get("model", "") or current_model
                 
                 # Calculate cost difference
-                current_cost = calculate_cost(real_current_model, tokens_in, tokens_out)
-                recommended_cost = calculate_cost(recommended_model, tokens_in, tokens_out)
-                savings = max(0, current_cost - recommended_cost)
+                # Calculate costs using standard pricing
+                theoretical_current = calculate_cost(real_current_model, tokens_in, tokens_out)
+                theoretical_recommended = calculate_cost(recommended_model, tokens_in, tokens_out)
+                
+                # Get the actual recorded cost from the event (which might be inflated for demo)
+                actual_event_cost = float(event.get("cost", 0))
+                
+                # Calculate savings using ratio to preserve the scale of the demo
+                if theoretical_current > 0 and actual_event_cost > 0:
+                    improvement_ratio = max(0, (theoretical_current - theoretical_recommended) / theoretical_current)
+                    savings = actual_event_cost * improvement_ratio
+                else:
+                    # Fallback to absolute difference if we have no event cost baseline
+                    savings = max(0, theoretical_current - theoretical_recommended)
                 
                 # Weight by confidence for total
                 model_fit_savings += savings * confidence

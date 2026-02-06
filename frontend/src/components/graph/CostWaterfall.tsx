@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { DependencyGraphData, GraphCall } from '@/types';
 import { DollarSign, Database, ShieldAlert, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ const ROW_HEIGHT = 72; // Fixed height for redundancy bridge calculations
 const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps) => {
     const calls = data.calls || [];
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     // Calculate total cost and latency for scaling
     const metrics = useMemo(() => {
@@ -55,9 +56,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
 
     return (
         <div className="w-full bg-slate-950 rounded-xl border border-slate-800 shadow-sm overflow-hidden flex flex-col h-[650px]">
-
-
-            {/* Header */}
+            {/* ... Header ... */}
             <div className="grid grid-cols-12 gap-4 pl-10 pr-6 py-3 bg-slate-900 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest z-10">
                 <div className="col-span-4">Agent Cost Trace</div>
                 <div className="col-span-2 text-center">Execution Cost</div>
@@ -69,11 +68,24 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative scrollbar-hide">
 
 
-                <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20">
+                <div className="absolute top-0 left-0 w-full pointer-events-none z-20" style={{ height: calls.length * ROW_HEIGHT }}>
                     <svg className="w-full h-full">
                         {redundancyBridges.map((bridge: any, i: number) => {
                             const startY = (bridge.sourceIndex * ROW_HEIGHT) + (ROW_HEIGHT / 2);
                             const endY = (bridge.targetIndex * ROW_HEIGHT) + (ROW_HEIGHT / 2);
+
+                            // Interaction Logic:
+                            // Show if:
+                            // 1. Hovering over source row
+                            // 2. Hovering over target row
+                            // 3. Hovering over a row "in between" (optional, maybe too noisy?) -> Let's stick to source/target
+                            // 4. A row is SELECTED (show relevant bridges for context)
+                            const isHovered = hoveredIndex === bridge.sourceIndex || hoveredIndex === bridge.targetIndex;
+                            const isSelected = selectedCall && (selectedCall.index === bridge.sourceIndex || selectedCall.index === bridge.targetIndex);
+                            const isRelevant = isHovered || isSelected;
+
+                            // Default to very faint, highlight on interaction
+                            const opacity = isRelevant ? 1 : 0.05;
 
                             // Dynamic styling for Double Whammy
                             const strokeColor = bridge.isDoubleWhammy ? "#f59e0b" : "#475569"; // Amber-500 vs Slate-600
@@ -85,7 +97,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
                             const midY = (startY + endY) / 2;
 
                             return (
-                                <g key={`bridge-group-${i}`}>
+                                <g key={`bridge-group-${i}`} style={{ opacity, transition: 'opacity 0.2s' }}>
                                     <path
                                         d={`M 36 ${startY} C 8 ${startY}, 8 ${endY}, 36 ${endY}`}
                                         fill="none"
@@ -124,6 +136,8 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
                             <div
                                 key={call.id}
                                 onClick={() => onSelectCall(selectedCall?.id === call.id ? null : call)}
+                                onMouseEnter={() => setHoveredIndex(idx)}
+                                onMouseLeave={() => setHoveredIndex(null)}
                                 style={{ height: `${ROW_HEIGHT}px` }}
                                 className={cn(
                                     "grid grid-cols-12 gap-4 pl-10 pr-6 border-b border-slate-800 items-center cursor-pointer transition-all hover:bg-slate-900/50",

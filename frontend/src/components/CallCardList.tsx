@@ -1,7 +1,8 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, FileJson } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, cleanContent } from "@/lib/utils";
 
 export interface Call {
     id: string;
@@ -159,8 +160,10 @@ function CallCard({ call }: CallCardProps) {
                         {/* OUTPUT SECTION */}
                         <div className="space-y-1.5">
                             <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600/80">Model Response</span>
-                            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-md p-3 text-xs font-mono whitespace-pre-wrap text-foreground/90 leading-relaxed">
-                                {call.response || "No response data available."}
+                            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-md p-3 text-xs text-foreground/90 leading-relaxed prose prose-invert prose-xs max-w-none prose-pre:bg-slate-950 prose-pre:border prose-pre:border-slate-800 [&_p]:m-0 [&_p]:leading-relaxed [&_strong]:text-emerald-300 [&_strong]:font-black">
+                                <ReactMarkdown>
+                                    {cleanContent(call.response || "No response data available.")}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     </div>

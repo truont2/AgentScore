@@ -1,10 +1,51 @@
 import { type GraphCall } from '@/types';
 import { Card } from '@/components/ui/card';
 import { ShieldAlert, Zap, Clock, DollarSign, Database, AlertTriangle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface GraphDetailsPanelProps {
   selectedCall: GraphCall | null;
 }
+
+// Helper to handle mixed content types (arrays, objects) and strip indentation that breaks markdown
+// e.g. converting 4-space indented text (which render as code blocks) back to normal text
+const cleanContent = (content: any): string => {
+  if (!content) return '';
+
+  let text = '';
+
+  // Handle array of prompts (common in LangChain/Agent data)
+  if (Array.isArray(content)) {
+    text = content.map(c => {
+      if (typeof c === 'string') return c;
+      if (typeof c === 'object' && c.content) return c.content; // OpenAI/LangChain message format
+      return JSON.stringify(c);
+    }).join('\n\n---\n\n');
+  }
+  else if (typeof content === 'object') {
+    text = JSON.stringify(content, null, 2);
+  } else {
+    text = String(content);
+  }
+
+  // Strip leading indentation to prevent unintended code blocks
+  // 1. Split into lines
+  const lines = text.split('\n');
+  // 2. Find minimum indentation (ignoring empty lines)
+  const minIndent = lines
+    .filter(l => l.trim().length > 0)
+    .reduce((min, line) => {
+      const indent = line.match(/^\s*/)?.[0].length || 0;
+      return Math.min(min, indent);
+    }, Infinity);
+
+  // 3. Remove that indentation if it exists and is > 0
+  if (minIndent > 0 && minIndent !== Infinity) {
+    text = lines.map(l => l.slice(minIndent)).join('\n');
+  }
+
+  return text.trim();
+};
 
 const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
   if (!selectedCall) {
@@ -141,11 +182,28 @@ const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
             {/* Input/Prompt */}
             {(selectedCall.input || selectedCall.prompt) && (
               <div className="space-y-2">
-                <span className="text-[10px] text-slate-500 font-bold uppercase">Input / Prompt</span>
-                <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
-                  <p className="text-[10px] text-slate-400 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto scrollbar-hide">
-                    {selectedCall.input || selectedCall.prompt}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Input / Prompt</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(selectedCall.input || selectedCall.prompt || '')}
+                    className="p-1 hover:bg-slate-800 rounded text-slate-500 hover:text-slate-300 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
+                <div className="bg-slate-950 rounded-lg border border-slate-800 relative group">
+                  <div className="absolute top-2 right-2 text-[9px] text-slate-600 font-mono opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    MARKDOWN
+                  </div>
+                  <div className="p-3 text-[10px] text-slate-400 leading-relaxed max-h-48 overflow-y-auto scrollbar-hide prose prose-invert prose-xs max-w-none prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800 [&_p]:m-0 [&_h1]:text-xs [&_h2]:text-xs [&_h3]:text-xs [&_strong]:font-black [&_strong]:text-slate-200">
+                    <ReactMarkdown>
+                      {cleanContent(selectedCall.input || selectedCall.prompt)}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             )}
@@ -153,11 +211,28 @@ const GraphDetailsPanel = ({ selectedCall }: GraphDetailsPanelProps) => {
             {/* Output/Response */}
             {(selectedCall.output || selectedCall.response) && (
               <div className="space-y-2">
-                <span className="text-[10px] text-slate-500 font-bold uppercase">Output / Response</span>
-                <div className="bg-slate-900 rounded-lg p-3 border border-slate-800">
-                  <p className="text-[10px] text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto scrollbar-hide">
-                    {selectedCall.output || selectedCall.response}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Output / Response</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(selectedCall.output || selectedCall.response || '')}
+                    className="p-1 hover:bg-slate-800 rounded text-slate-500 hover:text-slate-300 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
+                <div className="bg-slate-900/50 rounded-lg border border-slate-800/80 relative group">
+                  <div className="absolute top-2 right-2 text-[9px] text-slate-600 font-mono opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    MARKDOWN
+                  </div>
+                  <div className="p-3 text-[10px] text-emerald-400/80 leading-relaxed max-h-[300px] overflow-y-auto scrollbar-hide prose prose-invert prose-xs max-w-none prose-pre:bg-slate-950 prose-pre:border prose-pre:border-slate-800 [&_p]:m-0 [&_p]:leading-relaxed [&_strong]:text-emerald-300 [&_strong]:font-black">
+                    <ReactMarkdown>
+                      {cleanContent(selectedCall.output || selectedCall.response)}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             )}

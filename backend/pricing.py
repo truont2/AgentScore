@@ -17,6 +17,11 @@ MODEL_PRICING = {
     "gemini-2.0-flash-lite": {"input": 0.075, "output": 0.30},
     "gemini-2.0-flash-exp": {"input": 0.10, "output": 0.40}, # Proxy to flash
     "gemini-1.5-pro-002": {"input": 1.25, "output": 5.00}, # Proxy to 1.5 Pro pricing
+    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
+    "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
+    "gemini-1.5-flash-001": {"input": 0.075, "output": 0.30},
+    "gemini-1.5-flash-002": {"input": 0.075, "output": 0.30},
+    "gemini-1.5-flash-8b": {"input": 0.0375, "output": 0.15},
     
     # OpenAI
     "gpt-5.2": {"input": 1.75, "output": 14.00},
