@@ -130,47 +130,36 @@ function CallCard({ call }: CallCardProps) {
 
             {expanded && (
                 <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2 duration-200">
-                    {/* Adaptive Visualization */}
-                    <div className="space-y-4 mb-6">
-                        {parsedMessages ? (
-                            // MODE A: Structured Chat (JSON was valid)
-                            parsedMessages.map((msg, idx) => (
-                                <div key={idx} className={cn(
-                                    "flex flex-col gap-1 max-w-[90%]",
-                                    msg.type === 'system' ? "w-full" :
-                                        msg.type === 'human' ? "ml-auto items-end" : "items-start"
-                                )}>
-                                    <span className="text-[10px] uppercase text-muted-foreground font-semibold px-1">
-                                        {msg.type === 'human' ? 'User' : msg.type === 'ai' ? 'Assistant' : msg.type}
-                                    </span>
-                                    <div className={cn(
-                                        "rounded-lg p-3 text-sm whitespace-pre-wrap",
-                                        msg.type === 'system' ? "bg-muted/50 text-muted-foreground font-mono text-xs w-full border border-border/50" :
-                                            msg.type === 'human' ? "bg-primary text-primary-foreground" :
-                                                "bg-muted text-foreground"
-                                    )}>
-                                        {msg.content}
+                    <div className="space-y-6">
+                        {/* INPUT SECTION */}
+                        <div className="space-y-4">
+                            {parsedMessages ? (
+                                parsedMessages.map((msg, idx) => (
+                                    <div key={idx} className="space-y-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                                                {msg.type === 'human' ? 'User Prompt' : msg.type === 'system' ? 'System Instructions' : msg.type}
+                                            </span>
+                                        </div>
+                                        <div className="bg-muted/30 border border-border/50 rounded-md p-3 text-xs font-mono whitespace-pre-wrap text-foreground/90 leading-relaxed">
+                                            {msg.content}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="space-y-1.5">
+                                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Prompt</span>
+                                    <div className="bg-muted/30 border border-border/50 rounded-md p-3 text-xs font-mono whitespace-pre-wrap text-foreground/90 leading-relaxed">
+                                        {rawContent}
                                     </div>
                                 </div>
-                            ))
-                        ) : (
-                            // MODE B: Unstructured Text (Raw string)
-                            <div className="w-full">
-                                <span className="text-[10px] uppercase text-muted-foreground font-semibold px-1">
-                                    Full Prompt
-                                </span>
-                                <div className="bg-muted/30 text-muted-foreground rounded-lg p-4 text-xs font-mono whitespace-pre-wrap border border-border/50 overflow-auto max-h-[300px]">
-                                    {rawContent}
-                                </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* The Final Response */}
-                        <div className="flex flex-col gap-1 max-w-[90%] items-start pt-2 border-t border-border/50 mt-4">
-                            <span className="text-[10px] uppercase text-emerald-500 font-semibold px-1">
-                                Output
-                            </span>
-                            <div className="bg-emerald-500/10 text-foreground rounded-lg p-3 text-sm whitespace-pre-wrap border border-emerald-500/20 w-full">
+                        {/* OUTPUT SECTION */}
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600/80">Model Response</span>
+                            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-md p-3 text-xs font-mono whitespace-pre-wrap text-foreground/90 leading-relaxed">
                                 {call.response || "No response data available."}
                             </div>
                         </div>
