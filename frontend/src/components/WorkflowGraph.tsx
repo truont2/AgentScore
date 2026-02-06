@@ -108,8 +108,9 @@ export default function WorkflowGraph({ nodes: rawNodes, edges: rawEdges, onNode
                 />
             </div>
             <div className="lg:col-span-1">
-                <div className="sticky top-4 flex flex-col gap-4 max-h-[calc(100vh-120px)] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="sticky top-4 flex flex-col gap-4 max-h-[calc(100vh-120px)] overflow-y-auto pr-1 scrollbar-hide">
                     <GeminiAnalysis data={graphData} />
+
                     <GraphDetailsPanel selectedCall={selectedCall} />
                 </div>
             </div>

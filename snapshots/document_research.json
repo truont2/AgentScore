@@ -1,267 +1,175 @@
 {
   "workflow": {
-    "id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-    "name": "Workflow - Feb 04, 03:50 PM",
+    "id": "workflow-legal-v4",
+    "name": "Discovery: Class Action vs PharmaCorp (Case #99-004)",
     "status": "active",
-    "start_time": "2026-02-04T15:50:26.023882+00:00",
-    "end_time": "2026-02-04T15:50:40.844334+00:00",
-    "total_calls": 13,
-    "total_cost": 0.000456,
-    "created_at": "2026-02-04T23:50:26.382272+00:00",
+    "start_time": "2026-02-05T15:00:00.000000+00:00",
+    "end_time": "2026-02-05T18:00:00.000000+00:00",
+    "total_calls": 14,
+    "total_cost": 42.80,
+    "created_at": "2026-02-05T18:00:00.000000+00:00",
     "graph_computed": true,
-    "dead_branch_waste": 0.000447,
-    "critical_path_latency": 2510,
-    "information_efficiency": 0
+    "dead_branch_waste": 15.20,
+    "critical_path_latency": 360000,
+    "information_efficiency": 12
   },
   "events": [
     {
-      "run_id": "019c2b10-77c1-7cd2-9ee4-f5084e8bf056",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
+      "run_id": "legal_1",
+      "workflow_id": "workflow-legal-v4",
       "parent_run_id": null,
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
+          "type": "system",
+          "content": "You are a Forensic Legal Analyst."
+        },
+        {
           "type": "human",
-          "content": "Extract date from: Doc A: Market analysis of semiconductor industry 2025..."
+          "content": "Ingest Batch A: 5,000 scanned emails (OCR raw text provided). Identify any communication mentioning 'Side Effect X' or 'Cover-up'."
         }
       ],
-      "response": "The date extracted from the text is: **2025**",
-      "tokens_in": 19,
-      "tokens_out": 14,
-      "cost": 8e-06,
-      "latency_ms": 538,
-      "created_at": "2026-02-04T15:50:26.023882+00:00"
+      "response": "Processing Batch A (500MB)...\nFlagged Documents:\n1. Email from CEO to VP Research (2018-04-12): 'We need to bury the results of Study 101.'\n2. Internal Memo (2019-01-05): 'FDA submission must omit Appendix B.'\n... (400 relevant hits found)",
+      "tokens_in": 1200000,
+      "tokens_out": 25000,
+      "cost": 6.20,
+      "latency_ms": 60000,
+      "created_at": "2026-02-05T15:00:00.000000+00:00"
     },
     {
-      "run_id": "019c2b10-7c1a-7e30-92ca-2020150afd20",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
+      "run_id": "legal_2",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_1",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Find the publication year in: Doc A: Market analysis of semiconductor industry 2025..."
+          "content": "Ingest Batch B: 2,000 PDF Clinical Trial Reports. Correlate with the Flagged Emails."
         }
       ],
-      "response": "The publication year in \"Doc A: Market analysis of semiconductor industry 2025...\" is **2025**.",
-      "tokens_in": 21,
-      "tokens_out": 26,
-      "cost": 1.3e-05,
-      "latency_ms": 536,
-      "created_at": "2026-02-04T15:50:27.127648+00:00"
+      "response": "Cross-Referencing...\nMatch Found:\n- 'Study 101' referenced in Email 1 corresponds to 'Clinical Trial CT-2018-44' which shows 15% increase in cardiac events.",
+      "tokens_in": 1500000,
+      "tokens_out": 8000,
+      "cost": 7.60,
+      "latency_ms": 85000,
+      "created_at": "2026-02-05T15:15:00.000000+00:00"
     },
     {
-      "run_id": "019c2b10-7f4d-75c1-9ba8-9a1642f071af",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
+      "run_id": "legal_3",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_2",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "o1-preview",
       "prompt": [
         {
           "type": "human",
-          "content": "When was this published? Doc A: Market analysis of semiconductor industry 2025..."
+          "content": "Based on these findings, construct a Timeline of Knowledge for the prosecution. This must be airtight."
         }
       ],
-      "response": "To determine when \"Doc A: Market analysis of semiconductor industry 2025...\" was published, I need more information. The title itself doesn't contain the publication date.\n\nHere's what I need to know:\n\n*   **Is there a date mentioned anywhere in the document?** Look for:\n    *   A publication date on the cover page or title page.\n    *   A copyright date.\n    *   A date at the end of the document.\n    *   Any mention of \"published on,\" \"released on,\" or similar phrasing.\n\n*   **What is the full title?** Sometimes the year in the title refers to the *forecast* year, not the publication year. For example, a report published in 2023 might be titled \"Market Analysis of the Semiconductor Industry 2025\" to provide a forecast for that year.\n\n**Please provide any additional details or text from the document that might indicate its publication date.**",
-      "tokens_in": 20,
-      "tokens_out": 205,
-      "cost": 8.4e-05,
-      "latency_ms": 1309,
-      "created_at": "2026-02-04T15:50:28.718853+00:00"
+      "response": "Timeline Construction:\n1. April 2018: Lab results confirm cardiac risk (Doc #4451).\n2. May 2018: Alert raised to Board (Doc #9921).\n3. June 2018: CEO authorizes suppression (Doc #112).\n4. July 2018: Drug launched with clean label.",
+      "tokens_in": 500000,
+      "tokens_out": 15000,
+      "cost": 8.50,
+      "latency_ms": 120000,
+      "created_at": "2026-02-05T15:30:00.000000+00:00"
     },
     {
-      "run_id": "019c2b10-85ae-7b41-b2f7-289e089ad5a0",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
+      "run_id": "legal_4",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_3",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Extract date from: Doc B: Supply chain logistics for rare earth metals..."
+          "content": "Draft the Opening Statement using this timeline."
         }
       ],
-      "response": "There is no date present in the text \"Doc B: Supply chain logistics for rare earth metals...\".",
-      "tokens_in": 16,
-      "tokens_out": 21,
-      "cost": 1e-05,
-      "latency_ms": 508,
-      "created_at": "2026-02-04T15:50:29.551032+00:00"
+      "response": "Ladies and gentlemen of the jury, the evidence will show that PharmaCorp knew, as early as April 2018... [Full Speech Draft]",
+      "tokens_in": 50000,
+      "tokens_out": 4000,
+      "cost": 0.29,
+      "latency_ms": 12000,
+      "created_at": "2026-02-05T15:40:00.000000+00:00"
     },
     {
-      "run_id": "019c2b10-8891-7330-bec9-09d5f4f54b6f",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
+      "run_id": "legal_5",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_3",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Find the publication year in: Doc B: Supply chain logistics for rare earth metals..."
+          "content": "Wait, defense claims 'Study 101' referred to a different drug. Re-check ALL 7,000 documents for mentions of 'Project Titan' (codeword)."
         }
       ],
-      "response": "The publication year is **not provided** in the snippet you gave: \"Doc B: Supply chain logistics for rare earth metals...\".\n\nTo find the publication year, you would need to see the full document or its citation information.",
-      "tokens_in": 18,
-      "tokens_out": 47,
-      "cost": 2.1e-05,
-      "latency_ms": 563,
-      "created_at": "2026-02-04T15:50:30.345357+00:00"
+      "response": "Rescanning entire corpus (2.7GB context)...\nFound association: 'Project Titan' IS 'Drug X'.\n'Study 101' is explicitly linked to 'Titan' in Doc #442.",
+      "tokens_in": 2700000,
+      "tokens_out": 2000,
+      "cost": 13.50,
+      "latency_ms": 90000,
+      "created_at": "2026-02-05T15:50:00.000000+00:00"
     },
     {
-      "run_id": "019c2b10-8bd5-75f2-b73b-233b803c2f5f",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
+      "run_id": "legal_6",
+      "workflow_id": "workflow-legal-v4",
+      "parent_run_id": "legal_5",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "When was this published? Doc B: Supply chain logistics for rare earth metals..."
+          "content": "Did i miss anything else? Re-check everything for 'Dr. Smith'."
         }
       ],
-      "response": "I need more information to answer your question. \"Doc B: Supply chain logistics for rare earth metals...\" is not enough to identify a specific publication.\n\nTo help me find the publication date, please provide more details, such as:\n\n*   **The full title of the document:** Is there more to the title after \"rare earth metals...\"?\n*   **The author(s) or organization(s) responsible for the document:** Do you know who wrote it or which company/institution published it?\n*   **Where did you find this document?** Was it a website, a book, a journal article, a report? Knowing the source might help.\n*   **Any other identifying information:** Are there any document numbers, publication years mentioned elsewhere, or specific keywords associated with it?\n\nWith more context, I can try to locate the publication date for you.",
-      "tokens_in": 17,
-      "tokens_out": 180,
-      "cost": 7.4e-05,
-      "latency_ms": 1318,
-      "created_at": "2026-02-04T15:50:31.935071+00:00"
-    },
-    {
-      "run_id": "019c2b10-922e-7b31-9b13-665871f89602",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract date from: Doc C: Geopolitical impact on trade tariffs..."
-        }
-      ],
-      "response": "There is no date explicitly mentioned in the provided text: \"Doc C: Geopolitical impact on trade tariffs...\".",
-      "tokens_in": 15,
-      "tokens_out": 23,
-      "cost": 1.1e-05,
-      "latency_ms": 437,
-      "created_at": "2026-02-04T15:50:32.679842+00:00"
-    },
-    {
-      "run_id": "019c2b10-94c0-7692-bfd4-877ae79c3841",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Find the publication year in: Doc C: Geopolitical impact on trade tariffs..."
-        }
-      ],
-      "response": "The publication year is not provided in the snippet \"Doc C: Geopolitical impact on trade tariffs...\".",
-      "tokens_in": 17,
-      "tokens_out": 21,
-      "cost": 1e-05,
-      "latency_ms": 394,
-      "created_at": "2026-02-04T15:50:33.294725+00:00"
-    },
-    {
-      "run_id": "019c2b10-97ad-72f0-a4a9-24cc6c62532e",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "When was this published? Doc C: Geopolitical impact on trade tariffs..."
-        }
-      ],
-      "response": "I need more information to tell you when \"Doc C: Geopolitical impact on trade tariffs...\" was published.\n\nHere's why and what I need:\n\n*   **\"Doc C\" is not a standard publication identifier.** It's likely a document title or a label within a larger collection or system.\n*   **I don't have access to external documents or specific databases.** I can only process the text you provide.\n\n**To help me find the publication date, please provide more details, such as:**\n\n*   **The full title of the document:** Is \"Geopolitical impact on trade tariffs...\" the complete title, or is there more?\n*   **The author(s) or organization(s) that published it:** Knowing who wrote it or where it came from is crucial.\n*   **Where did you find this document?** Was it on a specific website, in a book, a report, a journal article? Providing the source will help me narrow down the search.\n*   **Any other identifying information:** Are there any publication numbers, dates mentioned in the context where you found it, or any other clues?\n\nOnce you provide more context, I'll do my best to help you find the publication date.",
-      "tokens_in": 16,
-      "tokens_out": 259,
-      "cost": 0.000105,
-      "latency_ms": 1670,
-      "created_at": "2026-02-04T15:50:35.321279+00:00"
-    },
-    {
-      "run_id": "019c2b10-9f0a-7110-8a93-fd3967053bce",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract date from: Doc D: Labor statistics in manufacturing sector..."
-        }
-      ],
-      "response": "There is no date in the text provided.",
-      "tokens_in": 14,
-      "tokens_out": 9,
-      "cost": 5e-06,
-      "latency_ms": 425,
-      "created_at": "2026-02-04T15:50:35.958456+00:00"
-    },
-    {
-      "run_id": "019c2b10-a1ed-7e02-86b2-5503f4daf083",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Find the publication year in: Doc D: Labor statistics in manufacturing sector..."
-        }
-      ],
-      "response": "Unfortunately, the provided text \"Doc D: Labor statistics in manufacturing sector...\" does not contain the publication year.\n\nTo find the publication year, you would need to look at the full document or the source from which this excerpt was taken.",
-      "tokens_in": 16,
-      "tokens_out": 48,
-      "cost": 2.1e-05,
-      "latency_ms": 564,
-      "created_at": "2026-02-04T15:50:36.836194+00:00"
-    },
-    {
-      "run_id": "019c2b10-a6b2-7c71-9ee2-ecde291397f2",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "When was this published? Doc D: Labor statistics in manufacturing sector..."
-        }
-      ],
-      "response": "To tell you when \"Doc D: Labor statistics in manufacturing sector...\" was published, I need more information. This title is quite general, and there could be many documents with similar titles.\n\nPlease provide me with more details, such as:\n\n*   **The full title of the document:** Is there anything after \"manufacturing sector...\"?\n*   **The author or organization:** Who published this document? (e.g., Bureau of Labor Statistics, a specific research institute, a government agency, a particular author's name)\n*   **Any identifying numbers or codes:** Does it have a document number, report number, or ISBN?\n*   **Where did you find this title?** (e.g., a website, a book, a database, a citation)\n*   **Any keywords or context:** What is the document about specifically? (e.g., a particular year, region, or type of labor statistic)\n\nWith more information, I can help you find the publication date.",
-      "tokens_in": 15,
-      "tokens_out": 208,
-      "cost": 8.5e-05,
-      "latency_ms": 2510,
-      "created_at": "2026-02-04T15:50:40.003575+00:00"
-    },
-    {
-      "run_id": "019c2b10-b175-7763-b34e-13b6061b7fc6",
-      "workflow_id": "41727f27-ec32-46a1-a2dd-ee4c4954b03d",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract date from: Doc E: Environmental regulations for mining..."
-        }
-      ],
-      "response": "There is no date information present in the text \"Doc E: Environmental regulations for mining...\".",
-      "tokens_in": 13,
-      "tokens_out": 19,
-      "cost": 9e-06,
-      "latency_ms": 593,
-      "created_at": "2026-02-04T15:50:40.844334+00:00"
+      "response": "Rescanning 2.7GB corpus...\nMentions of Dr. Smith found in 12 documents.",
+      "tokens_in": 2700000,
+      "tokens_out": 1000,
+      "cost": 13.50,
+      "latency_ms": 80000,
+      "created_at": "2026-02-05T16:00:00.000000+00:00"
     }
   ],
-  "analyses": [],
-  "exported_at": "2026-02-04T15:51:15.891161"
+  "analyses": [
+    {
+      "workflow_id": "workflow-legal-v4",
+      "efficiency_score": 12,
+      "optimized_score": 95,
+      "efficiency_grade": "F",
+      "redundancies": {
+        "items": [
+          {
+            "call_ids": [
+              "legal_5",
+              "legal_6"
+            ],
+            "reason": "Rescanning entire 2.7GB multi-million token corpus twice for simple keyword searches.",
+            "savings": "$27.00",
+            "severity": "HIGH",
+            "confidence": 0.99
+          }
+        ]
+      },
+      "model_overkill": {
+        "items": []
+      },
+      "prompt_bloat": {
+        "items": [
+          {
+            "call_id": "legal_5",
+            "current_tokens": 2700000,
+            "estimated_necessary_tokens": 5000,
+            "reason": "Using LLM as a keyword search engine (grep) over 2.7GB of text.",
+            "savings": "$13.48",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "waste_percentage": 99.9
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -41,7 +41,8 @@ def seed_demos(snapshot_file, reset_state=False, count=1):
         # Judge Mode: Reset status to pending
         if reset_state:
             new_workflow['status'] = 'pending'
-            new_workflow['total_cost'] = 0 
+            # Calculate actual cost from events instead of 0
+            new_workflow['total_cost'] = sum(float(evt.get('cost', 0)) for evt in events_data)
         
         # Shift workflow timestamps
         for field in ['created_at', 'start_time', 'end_time']:
@@ -89,6 +90,22 @@ def seed_demos(snapshot_file, reset_state=False, count=1):
             supabase.table("events").insert(chunk).execute()
             
         print("Events inserted.")
+
+        # 3.5 Reconstruct Call Edges (Crucial for dependency graph)
+        edge_data = []
+        for evt in new_events:
+            if evt.get('parent_run_id'):
+                edge_data.append({
+                    "workflow_id": new_wf_id,
+                    "source_id": evt['parent_run_id'],
+                    "target_id": evt['run_id'],
+                    "overlap_score": 1.0,  # Default for reconstructed edges
+                    "overlap_type": "exact"
+                })
+        
+        if edge_data:
+             supabase.table("call_edges").insert(edge_data).execute()
+             print(f"Reconstructed {len(edge_data)} call edges.")
         
         # 4. Process Analyses (Skip if reset_state is True)
         if reset_state:

@@ -1,609 +1,242 @@
 {
   "workflow": {
-    "id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-    "name": "Workflow - Feb 04, 04:18 PM",
+    "id": "workflow-recruiting-v2",
+    "name": "Pipeline: Staff AI Engineer Sourcing (Q1)",
     "status": "active",
-    "start_time": "2026-02-04T16:18:10.001225+00:00",
-    "end_time": "2026-02-04T16:24:16.25971+00:00",
-    "total_calls": 31,
-    "total_cost": 0.032497,
-    "created_at": "2026-02-05T00:18:10.391424+00:00",
+    "start_time": "2026-02-05T08:00:00.000000+00:00",
+    "end_time": "2026-02-05T09:30:00.000000+00:00",
+    "total_calls": 12,
+    "total_cost": 28.40,
+    "created_at": "2026-02-05T10:00:00.000000+00:00",
     "graph_computed": true,
-    "dead_branch_waste": 0.028113,
-    "critical_path_latency": 34724,
-    "information_efficiency": 0
+    "dead_branch_waste": 12.50,
+    "critical_path_latency": 180000,
+    "information_efficiency": 18
   },
   "events": [
     {
-      "run_id": "019c2b29-d0b2-7a63-9c93-4b6fb0fb35b9",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
+      "run_id": "recruit_1",
+      "workflow_id": "workflow-recruiting-v2",
       "parent_run_id": null,
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
+          "type": "system",
+          "content": "You are an Executive AI Recruiter."
+        },
+        {
           "type": "human",
-          "content": "Rank these candidates for the role: ['Alex Chen (Full Stack)', 'Sam Smith (DevOps)', 'Jordan Lee (Product)', 'Taylor Doe (Design)', 'Casey Wu (Data)']"
+          "content": "I have uploaded 500 PDF resumes (Total 1.5GB text). Parse them all. Extract: Name, Current Role, Years of Transformers Exp, Patents."
         }
       ],
-      "response": "To rank these candidates, I need more information! Here's why and what kind of information would be helpful:\n\n**Why I Can't Rank Them Yet:**\n\n*   **No Criteria:** \"Ranking\" implies a comparison based on specific requirements. Without knowing what qualities are most important for this specific role, any ranking would be arbitrary.\n*   **No Candidate Details:** I only have names and general specializations. I don't know their experience, skills, qualifications, interview performance, references, or anything that would differentiate them.\n\n**What Information Would Help Me Rank Them:**\n\nTo provide a meaningful ranking, please tell me about the **specific requirements and priorities for this role.** Consider these factors:\n\n**1. Role Requirements & Priorities:**\n\n*   **What is the primary function of this role?** (e.g., building new features, optimizing infrastructure, defining product strategy, creating user interfaces, analyzing data for insights)\n*   **What are the absolute \"must-have\" skills and experience for this role?**\n*   **What are the \"nice-to-have\" skills and experience?**\n*   **What level of experience is expected?** (e.g., junior, mid-level, senior, lead)\n*   **What is the team dynamic and culture?** (e.g., collaborative, independent, fast-paced)\n*   **What are the key challenges this person will face?**\n\n**2. Candidate Specifics (for each candidate):**\n\n*   **Resume/CV Highlights:** What are their most relevant accomplishments and experiences?\n*   **Skill Assessment:** How do their technical and soft skills align with the role's requirements?\n*   **Interview Performance:**\n    *   How did they articulate their experience?\n    *   Did they demonstrate problem-solving skills?\n    *   How was their communication and cultural fit?\n    *   Did they ask insightful questions?\n*   **References:** What feedback have you received from their references?\n*   **Specific Contributions:** Have they demonstrated specific skills relevant to the role (e.g., a portfolio for Design, a GitHub repo for Engineering, a case study for Data)?\n\n**Once you provide me with this information, I can help you create a ranked list.**\n\n**Example of how I would rank if I had information:**\n\nLet's say the role is a **Senior Full Stack Engineer** who needs to lead the development of a new customer-facing feature and has strong experience with React and Node.js.\n\n*   **Alex Chen (Full Stack):** If Alex has 8 years of experience, a proven track record of leading feature development, and deep expertise in React and Node.js, they would likely be ranked highest.\n*   **Sam Smith (DevOps):** While important for infrastructure, if the primary need is feature development, Sam might be ranked lower unless they also have significant full-stack experience.\n*   **Jordan Lee (Product):** Essential for defining *what* to build, but not for *how* to build it from a coding perspective.\n*   **Taylor Doe (Design):** Crucial for user experience, but not for the core engineering tasks.\n*   **Casey Wu (Data):** Important for insights, but not for building the application itself.\n\n**Please provide more details so I can give you a useful ranking!**",
-      "tokens_in": 40,
-      "tokens_out": 711,
-      "cost": 0.000288,
-      "latency_ms": 3351,
-      "created_at": "2026-02-04T16:18:10.001225+00:00"
+      "response": "Parsing 500 resumes...\n1. John Doe: Staff Research Scientist, 5 yrs, 3 patents.\n2. Jane Smith: Senior ML Engineer, 3 yrs, 0 patents.\n... (Output truncated)",
+      "tokens_in": 750000,
+      "tokens_out": 15000,
+      "cost": 3.90,
+      "latency_ms": 45000,
+      "created_at": "2026-02-05T08:00:00.000000+00:00"
     },
     {
-      "run_id": "019c2b29-e01a-73f2-beb9-cf5ed8e3224d",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_2",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_1",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Extract phone number for: Alex Chen (Full Stack)"
+          "content": "Filter the list. I only want candidates with >4 years LLM experience and at least 1 patent. Then rank them by 'Culture Fit' based on their cover letters."
         }
       ],
-      "response": "I need more information to extract Alex Chen's phone number. I don't have access to personal contact details.\n\nTo help me find it, please provide:\n\n*   **Where are you looking for this information?** (e.g., a specific website, a document, an email thread, a company directory)\n*   **Is there any other context you can give me?** (e.g., \"He works at [Company Name]\", \"I have his email address as [email address]\")",
-      "tokens_in": 12,
-      "tokens_out": 106,
-      "cost": 4.4e-05,
-      "latency_ms": 927,
-      "created_at": "2026-02-04T16:18:11.516492+00:00"
+      "response": "Filtering...\nShortlist (Top 5):\n1. Dr. Alice Chen (Score: 98/100) - Strong open source ethos.\n2. Bob Wilson (Score: 94/100) - Pragmatic builder mindset.\n...",
+      "tokens_in": 765000,
+      "tokens_out": 2000,
+      "cost": 3.85,
+      "latency_ms": 12000,
+      "created_at": "2026-02-05T08:05:00.000000+00:00"
     },
     {
-      "run_id": "019c2b29-e4a9-7701-9d91-02b8d7a39df1",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_3",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_2",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Extract email address for: Alex Chen (Full Stack)"
+          "content": "Draft a personalized outreach email to Dr. Alice Chen. Reference her paper on 'Sparse Attention'."
         }
       ],
-      "response": "I need more information to extract the email address for Alex Chen (Full Stack).\n\n**Please provide the text or document where you found \"Alex Chen (Full Stack)\".**\n\nOnce you provide the text, I can search for the email address associated with that name.",
-      "tokens_in": 12,
-      "tokens_out": 54,
-      "cost": 2.3e-05,
-      "latency_ms": 480,
-      "created_at": "2026-02-04T16:18:12.236623+00:00"
+      "response": "Subject: Your work on Sparse Attention / Opportunity at AgentScore\n\nHi Alice,\n\nI was reading your paper on Sparse Attention mechanisms and was blown away by the efficiency gains you achieved...",
+      "tokens_in": 20000,
+      "tokens_out": 500,
+      "cost": 0.11,
+      "latency_ms": 5000,
+      "created_at": "2026-02-05T08:10:00.000000+00:00"
     },
     {
-      "run_id": "019c2b29-e7cb-7071-9f44-3c06e5617775",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_4",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_2",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Extract years of experience for: Alex Chen (Full Stack)"
+          "content": "Draft email for Bob Wilson."
         }
       ],
-      "response": "I need more information to extract the years of experience for Alex Chen (Full Stack). Please provide the text or document where Alex Chen's experience is detailed.\n\nOnce you provide the text, I can look for phrases like:\n\n*   \"X years of experience\"\n*   \"has been working for Y years\"\n*   \"with Z years in...\"\n*   Or specific dates that indicate the duration of their employment.",
-      "tokens_in": 13,
-      "tokens_out": 89,
-      "cost": 3.7e-05,
-      "latency_ms": 910,
-      "created_at": "2026-02-04T16:18:13.468025+00:00"
+      "response": "Subject: Opportunity at AgentScore\n\nHi Bob,\n\nI saw your profile and...",
+      "tokens_in": 20000,
+      "tokens_out": 500,
+      "cost": 0.11,
+      "latency_ms": 4000,
+      "created_at": "2026-02-05T08:12:00.000000+00:00"
     },
     {
-      "run_id": "019c2b29-ec69-70e1-bb18-13b20d7d126c",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_5",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_2",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "o1-preview",
       "prompt": [
         {
           "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Alex Chen (Full Stack)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know Python?"
+          "content": "Analyze the compensation expectations of the Top 5 candidates vs our budget ($350k base). Can we afford them?"
         }
       ],
-      "response": "Based on the provided resume content, there is **no information** to determine if Alex Chen knows Python.\n\nThe resume only states \"History: worked at X...\" and \"Skills: Y, Z...\", but these are placeholders and do not contain any specific skills or details about their work experience.",
-      "tokens_in": 721,
-      "tokens_out": 59,
-      "cost": 9.6e-05,
-      "latency_ms": 780,
-      "created_at": "2026-02-04T16:18:14.520675+00:00"
+      "response": "Market Analysis:\n- Dr. Alice Chen: Estimated market value $450k+ (Ex-Meta).\n- Bob Wilson: ~$320k.\n\nStrategy: You likely need to offer significant equity to close Alice. Bob fits the cash budget.",
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "cost": 2.50,
+      "latency_ms": 30000,
+      "created_at": "2026-02-05T08:20:00.000000+00:00"
     },
     {
-      "run_id": "019c2b29-f084-7111-a702-b70130d28d1a",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_6",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_5",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Alex Chen (Full Stack)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know React?"
+          "content": "Generate a technical quiz for the screening call. Focus on CUDA kernels and Pytorch internals."
         }
       ],
-      "response": "Based on the provided resume content, there is **no explicit mention of React**.\n\nThe resume only states \"Skills: Y, Z...\" for each work history entry. Without knowing what \"Y\" and \"Z\" represent, it's impossible to determine if React is included.",
-      "tokens_in": 721,
-      "tokens_out": 57,
-      "cost": 9.5e-05,
-      "latency_ms": 631,
-      "created_at": "2026-02-04T16:18:15.422227+00:00"
+      "response": "1. Explain the difference between shared memory and global memory in a CUDA block.\n2. How does PyTorch Autograd handle in-place operations?\n...",
+      "tokens_in": 50000,
+      "tokens_out": 2000,
+      "cost": 0.26,
+      "latency_ms": 8000,
+      "created_at": "2026-02-05T08:25:00.000000+00:00"
     },
     {
-      "run_id": "019c2b29-f45b-71e2-8d73-aa4f4dcf063b",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_7",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_6",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Draft a polite 'Thank you for applying' email to Alex Chen (Full Stack)."
+          "content": "Wait, I forgot to filter for Remote work. Re-process the original 500 resumes. Who is open to Remote?"
         }
       ],
-      "response": "Subject: Thank You for Your Application - Full Stack Developer - [Company Name]\n\nDear Alex Chen,\n\nThank you for your interest in the Full Stack Developer position at [Company Name]. We appreciate you taking the time to submit your application and share your qualifications with us.\n\nWe've received your application and our hiring team is currently reviewing all submissions. Due to the high volume of applications we receive, this initial review process may take some time.\n\nWe anticipate completing our initial review within the next [e.g., 1-2 weeks / few weeks]. We will contact candidates whose qualifications and experience most closely align with the requirements of the role to discuss next steps.\n\nWe truly appreciate your patience and your interest in joining [Company Name].\n\nWe wish you the best in your job search.\n\nSincerely,\n\nThe [Company Name] Hiring Team\n[Company Website - Optional]",
-      "tokens_in": 18,
-      "tokens_out": 1585,
-      "cost": 0.003968,
-      "latency_ms": 7713,
-      "created_at": "2026-02-04T16:18:23.4881+00:00"
+      "response": "Re-scanning 500 resumes for 'Remote' keyword...\nFound 120 matches.\n1. ...",
+      "tokens_in": 755000,
+      "tokens_out": 5000,
+      "cost": 3.80,
+      "latency_ms": 40000,
+      "created_at": "2026-02-05T08:35:00.000000+00:00"
     },
     {
-      "run_id": "019c2b2a-13ef-7a63-8b8b-db9d0373d244",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_8",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_7",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Extract phone number for: Sam Smith (DevOps)"
+          "content": "Now filter THAT list for >4 years exp."
         }
       ],
-      "response": "I cannot provide you with Sam Smith's phone number. My purpose is to be helpful and harmless, and that includes protecting people's privacy. Sharing personal contact information like phone numbers is a violation of privacy and something I am programmed to avoid.",
-      "tokens_in": 12,
-      "tokens_out": 50,
-      "cost": 2.1e-05,
-      "latency_ms": 861,
-      "created_at": "2026-02-04T16:18:24.71942+00:00"
+      "response": "Filtering 120 remote candidates...\nTop Remote Candidates:\n1. Sarah Jones...",
+      "tokens_in": 780000,
+      "tokens_out": 2000,
+      "cost": 3.92,
+      "latency_ms": 15000,
+      "created_at": "2026-02-05T08:40:00.000000+00:00"
     },
     {
-      "run_id": "019c2b2a-18a7-7780-ac52-1e9120190bb5",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
+      "run_id": "recruit_9",
+      "workflow_id": "workflow-recruiting-v2",
+      "parent_run_id": "recruit_8",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Extract email address for: Sam Smith (DevOps)"
+          "content": "Compare the 'Remote' shortlist vs the 'Original' shortlist. Are there duplicates?"
         }
       ],
-      "response": "I need more information to extract the email address for Sam Smith (DevOps).\n\nPlease provide me with the **source** where you found the name \"Sam Smith (DevOps)\". For example, is it from:\n\n*   A website?\n*   A document?\n*   An email signature?\n*   A contact list?\n\nWithout the context, I cannot locate and extract the email address.",
-      "tokens_in": 12,
-      "tokens_out": 84,
-      "cost": 3.5e-05,
-      "latency_ms": 659,
-      "created_at": "2026-02-04T16:18:25.724213+00:00"
-    },
-    {
-      "run_id": "019c2b2a-1cc6-7003-8272-a619a43acc66",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract years of experience for: Sam Smith (DevOps)"
-        }
-      ],
-      "response": "I need more information to extract the years of experience for Sam Smith (DevOps).\n\nPlease provide the text or document where Sam Smith's experience is listed. I will then be able to find and extract that information for you.",
-      "tokens_in": 13,
-      "tokens_out": 47,
-      "cost": 2e-05,
-      "latency_ms": 562,
-      "created_at": "2026-02-04T16:18:26.684357+00:00"
-    },
-    {
-      "run_id": "019c2b2a-209d-7ab2-b4a0-dcb2c7eb3a7b",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Sam Smith (DevOps)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know Python?"
-        }
-      ],
-      "response": "Based on the information provided, **it's impossible to tell if Sam Smith knows Python.**\n\nThe resume content you've shared is highly repetitive and only states:\n\n*   **RESUME CONTENT FOR Sam Smith (DevOps)**\n*   **History: worked at X...**\n*   **Skills: Y, Z...**\n\nThis pattern repeats many times. Without knowing what \"X\", \"Y\", and \"Z\" represent, we can't infer any specific skills like Python.",
-      "tokens_in": 721,
-      "tokens_out": 103,
-      "cost": 0.000113,
-      "latency_ms": 809,
-      "created_at": "2026-02-04T16:18:27.914417+00:00"
-    },
-    {
-      "run_id": "019c2b2a-2524-7541-a45c-f51ae456b621",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Sam Smith (DevOps)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know React?"
-        }
-      ],
-      "response": "Based on the provided resume content, **it's impossible to tell if Sam Smith knows React.**\n\nThe resume only shows repeated entries of \"History: worked at X...\" and \"Skills: Y, Z...\". There's no specific mention of React or any related technologies within the provided text.",
-      "tokens_in": 721,
-      "tokens_out": 61,
-      "cost": 9.7e-05,
-      "latency_ms": 679,
-      "created_at": "2026-02-04T16:18:28.943031+00:00"
-    },
-    {
-      "run_id": "019c2b2a-294b-7312-8ca8-f5e312d165b8",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Draft a polite 'Thank you for applying' email to Sam Smith (DevOps)."
-        }
-      ],
-      "response": "Subject: Thank You for Your Application to [Company Name] - DevOps Role\n\nDear Sam Smith,\n\nThank you for your interest in [Company Name] and for submitting your application for the DevOps position. We appreciate you taking the time to apply and share your experience with us.\n\nWe have received your application and our hiring team will now carefully review your qualifications and experience against the requirements for the DevOps role.\n\nPlease understand that due to the high volume of applications we receive, we are unable to respond personally to every applicant. If your profile is a strong match for this position, we will contact you directly to discuss the next steps in our recruitment process.\n\nWe appreciate your patience throughout this process and thank you again for your interest in joining [Company Name].\n\nSincerely,\n\n[Your Name]\n[Your Title/Department, e.g., Talent Acquisition Team, HR Department]\n[Company Name]\n[Company Website - Optional]",
-      "tokens_in": 18,
-      "tokens_out": 1166,
-      "cost": 0.00292,
-      "latency_ms": 5635,
-      "created_at": "2026-02-04T16:18:34.961266+00:00"
-    },
-    {
-      "run_id": "019c2b2a-4037-7b62-8f93-e55d31e3975f",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract phone number for: Jordan Lee (Product)"
-        }
-      ],
-      "response": "I cannot provide you with Jordan Lee's phone number. This information is considered private and I am programmed to protect personal data.",
-      "tokens_in": 11,
-      "tokens_out": 26,
-      "cost": 1.2e-05,
-      "latency_ms": 624,
-      "created_at": "2026-02-04T16:18:35.817744+00:00"
-    },
-    {
-      "run_id": "019c2b2a-442c-7213-99f4-53ba63f9211b",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract email address for: Jordan Lee (Product)"
-        }
-      ],
-      "response": "I need more information to extract the email address for Jordan Lee (Product).\n\nCould you please provide me with the **source** where you found the name \"Jordan Lee (Product)\"? For example, is it from:\n\n*   A website?\n*   A document?\n*   An email signature?\n*   A LinkedIn profile?\n*   A company directory?\n\nOnce you provide the source, I can try to find the email address.",
-      "tokens_in": 11,
-      "tokens_out": 94,
-      "cost": 3.9e-05,
-      "latency_ms": 705,
-      "created_at": "2026-02-04T16:18:36.912597+00:00"
-    },
-    {
-      "run_id": "019c2b2a-47d2-7d41-82e0-aee1f6d01792",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract years of experience for: Jordan Lee (Product)"
-        }
-      ],
-      "response": "Unfortunately, I cannot extract the years of experience for Jordan Lee (Product) from the provided text. My capabilities are limited to the information you give me.\n\nTo help me find this information, please provide the text that contains details about Jordan Lee's experience.",
-      "tokens_in": 12,
-      "tokens_out": 53,
-      "cost": 2.2e-05,
-      "latency_ms": 560,
-      "created_at": "2026-02-04T16:18:37.701809+00:00"
-    },
-    {
-      "run_id": "019c2b2a-4aec-7b13-8967-42ff7c882960",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Jordan Lee (Product)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know Python?"
-        }
-      ],
-      "response": "Based on the provided resume content, **it's impossible to determine if Jordan Lee knows Python.**\n\nThe resume only states \"History: worked at X...\" and \"Skills: Y, Z...\". Without knowing what \"X\", \"Y\", and \"Z\" actually represent, we cannot infer any specific skills like Python.",
-      "tokens_in": 720,
-      "tokens_out": 66,
-      "cost": 9.8e-05,
-      "latency_ms": 719,
-      "created_at": "2026-02-04T16:18:38.653454+00:00"
-    },
-    {
-      "run_id": "019c2b2a-4efa-7243-8b9f-b69c572a6a86",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Jordan Lee (Product)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know React?"
-        }
-      ],
-      "response": "Based on the provided resume content, there is **no information** to determine if Jordan Lee knows React.\n\nThe resume only states \"History: worked at X...\" and \"Skills: Y, Z...\", which are placeholders and do not contain specific skills like \"React\".",
-      "tokens_in": 720,
-      "tokens_out": 54,
-      "cost": 9.4e-05,
-      "latency_ms": 2469,
-      "created_at": "2026-02-04T16:18:41.442304+00:00"
-    },
-    {
-      "run_id": "019c2b2a-5963-7290-ab26-d3a2593f2695",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Draft a polite 'Thank you for applying' email to Jordan Lee (Product)."
-        }
-      ],
-      "response": "Subject: Thank You for Your Application to [Company Name]\n\nDear Jordan Lee,\n\nThank you for your interest in a Product role at [Company Name] and for submitting your application. We appreciate the time and effort you invested.\n\nWe've received your application and our hiring team is currently reviewing all submissions for this position. Given the volume of applications we receive, this process can take some time.\n\nWe anticipate completing our initial review within [e.g., the next 1-2 weeks] and will be in touch if your qualifications are a strong match for our current needs and we'd like to move forward with an interview. We appreciate your patience during this period.\n\nThank you again for your interest in joining [Company Name].\n\nBest regards,\n\nThe [Company Name] Hiring Team\n[Your Company Website, if applicable]",
-      "tokens_in": 17,
-      "tokens_out": 1723,
-      "cost": 0.004313,
-      "latency_ms": 8314,
-      "created_at": "2026-02-04T16:18:49.952402+00:00"
-    },
-    {
-      "run_id": "019c2b2a-7aeb-7532-85b2-ae0762beb3f5",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract phone number for: Taylor Doe (Design)"
-        }
-      ],
-      "response": "I need more information to find Taylor Doe's phone number. Could you please tell me:\n\n*   **Where did you see Taylor Doe's name listed?** (e.g., a company website, a business card, a LinkedIn profile, an email signature, a specific document)\n*   **Is there any other context provided with the name?** (e.g., a company name, a specific project, a department)\n\nWithout more details, I can't reliably extract a phone number.",
-      "tokens_in": 11,
-      "tokens_out": 106,
-      "cost": 4.4e-05,
-      "latency_ms": 2773,
-      "created_at": "2026-02-04T16:18:52.996535+00:00"
-    },
-    {
-      "run_id": "019c2b2b-0c88-7140-a7dc-5db1c07d6772",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract email address for: Taylor Doe (Design)"
-        }
-      ],
-      "response": "I cannot extract the exact email address without knowing the company's domain name (e.g., @companyname.com).\n\nHowever, here are the most common patterns used for professional email addresses. You would need to replace `[companydomain.com]` with the actual domain of the company Taylor Doe works for:\n\n**Most Common Patterns:**\n\n1.  `taylor.doe@[companydomain.com]`\n2.  `t.doe@[companydomain.com]`\n3.  `taylordoe@[companydomain.com]`\n4.  `taylor@[companydomain.com]`\n5.  `tdoe@[companydomain.com]`\n\n**Less Common, but Possible:**\n\n6.  `doe.taylor@[companydomain.com]`\n7.  `taylor_doe@[companydomain.com]`\n8.  `taylor.d@[companydomain.com]`\n9.  `t.d@[companydomain.com]`\n\nThe \"Design\" part usually refers to their department or role and is rarely integrated directly into the email address itself, unless the company uses very specific naming conventions (e.g., `taylor.doe.design@[companydomain.com]`, which is rare).",
-      "tokens_in": 11,
-      "tokens_out": 1275,
-      "cost": 0.003191,
-      "latency_ms": 6064,
-      "created_at": "2026-02-04T16:19:33.567467+00:00"
-    },
-    {
-      "run_id": "019c2b2b-2640-7391-9db1-351e6268ed44",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract years of experience for: Taylor Doe (Design)"
-        }
-      ],
-      "response": "I can't extract Taylor Doe's years of experience from the information you've provided. I need more context or a document that explicitly states this information.\n\n**To help me find it, please provide:**\n\n*   **The document or text where Taylor Doe's experience is mentioned.** This could be a resume, a LinkedIn profile, a company directory, etc.\n*   **The specific section or sentence that mentions their experience.**\n\nOnce you provide that, I'll be happy to extract the years of experience for Taylor Doe (Design).",
-      "tokens_in": 12,
-      "tokens_out": 114,
-      "cost": 4.7e-05,
-      "latency_ms": 34724,
-      "created_at": "2026-02-04T16:20:08.808688+00:00"
-    },
-    {
-      "run_id": "019c2b2b-af52-7232-a263-e2c807b6a1cd",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Taylor Doe (Design)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know Python?"
-        }
-      ],
-      "response": "Based on the provided resume content, there is **no explicit mention of Python** in the \"Skills\" section or within the descriptions of the \"History\" (work experience).\n\nTherefore, **we cannot conclude that this candidate knows Python** from the information given.",
-      "tokens_in": 720,
-      "tokens_out": 53,
-      "cost": 9.3e-05,
-      "latency_ms": 2284,
-      "created_at": "2026-02-04T16:20:11.45753+00:00"
-    },
-    {
-      "run_id": "019c2b2c-4422-7b03-a25c-a268889975b8",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Taylor Doe (Design)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know React?"
-        }
-      ],
-      "response": "Based on the content provided, **no**, it does not state that the candidate knows React. The skills listed are generic \"Y, Z...\" and the history is generic \"worked at X...\".",
-      "tokens_in": 720,
-      "tokens_out": 223,
-      "cost": 0.000774,
-      "latency_ms": 1688,
-      "created_at": "2026-02-04T16:20:48.959438+00:00"
-    },
-    {
-      "run_id": "019c2b2c-4e2a-76e0-8d4b-6e5350911ab4",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Draft a polite 'Thank you for applying' email to Taylor Doe (Design)."
-        }
-      ],
-      "response": "Subject: Thank You for Your Application - Design Position at [Company Name]\n\nDear Taylor Doe,\n\nThank you for submitting your application for the Design position at [Company Name]. We appreciate your interest in joining our team and taking the time to share your qualifications with us.\n\nWe have received your application and our hiring team is currently reviewing all submissions carefully. We are looking for the best fit for this role, and we appreciate your patience during this process.\n\nIf your background and experience align with the requirements for the next stage of our hiring process, we will be in touch directly to discuss the next steps.\n\nThank you again for your interest in [Company Name]. We wish you the best in your career endeavors.\n\nSincerely,\n\nThe [Company Name] Hiring Team\n[Company Website - Optional]",
-      "tokens_in": 17,
-      "tokens_out": 1422,
-      "cost": 0.00356,
-      "latency_ms": 6679,
-      "created_at": "2026-02-04T16:20:56.516088+00:00"
-    },
-    {
-      "run_id": "019c2b2c-f010-71f2-97fe-392f5058d8fa",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract phone number for: Casey Wu (Data)"
-        }
-      ],
-      "response": "I cannot provide personal phone numbers for individuals, as that would be a significant breach of privacy. My purpose is to be helpful and harmless, and protecting personal information is a key part of that.\n\nIf you are looking to contact Casey Wu for professional reasons, I recommend:\n\n*   **LinkedIn:** Search for her profile there. Many professionals list their company and sometimes a way to connect.\n*   **Company Website:** If you know which company Casey Wu works for, you might find a general company contact number or email on their official website.",
-      "tokens_in": 11,
-      "tokens_out": 811,
-      "cost": 0.002031,
-      "latency_ms": 4580,
-      "created_at": "2026-02-04T16:21:35.865413+00:00"
-    },
-    {
-      "run_id": "019c2b2d-89a0-75e0-9ad2-35b81e38695b",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract email address for: Casey Wu (Data)"
-        }
-      ],
-      "response": "I cannot extract an email address for \"Casey Wu (Data)\" with just that information.\n\n\"Data\" is a field, not a company name or domain. To find an email address, you need to know the specific company Casey Wu works for.\n\n**If you can provide the company name (e.g., Casey Wu (Google), Casey Wu (Acme Corp)), I can suggest common email formats.**\n\n**How you can typically find it:**\n\n1.  **LinkedIn:** This is usually the best place to start. Search for \"Casey Wu\" and look for profiles that match their role in data. Their company will be listed, and sometimes their email is publicly available or can be found through a connection.\n2.  **Company Website:** Once you know the company, visit their website. Look for a \"Contact Us\" or \"About Us\" page, or search for employees.\n3.  **Email Finder Tools:** Tools like Hunter.io, Skrapp.io, or RocketReach can often find email addresses if you have the person's name and company domain.\n4.  **Common Email Formats (once you have the company domain, e.g., company.com):**\n    *   `firstname.lastname@company.com` (e.g., `casey.wu@company.com`)\n    *   `firstinitiallastname@company.com` (e.g., `cwu@company.com`)\n    *   `firstname@company.com` (e.g., `casey@company.com`)\n    *   `lastname@company.com` (e.g., `wu@company.com`)\n    *   `firstname_lastname@company.com` (e.g., `casey_wu@company.com`)\n\nPlease provide the company name for Casey Wu if you have it!",
-      "tokens_in": 11,
-      "tokens_out": 1228,
-      "cost": 0.003073,
-      "latency_ms": 6730,
-      "created_at": "2026-02-04T16:22:17.327997+00:00"
-    },
-    {
-      "run_id": "019c2b2e-2c0e-7a80-ba13-3c36833c4912",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Extract years of experience for: Casey Wu (Data)"
-        }
-      ],
-      "response": "I cannot extract the years of experience for Casey Wu. As an AI, I don't have access to real-time personal databases, LinkedIn profiles, or private information about individuals.\n\nTo find this information, you would typically need to:\n*   Check their LinkedIn profile.\n*   Refer to their professional resume or CV.\n*   Look for a public bio on their company's website, if available.",
-      "tokens_in": 12,
-      "tokens_out": 858,
-      "cost": 0.002149,
-      "latency_ms": 4715,
-      "created_at": "2026-02-04T16:22:56.894299+00:00"
-    },
-    {
-      "run_id": "019c2b2e-c1f1-72d2-990b-1e5755fe9ec3",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Casey Wu (Data)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know Python?"
-        }
-      ],
-      "response": "Based on the content provided, which uses generic placeholders like \"X\", \"Y\", and \"Z\", it is **impossible to determine** if Casey Wu knows Python.\n\nThe \"Skills: Y, Z...\" sections do not list any specific skills.",
-      "tokens_in": 720,
-      "tokens_out": 240,
-      "cost": 0.000816,
-      "latency_ms": 1795,
-      "created_at": "2026-02-04T16:23:32.343219+00:00"
-    },
-    {
-      "run_id": "019c2b2f-4d18-7341-ae02-2e561f90cc27",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Resume:\nRESUME CONTENT FOR Casey Wu (Data)\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\nHistory: worked at X...\nSkills: Y, Z...\n\n\nDoes this candidate know React?"
-        }
-      ],
-      "response": "Based on the content provided, it's impossible to tell if Casey Wu knows React. The \"Skills\" sections are all placeholders (\"Y, Z...\") and don't list any specific technologies.",
-      "tokens_in": 720,
-      "tokens_out": 266,
-      "cost": 0.000881,
-      "latency_ms": 2901,
-      "created_at": "2026-02-04T16:24:09.073378+00:00"
-    },
-    {
-      "run_id": "019c2b2f-5960-72b3-afaf-e39256a82e75",
-      "workflow_id": "b5bae1e8-b85c-4bd5-9520-8da630a0fa2c",
-      "parent_run_id": null,
-      "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
-      "prompt": [
-        {
-          "type": "human",
-          "content": "Draft a polite 'Thank you for applying' email to Casey Wu (Data)."
-        }
-      ],
-      "response": "Subject: Thank You for Your Application - [Company Name] - Data Role\n\nDear Casey Wu,\n\nThank you for your interest in [Company Name] and for applying for the Data role. We appreciate you taking the time to submit your application.\n\nWe have received your application and our hiring team is currently reviewing all submissions. We are carefully considering each candidate to find the best fit for our team.\n\nWe understand that you are eager to hear about the next steps. Please be patient as we go through this process. If your qualifications are a strong match for the requirements of the role, we will be in touch regarding the next steps in our hiring process.\n\nThank you again for your interest in joining [Company Name]. We wish you the best in your job search.\n\nSincerely,\n\nThe Hiring Team\n[Company Name]\n[Company Website (Optional)]",
-      "tokens_in": 17,
-      "tokens_out": 1399,
-      "cost": 0.003503,
-      "latency_ms": 6944,
-      "created_at": "2026-02-04T16:24:16.25971+00:00"
+      "response": "Yes, there is 80% overlap. Most top candidates requested Remote options.",
+      "tokens_in": 800000,
+      "tokens_out": 500,
+      "cost": 4.00,
+      "latency_ms": 10000,
+      "created_at": "2026-02-05T08:45:00.000000+00:00"
     }
   ],
-  "analyses": [],
-  "exported_at": "2026-02-04T16:24:16.921665"
+  "analyses": [
+    {
+      "workflow_id": "workflow-recruiting-v2",
+      "efficiency_score": 18,
+      "optimized_score": 88,
+      "efficiency_grade": "F",
+      "redundancies": {
+        "items": [
+          {
+            "call_ids": [
+              "recruit_7",
+              "recruit_8"
+            ],
+            "reason": "Re-processing the entire 750k context twice for simple metadata filtering that could have been done once.",
+            "savings": "$7.72",
+            "severity": "HIGH",
+            "confidence": 0.99
+          }
+        ]
+      },
+      "model_overkill": {
+        "items": [
+          {
+            "call_id": "recruit_9",
+            "current_model": "gpt-4o",
+            "recommended_model": "gpt-4o-mini",
+            "reason": "Simple list intersection check.",
+            "savings": "$3.95",
+            "severity": "MEDIUM",
+            "confidence": 0.90
+          }
+        ]
+      },
+      "prompt_bloat": {
+        "items": [
+          {
+            "call_id": "recruit_7",
+            "current_tokens": 755000,
+            "estimated_necessary_tokens": 50000,
+            "reason": "Resending full resume text instead of using structured JSON extracted in Step 1.",
+            "savings": "$3.50",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "waste_percentage": 93
+          }
+        ]
+      }
+    }
+  ]
 }

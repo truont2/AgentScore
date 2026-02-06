@@ -19,7 +19,7 @@
       "workflow_id": "736fd73c-a063-478c-84c8-390dcf5e2051",
       "parent_run_id": null,
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gemini-1.5-pro-002",
       "prompt": [
         {
           "type": "human",
@@ -91,6 +91,25 @@
       "created_at": "2026-02-04T15:42:31.331309+00:00"
     },
     {
+      "run_id": "019c2b09-385c-7c80-86a3-9c32a1051aa2",
+      "workflow_id": "736fd73c-a063-478c-84c8-390dcf5e2051",
+      "parent_run_id": null,
+      "event_type": "llm_call",
+      "model": "gemini-2.5-flash-lite",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Double check: What was that refund timeframe again?"
+        }
+      ],
+      "response": "The user mentioned \"3 days ago\".",
+      "tokens_in": 18,
+      "tokens_out": 10,
+      "cost": 1.0e-05,
+      "latency_ms": 320,
+      "created_at": "2026-02-04T15:42:31.900000+00:00"
+    },
+    {
       "run_id": "019c2b09-3cba-76f3-9422-d35f99972594",
       "workflow_id": "736fd73c-a063-478c-84c8-390dcf5e2051",
       "parent_run_id": null,
@@ -99,7 +118,7 @@
       "prompt": [
         {
           "type": "human",
-          "content": "Classify intent: How do I update my billing address?..."
+          "content": "SYSTEM_CONTEXT: Current policy (v2024.1) requires all address updates to be verified against the postal database. Ensure the response is courteous. \\n\\nTask: Classify intent: How do I update my billing address?..."
         }
       ],
       "response": "This intent can be classified as a **How-to / Information Request** or **Customer Support / Account Management**.\n\nHere's a breakdown of why and what subcategories it might fall into:\n\n**Primary Classification:**\n\n*   **How-to / Information Request:** The user is explicitly asking for instructions on how to perform a specific task. They need to know the steps involved.\n*   **Customer Support / Account Management:** The request relates to managing their account details, specifically financial information.\n\n**More Specific Subcategories (depending on context):**\n\n*   **Account Management:** Specifically updating personal or financial information within their account.\n*   **Billing & Payments:** A more focused category related to financial transactions and their associated details.\n*   **Self-Service Assistance:** The user is looking for a way to resolve this themselves rather than speaking to a representative.\n*   **Procedural Guidance:** The user needs a step-by-step guide.\n\n**In summary, the core intent is to get instructions on how to change their billing address.**",

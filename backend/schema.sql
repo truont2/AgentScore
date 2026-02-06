@@ -52,3 +52,4 @@ create table analyses (
   savings_breakdown jsonb,
   created_at timestamp with time zone default now()
 );
+

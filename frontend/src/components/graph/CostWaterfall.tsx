@@ -66,7 +66,8 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
             </div>
 
             {/* Scrollable Container */}
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative custom-scrollbar">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative scrollbar-hide">
+
 
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20">
                     <svg className="w-full h-full">

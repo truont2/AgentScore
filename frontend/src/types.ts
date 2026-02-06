@@ -43,6 +43,7 @@ export interface Workflow {
     totalCost: number;
     optimizedCost: number;
     efficiencyScore: number | null;
+    optimizedScore: number | null;
     redundancyScore: number | null;
     modelFitScore: number | null;
     contextEfficiencyScore: number | null;
@@ -55,4 +56,36 @@ export interface Workflow {
     edges?: any[];
     metrics?: any;
     events?: any[];
+}
+
+export interface GraphCall {
+    id: string;
+    agent: string;
+    cost: number;
+    latency: number;
+    tokens: number;
+    model: string;
+
+    // Status flags
+    isRedundant?: boolean;
+    isOverkill?: boolean;
+    isBloated?: boolean;
+    hasSecurityRisk?: boolean;
+
+    // Analysis details
+    vulnerabilityType?: string;
+    reason?: string;
+    recommendedModel?: string;
+    redundantWithId?: string;
+    redundantWithIndex?: number;
+
+    // Payload
+    input?: string;
+    prompt?: string;
+    output?: string;
+    response?: string;
+
+    // Graph specific
+    index?: number;
+    label?: string;
 }
