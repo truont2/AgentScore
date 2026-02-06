@@ -177,6 +177,7 @@ Return ONLY valid JSON. No markdown, no explanation text.
   "redundant_calls": [
     {
       "call_ids": ["call_1", "call_3"],
+      "duplicate_call_ids": ["call_3"],
       "severity": "HIGH",
       "reason": "Both calls ask for translation of medical term 'myocardial infarction'. Call 3 uses abbreviation 'MI' but requests identical information.",
       "keep_call_id": "call_1",

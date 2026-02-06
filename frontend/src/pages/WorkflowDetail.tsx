@@ -51,7 +51,8 @@ interface BackendAnalysis {
   original_cost: number;
   optimized_cost: number;
   efficiency_score: number;
-  optimized_score?: number; // Added field
+  optimized_score?: number;
+  efficiency_grade?: string;
   redundancies?: { items: any[] };
   model_overkill?: { items: any[] };
   prompt_bloat?: { items: any[] };
@@ -190,6 +191,7 @@ export default function WorkflowDetail() {
         optimizedCost: latestAnalysis?.optimized_cost || wfData.total_cost,
         efficiencyScore: latestAnalysis?.efficiency_score || null,
         optimizedScore: latestAnalysis?.optimized_score || null,
+        potentialScore: latestAnalysis?.optimized_score || null,
         redundancyScore: latestAnalysis ? 85 : null,
         modelFitScore: latestAnalysis ? 90 : null,
         contextEfficiencyScore: latestAnalysis ? 75 : null,
@@ -412,9 +414,7 @@ export default function WorkflowDetail() {
   }
 
   const isAnalyzed = workflow.status === 'analyzed';
-  const optimizedScore = isAnalyzed
-    ? (workflow.optimizedScore !== null && workflow.optimizedScore !== undefined ? workflow.optimizedScore : Math.min((workflow.efficiencyScore || 0) + 20, 99))
-    : null;
+  const optimizedScore = isAnalyzed ? (workflow.potentialScore ?? 100) : null;
 
   // Calculate issue counts based on savings (safely parsing string "$2.50")
   const parseSavings = (s?: string) => s ? parseFloat(s.replace(/[^0-9.]/g, '')) : 0;

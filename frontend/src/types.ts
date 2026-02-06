@@ -44,6 +44,7 @@ export interface Workflow {
     optimizedCost: number;
     efficiencyScore: number | null;
     optimizedScore: number | null;
+    potentialScore: number | null;
     redundancyScore: number | null;
     modelFitScore: number | null;
     contextEfficiencyScore: number | null;

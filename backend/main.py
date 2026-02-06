@@ -21,6 +21,7 @@ from schemas import Workflow, WorkflowDetail, AnalysisResult, EventCreate
 from pricing import calculate_cost
 
 app = FastAPI()
+# force reload
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -262,8 +263,8 @@ async def analyze_workflow(id: str):
             
             analysis_entry = {
                 "workflow_id": id,
-                "original_cost": analysis_json.get("original_cost") or calculated_total_cost,
-                "optimized_cost": analysis_json.get("optimized_cost") or (calculated_total_cost * 0.8),
+                "original_cost": score_data.get("breakdown", {}).get("total_cost") or calculated_total_cost,
+                "optimized_cost": score_data.get("optimized_score") if score_data.get("optimized_score") == 100 and score_data.get("breakdown", {}).get("optimized_cost") is None else score_data.get("breakdown", {}).get("optimized_cost"),
                 "redundancies": {"items": analysis_json.get("redundancies") or analysis_json.get("redundant_calls") or []},
                 "model_overkill": {"items": analysis_json.get("model_overkill") or []},
                 "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},
