@@ -58,15 +58,37 @@ export interface Workflow {
     events?: any[];
 }
 
+export interface DependencyGraphData {
+    calls: GraphCall[];
+    edges: Array<{ source: string; target: string; overlap: number }>;
+    deadBranchCost: number;
+    criticalPathLatency: number;
+    totalCost: number;
+    informationEfficiency: number;
+    parallelizationPotential: number;
+}
+
+export interface GraphEdge {
+    source: string;
+    target: string;
+    overlap: number;
+}
+
+
+
 export interface GraphCall {
     id: string;
     agent: string;
     cost: number;
     latency: number;
     tokens: number;
+    tokens_in?: number;
+    tokens_out?: number;
     model: string;
 
     // Status flags
+    isDeadBranch?: boolean;
+    isCriticalPath?: boolean;
     isRedundant?: boolean;
     isOverkill?: boolean;
     isBloated?: boolean;

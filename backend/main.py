@@ -358,6 +358,8 @@ def get_workflow_graph(id: str):
                 "model": e.get("model", "unknown"),
                 "cost": float(e.get("cost", 0)),
                 "latency": e.get("latency_ms", 0),
+                "tokens_in": e.get("tokens_in", 0),
+                "tokens_out": e.get("tokens_out", 0),
                 "type": e.get("node_type", "normal") 
             })
 

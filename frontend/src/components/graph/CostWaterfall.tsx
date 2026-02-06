@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import type { DependencyGraphData, GraphCall } from '@/data/dependencyGraphData';
+import type { DependencyGraphData, GraphCall } from '@/types';
 import { DollarSign, Database, ShieldAlert, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -173,7 +173,7 @@ const CostWaterfall = ({ data, selectedCall, onSelectCall }: CostWaterfallProps)
                                     </div>
                                     <div className="flex items-center gap-1 text-slate-600 text-[10px]">
                                         <Database className="w-3 h-3" />
-                                        <span className="font-mono">{call.tokens_in || 0} in</span>
+                                        <span className="font-mono">{call.tokens_in || 0}</span>
                                     </div>
                                 </div>
 

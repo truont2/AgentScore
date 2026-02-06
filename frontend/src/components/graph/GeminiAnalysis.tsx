@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
-import type { DependencyGraphData, GraphCall } from '@/data/dependencyGraphData';
+import type { DependencyGraphData, GraphCall } from '@/types';
 
 interface GeminiAnalysisProps {
   data: DependencyGraphData;

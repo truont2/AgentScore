@@ -49,9 +49,16 @@ def seed_demos(snapshot_file, reset_state=False, count=1):
             if new_workflow.get(field):
                 dt = dateutil.parser.isoparse(new_workflow[field])
                 new_workflow[field] = (dt + time_shift).isoformat()
+        
+        # Filter out columns that don't exist in the database schema
+        valid_workflow_columns = {
+            'id', 'name', 'status', 'start_time', 'end_time', 
+            'total_calls', 'total_cost', 'created_at'
+        }
+        filtered_workflow = {k: v for k, v in new_workflow.items() if k in valid_workflow_columns}
                 
         # Insert Workflow
-        res = supabase.table("workflows").insert(new_workflow).execute()
+        res = supabase.table("workflows").insert(filtered_workflow).execute()
         
         # 3. Process Events
         run_id_map = {} # old_run_id -> new_run_id
