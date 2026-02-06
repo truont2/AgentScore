@@ -20,9 +20,9 @@ SEVERITY_WEIGHTS = {
 
 # Base penalties per issue type (applied with severity weight)
 BASE_PENALTIES = {
-    "redundancy": 15,
-    "model_overkill": 10,
-    "prompt_bloat": 5  # per 1000 wasted tokens
+    "redundancy": 8,
+    "model_overkill": 5,
+    "prompt_bloat": 2  # per 1000 wasted tokens
 }
 
 
@@ -148,9 +148,9 @@ def filter_findings(findings: list, min_confidence: float = 0.7) -> list:
     """Filter out findings below the confidence threshold."""
     return [f for f in findings if f.get("confidence", 0) >= min_confidence]
 
-def calculate_efficiency_score(analysis_results: dict, events: List[Dict]) -> dict:
+def calculate_savings_breakdown(analysis_results: dict, events: List[Dict]) -> dict:
     """
-    Calculates cost-based efficiency score.
+    Calculates detailed savings breakdown.
     """
     if not events:
         return {
@@ -169,6 +169,11 @@ def calculate_efficiency_score(analysis_results: dict, events: List[Dict]) -> di
     total_cost = sum(float(e.get("cost", 0)) for e in events)
     if total_cost == 0:
         total_cost = 0.000001  # Prevent division by zero
+    
+    # Initialize savings accumulators
+    redundancy_savings = 0.0
+    model_fit_savings = 0.0
+    context_efficiency_savings = 0.0
 
     # 2. Extract Findings
     redundancies = analysis_results.get("redundancies") or analysis_results.get("redundant_calls") or []
@@ -348,124 +353,23 @@ def extract_severity_counts(analysis_results: Dict) -> Dict[str, int]:
     if isinstance(redundancies, dict):
         redundancies = redundancies.get("items", [])
     all_findings.extend(redundancies)
-=======
-    if isinstance(redundancies, dict): redundancies = redundancies.get("items", [])
-    redundancies = filter_findings(redundancies)
->>>>>>> 798353a (WIF)
     
     overkill = analysis_results.get("model_overkill") or []
-    if isinstance(overkill, dict): overkill = overkill.get("items", [])
-    overkill = filter_findings(overkill)
+    if isinstance(overkill, dict):
+        overkill = overkill.get("items", [])
+    all_findings.extend(overkill)
     
     bloat = analysis_results.get("prompt_bloat") or []
-    if isinstance(bloat, dict): bloat = bloat.get("items", [])
-    bloat = filter_findings(bloat)
-
-    # 3. Calculate Waste
-    redundancy_waste = 0.0
-    overkill_waste = 0.0
-    bloat_waste = 0.0
-
-    # Redundancy Waste = Cost of duplicate calls
-    for finding in redundancies:
-        # Prefer explicit "duplicate_call_ids", fallback to all but one in "call_ids"
-        duplicates = finding.get("duplicate_call_ids")
-        if not duplicates:
-            all_ids = finding.get("call_ids", [])
-            duplicates = all_ids[1:] if len(all_ids) > 1 else []
-            
-        group_waste = 0.0
-        for dup_id in duplicates:
-            event = match_call_id_to_event(dup_id, events)
-            if event:
-                cost = float(event.get("cost", 0))
-                group_waste += cost
-        
-        redundancy_waste += group_waste
-        finding["savings"] = f"${group_waste:.4f}"
-
-    # Overkill Waste = Actual Cost - Recommended Cost
-    for finding in overkill:
-        call_id = finding.get("call_id")
-        rec_model = finding.get("recommended_model")
-        event = match_call_id_to_event(call_id, events)
-        
-        item_waste = 0.0
-        if event and rec_model:
-            actual_cost = float(event.get("cost", 0))
-            tokens_in = event.get("tokens_in", 0)
-            tokens_out = event.get("tokens_out", 0)
-            
-            # Calculate what it SHOULD have cost
-            rec_cost = calculate_cost(rec_model, tokens_in, tokens_out)
-            
-            # Savings is the difference (ensure non-negative)
-            item_waste = max(0, actual_cost - rec_cost)
-            
-        overkill_waste += item_waste
-        finding["savings"] = f"${item_waste:.4f}"
-
-    # Bloat Waste = Unnecessary Input Tokens * Input Cost
-    for finding in bloat:
-        call_id = finding.get("call_id")
-        est_necessary = finding.get("estimated_necessary_tokens", 0)
-        event = match_call_id_to_event(call_id, events)
-        
-        item_waste = 0.0
-        if event:
-            model = event.get("model", "")
-            tokens_in = event.get("tokens_in", 0)
-            
-            if tokens_in > est_necessary:
-                wasted_tokens = tokens_in - est_necessary
-                # Calculate cost of ONLY the wasted input tokens (0 output tokens)
-                item_waste = calculate_cost(model, wasted_tokens, 0)
-        
-        bloat_waste += item_waste
-        finding["savings"] = f"${item_waste:.4f}"
-
-    # 4. Final Score Calculation
-    total_waste = redundancy_waste + overkill_waste + bloat_waste
-    optimized_cost = max(total_cost - total_waste, 0.000001)
+    if isinstance(bloat, dict):
+        bloat = bloat.get("items", [])
+    all_findings.extend(bloat)
     
-    # Efficiency Score = (Optimized / Total) * 100
-    efficiency_score = int((optimized_cost / total_cost) * 100)
-    efficiency_score = max(0, min(100, efficiency_score))
-
-    # 5. Populate Result Structure
-    # Sub-scores are less relevant now, but we fill them for UI compatibility
-    # We can just use the overall score or make simple derivations
-    sub_scores = {
-        "redundancy": max(0, 100 - int((redundancy_waste / total_cost) * 100)) if total_cost > 0 else 100,
-        "model_fit": max(0, 100 - int((overkill_waste / total_cost) * 100)) if total_cost > 0 else 100,
-        "context_efficiency": max(0, 100 - int((bloat_waste / total_cost) * 100)) if total_cost > 0 else 100
-    }
-
-    return {
-        "score": efficiency_score,
-    return {
-        "score": efficiency_score,
-        "grade": None, # Deprecated
-        "breakdown": {
-            "redundancy_waste": round(redundancy_waste, 4),
-            "overkill_waste": round(overkill_waste, 4),
-            "bloat_waste": round(bloat_waste, 4),
-            "total_waste": round(total_waste, 4),
-            "total_cost": round(total_cost, 4),
-            "optimized_cost": round(optimized_cost, 4)
-        },
-        "sub_scores": sub_scores,
-        "optimized_sub_scores": {"redundancy": 100, "model_fit": 100, "context_efficiency": 100},
-        "optimized_score": 100, # By definition, the optimized version is perfect
-        "savings_breakdown": {
-            "redundancy_savings": round(redundancy_waste, 4),
-            "model_fit_savings": round(overkill_waste, 4),
-            "context_efficiency_savings": round(bloat_waste, 4),
-            "total_savings": round(total_waste, 4)
-        },
-        "severity_counts": {"HIGH": 0, "MEDIUM": 0, "LOW": 0}, # Deprecated but kept for schema
-        "top_issues": extract_top_issues(analysis_results, total_waste)
-    }
+    for f in all_findings:
+        sev = f.get("severity", "MEDIUM").upper()
+        if sev in counts:
+            counts[sev] += 1
+            
+    return counts
 
 def extract_top_issues(analysis_results: Dict, total_waste: float) -> List[str]:
     """Generate simple top issues summary."""
@@ -482,6 +386,9 @@ def extract_top_issues(analysis_results: Dict, total_waste: float) -> List[str]:
 
     overkill = analysis_results.get("model_overkill") or []
     if isinstance(overkill, dict): overkill = overkill.get("items", [])
+
+    bloat = analysis_results.get("prompt_bloat") or []
+    if isinstance(bloat, dict): bloat = bloat.get("items", [])
     
     if len(redundancies) > 0:
         issues.append(f"{len(redundancies)} redundant call(s) detected")
@@ -507,93 +414,14 @@ def extract_top_issues(analysis_results: Dict, total_waste: float) -> List[str]:
 
 def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dict]] = None) -> dict:
     """
-    Calculates an efficiency score (0-100) based on detected inefficiencies.
+    Calculates an efficiency score (0-100) based on strict cost efficiency.
     
-    Updated to use severity-weighted penalties:
-    - HIGH severity: Full penalty
-    - MEDIUM severity: 60% penalty
-    - LOW severity: 30% penalty
+    Formula: Score = (Optimized Cost / Total Cost) * 100
     
     Returns:
         dict with score, grade, breakdown, sub_scores, optimized predictions, and savings
     """
-    score = 100
-    
-    # Extract findings (support both wrapper and direct list formats)
-    redundancies = analysis_results.get("redundancies") or analysis_results.get("redundant_calls") or []
-    if isinstance(redundancies, dict):
-        redundancies = redundancies.get("items", [])
-        
-    overkill = analysis_results.get("model_overkill") or []
-    if isinstance(overkill, dict):
-        overkill = overkill.get("items", [])
-        
-    bloat_items = analysis_results.get("prompt_bloat") or []
-    if isinstance(bloat_items, dict):
-        bloat_items = bloat_items.get("items", [])
-    
-    # Calculate severity-weighted penalties
-    redundancy_penalty = 0.0
-    for finding in redundancies:
-        weight = get_severity_weight(finding)
-        redundancy_penalty += BASE_PENALTIES["redundancy"] * weight
-    
-    overkill_penalty = 0.0
-    for finding in overkill:
-        weight = get_severity_weight(finding)
-        overkill_penalty += BASE_PENALTIES["model_overkill"] * weight
-    
-    bloat_penalty = 0.0
-    for item in bloat_items:
-        weight = get_severity_weight(item)
-        current = item.get("current_tokens", 0)
-        necessary = item.get("estimated_necessary_tokens", 0)
-        
-        if necessary > 0 and current > necessary:
-            wasted_tokens = current - necessary
-        elif item.get("waste_percentage"):
-            wasted_tokens = current * (item.get("waste_percentage", 0) / 100)
-        else:
-            wasted_tokens = 500  # Conservative default
-        
-        # Penalty per 1000 wasted tokens, weighted by severity
-        bloat_penalty += (wasted_tokens / 1000) * BASE_PENALTIES["prompt_bloat"] * weight
-    
-    # Apply penalties
-    score -= redundancy_penalty
-    score -= overkill_penalty
-    score -= bloat_penalty
-    
-    # Clamp score between 0 and 100
-    score = int(max(0, min(100, score)))
-    
-    # Calculate sub-scores
-    total_calls = len(events) if events else max(5, len(redundancies) + len(overkill) + len(bloat_items))
-    
-    sub_scores = {
-        "redundancy": calculate_redundancy_score(redundancies, total_calls),
-        "model_fit": calculate_model_fit_score(overkill, total_calls),
-        "context_efficiency": calculate_context_efficiency_score(bloat_items, events) if events else 50
-    }
-    
-    # Calculate optimized sub-scores (after fixes applied)
-    optimized_sub_scores = {
-        "redundancy": 100,  # All redundancies eliminated via caching
-        "model_fit": 100,   # All models appropriate after switching
-        "context_efficiency": calculate_optimized_context_efficiency(
-            sub_scores["context_efficiency"], 
-            bloat_items
-        )
-    }
-    
-    # Calculate optimized overall score (weighted average)
-    optimized_score = int(
-        (optimized_sub_scores["redundancy"] + 
-        optimized_sub_scores["model_fit"] + 
-        optimized_sub_scores["context_efficiency"]) / 3
-    )
-    
-    # Calculate savings breakdown
+    # 1. Calculate Savings Breakdown first (this computes all the waste values)
     savings_breakdown = calculate_savings_breakdown(analysis_results, events) if events else {
         "redundancy_savings": 0.0,
         "model_fit_savings": 0.0,
@@ -601,30 +429,73 @@ def calculate_efficiency_score(analysis_results: dict, events: Optional[List[Dic
         "total_savings": 0.0
     }
     
+    total_waste = savings_breakdown["total_savings"]
+    
+    # 2. Calculate Total Cost
+    total_cost = 0.0
+    if events:
+        total_cost = sum(float(e.get("cost", 0)) for e in events)
+    
+    if total_cost == 0:
+        if total_waste == 0:
+            # No cost, no waste -> 100% efficient
+            efficiency_score = 100
+        else:
+            # Waste but no recorded cost (shouldn't happen, but fallback)
+            efficiency_score = 0
+            total_cost = total_waste # Assume cost was at least the waste
+    else:
+        # Standard formula
+        optimized_cost = max(0, total_cost - total_waste)
+        efficiency_score = int((optimized_cost / total_cost) * 100)
+    
+    # Clamp score
+    efficiency_score = max(0, min(100, efficiency_score))
+    
+    # Calculate optimized cost for return
+    optimized_cost = max(0, total_cost - total_waste)
+
+    # 3. Calculate sub-scores (approximate for UI)
+    # We can use the % of cost wasted in each category
+    def calc_sub(waste, total):
+        if total == 0: return 100
+        return max(0, 100 - int((waste / total) * 100))
+
+    sub_scores = {
+        "redundancy": calc_sub(savings_breakdown["redundancy_savings"], total_cost),
+        "model_fit": calc_sub(savings_breakdown["model_fit_savings"], total_cost),
+        "context_efficiency": calc_sub(savings_breakdown["context_efficiency_savings"], total_cost)
+    }
+    
+    # Optimized sub-scores are always perfect
+    optimized_sub_scores = {
+        "redundancy": 100, 
+        "model_fit": 100, 
+        "context_efficiency": 100
+    }
+    
     # Extract severity counts and top issues
     severity_counts = extract_severity_counts(analysis_results)
-    top_issues = extract_top_issues(analysis_results)
+    top_issues = extract_top_issues(analysis_results, total_waste)
     
     return {
-        "score": score,
+        "score": efficiency_score,
         "grade": None,
         "breakdown": {
-            "redundancy_penalty": round(redundancy_penalty, 1),
-            "overkill_penalty": round(overkill_penalty, 1),
-            "bloat_penalty": round(bloat_penalty, 1)
+            "redundancy_waste": round(savings_breakdown["redundancy_savings"], 6),
+            "overkill_waste": round(savings_breakdown["model_fit_savings"], 6),
+            "bloat_waste": round(savings_breakdown["context_efficiency_savings"], 6),
+            "total_waste": round(total_waste, 6),
+            "total_cost": round(total_cost, 6),
+            "optimized_cost": round(optimized_cost, 6)
         },
         "sub_scores": sub_scores,
         "optimized_sub_scores": optimized_sub_scores,
-        "optimized_score": optimized_score,
+        "optimized_score": 100,
         "savings_breakdown": savings_breakdown,
         "severity_counts": severity_counts,
         "top_issues": top_issues
     }
-=======
-        issues.append(f"{len(overkill)} call(s) using over-powered models")
-        
-    return issues[:3]
->>>>>>> 798353a (WIF)
 
 def compute_workflow_graph_metrics(workflow_id: str, supabase_client):
     # (Leaving existing graph logic unchanged as it's separate from scoring)
