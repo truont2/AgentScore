@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
 import type { Fix } from '@/types';
 
 interface FixSuggestionProps {
@@ -40,7 +41,11 @@ export function FixSuggestion({ fix, defaultOpen = true }: FixSuggestionProps) {
                 )}
             >
                 <div className="px-3 pb-3 space-y-3">
-                    <p className="text-sm text-muted-foreground">{fix.explanation}</p>
+                    <div className="text-sm text-muted-foreground prose prose-invert prose-xs max-w-none [&_p]:leading-relaxed [&_strong]:text-slate-200">
+                        <ReactMarkdown>
+                            {fix.explanation || ''}
+                        </ReactMarkdown>
+                    </div>
 
                     {fix.code && (
                         <CodeBlock code={fix.code} />

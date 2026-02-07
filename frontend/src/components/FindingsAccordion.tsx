@@ -10,6 +10,7 @@ import { RefreshCw, Zap, Package, AlertTriangle } from 'lucide-react';
 import type { Finding } from '@/types';
 import { cn } from '@/lib/utils';
 import { FixSuggestion } from '@/components/FixSuggestion';
+import ReactMarkdown from 'react-markdown';
 
 interface FindingsAccordionProps {
   redundancyFindings: Finding[];
@@ -33,7 +34,11 @@ function FindingCard({ finding, type }: FindingCardProps) {
           </Badge>
         </div>
 
-        <p className="text-sm text-muted-foreground">{finding.details}</p>
+        <div className="text-sm text-muted-foreground prose prose-invert prose-xs max-w-none [&_p]:leading-relaxed [&_strong]:text-slate-200">
+          <ReactMarkdown>
+            {finding.details || ''}
+          </ReactMarkdown>
+        </div>
 
         <div className="flex flex-wrap gap-2 text-xs">
           {type === 'redundancy' && finding.callIds && (

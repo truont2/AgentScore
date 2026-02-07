@@ -1,115 +1,524 @@
 {
   "workflow": {
-    "id": "188dd750-3334-4f8f-8685-9623c880623b",
-    "name": "Workflow - Feb 04, 04:15 PM",
+    "id": "workflow-travel-bloated-v1",
+    "name": "Travel Planning: Tokyo March Trip",
     "status": "active",
-    "start_time": "2026-02-04T16:15:28.333767+00:00",
-    "end_time": "2026-02-04T16:15:42.646005+00:00",
-    "total_calls": 5,
-    "total_cost": 0.005579,
-    "created_at": "2026-02-05T00:15:28.734796+00:00",
+    "start_time": "2026-02-05T13:00:00.000000+00:00",
+    "end_time": "2026-02-05T13:45:00.000000+00:00",
+    "total_calls": 22,
+    "total_cost": 18.75,
+    "created_at": "2026-02-05T13:45:00.000000+00:00",
     "graph_computed": true,
-    "dead_branch_waste": 0.001104,
-    "critical_path_latency": 7372,
-    "information_efficiency": 0
+    "dead_branch_waste": 4.20,
+    "critical_path_latency": 185000,
+    "information_efficiency": 15
   },
   "events": [
     {
-      "run_id": "019c2b27-4978-78d0-a1a2-ebe645b264ec",
-      "workflow_id": "188dd750-3334-4f8f-8685-9623c880623b",
+      "run_id": "travel_1",
+      "workflow_id": "workflow-travel-bloated-v1",
       "parent_run_id": null,
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gemini-2.0-flash-exp",
       "prompt": [
         {
           "type": "human",
-          "content": "Create a search plan for: I need a flight to Tokyo next month (March 10-20) for under $1500. Also need a hotel near Shinjuku."
+          "content": "Create a comprehensive search plan for: I need a flight to Tokyo next month (March 10-20) for under $1500. Also need a hotel near Shinjuku."
         }
       ],
-      "response": "Here's a comprehensive search plan to find your flight and hotel to Tokyo within your budget and preferences.\n\n## Search Plan: Tokyo Flight & Hotel (March 10-20, Under $1500)\n\n**Objective:** Find a round-trip flight to Tokyo (March 10-20) for under $1500 and a hotel near Shinjuku for the same dates.\n\n**Key Information:**\n\n*   **Destination:** Tokyo, Japan (likely NRT - Narita International Airport or HND - Haneda Airport)\n*   **Travel Dates:** March 10th (departure) - March 20th (return)\n*   **Flight Budget:** Under $1500 (round-trip, per person)\n*   **Hotel Location:** Near Shinjuku Station (or within easy walking/short transit distance)\n*   **Hotel Budget:** (Not specified, but implicitly reasonable to pair with the flight budget. We'll aim for mid-range to budget-friendly options initially).\n*   **Number of Travelers:** (Assuming 1 person for this plan. Adjust if more).\n*   **Departure City:** (Crucial missing information. You'll need to fill this in. Let's assume **Los Angeles (LAX)** for the examples, but be sure to substitute your actual departure city).\n\n---\n\n### **Phase 1: Flight Search (Prioritize Flexibility & Budget)**\n\n**Goal:** Secure the best flight deal within budget.\n\n**Tools:**\n\n*   **Flight Aggregators:**\n    *   Google Flights (Excellent for exploring dates, prices, and nearby airports)\n    *   Skyscanner (Good for flexible date searches and budget options)\n    *   Kayak/Priceline/Expedia (Broader search, good for comparing)\n*   **Airline Websites:** Once potential deals are found, check directly on airline sites for potential savings or better options.\n\n**Steps:**\n\n1.  **Define Departure Airport:**\n    *   **Action:** Identify your primary departure airport (e.g., LAX).\n    *   **Action:** Consider searching from nearby airports if they offer significantly cheaper flights or better schedules (e.g., BUR, SNA for LAX).\n    *   **Tool:** Google Flights allows searching \"from\" multiple airports.\n\n2.  **Initial Broad Search (Google Flights - Recommended):**\n    *   **Action:** Go to Google Flights.\n    *   **Input:**\n        *   **From:** [Your Departure City/Airport(s)]\n        *   **To:** Tokyo (select \"Tokyo\" to search both NRT and HND)\n        *   **Depart:** March 10\n        *   **Return:** March 20\n        *   **Passengers:** 1 (adjust if needed)\n    *   **Action:** Click \"Search.\"\n\n3.  **Analyze Flight Results (Google Flights):**\n    *   **Filter by Price:** Ensure the \"Price\" filter is set to show results under $1500.\n    *   **Sort by Price:** Look for the cheapest options first.\n    *   **Consider Layover Locations & Durations:**\n        *   Are there significantly cheaper flights with long layovers (e.g., 8+ hours)? Is the extra time worth the savings?\n        *   Are there multiple layovers?\n        *   Check if the layover airport is convenient for stretching your legs or grabbing a meal.\n    *   **Check Airlines:** Note down airlines offering good prices. Are they reputable?\n    *   **Compare NRT vs. HND:** Haneda (HND) is closer to central Tokyo, which can save time and money on airport transfer. Narita (NRT) is further out. Sometimes NRT flights are cheaper.\n    *   **Flexibility (If Applicable):** If your dates have some wiggle room (e.g., +/- 1-2 days), use Google Flights' \"flexible dates\" feature to see if slightly different dates offer better prices. *For this specific plan, we are sticking to March 10-20.*\n\n4.  **Explore Other Aggregators (Skyscanner, Kayak):**\n    *   **Action:** Repeat the search on Skyscanner and Kayak using the same dates and departure city.\n    *   **Action:** Use their \"flexible dates\" or \"whole month\" features if you see slightly cheaper options by shifting by a day or two, but prioritize the exact dates first.\n\n5.  **Direct Airline Checks:**\n    *   **Action:** Once you've identified a few promising flight options from aggregators, visit the websites of those airlines directly.\n    *   **Reasoning:** Sometimes booking directly can be slightly cheaper, or you might find different fare classes or better seat selection options.\n\n6.  **Consider \"Hidden City\" Ticketing (Use with Extreme Caution):**\n    *   **Action:** Briefly research if \"hidden city\" ticketing (booking a flight with a layover in your desired destination and getting off there) is an option.\n    *   **WARNING:** This is risky. Airlines can cancel your return ticket if they detect this practice. Only consider if you are willing to accept the risk, and always book a one-way ticket for the return leg if doing this. *For this plan, we'll assume standard round-trip bookings.*\n\n7.  **Book the Flight:**\n    *   **Action:** Once you've found a flight that meets your criteria (under $1500, acceptable layovers, good airline), book it!\n    *   **Tip:** Book the flight first, as hotel prices can fluctuate less drastically than flight prices.\n\n---\n\n### **Phase 2: Hotel Search (Focus on Location & Value)**\n\n**Goal:** Find a comfortable and conveniently located hotel near Shinjuku within a reasonable budget.\n\n**Tools:**\n\n*   **Hotel Booking Sites:**\n    *   Booking.com (Excellent for diverse options and user reviews)\n    *   Agoda (Strong presence in Asia, often good deals)\n    *   Expedia/Hotels.com (Good for package deals if you want to bundle)\n    *   TripAdvisor (Good for reviews and comparing prices across platforms)\n*   **Map Services:**\n    *   Google Maps (Essential for visualizing Shinjuku and surrounding areas)\n\n**Steps:**\n\n1.  **Define \"Near Shinjuku\":**\n    *   **Action:** Open Google Maps and search for \"Shinjuku Station.\"\n    *   **Action:** Zoom out slightly to get a feel for the surrounding area.\n    *   **Consider:** What is your definition of \"near\"?\n        *   Within 5-10 minutes walk?\n        *   Within a short train/subway ride (1-2 stops)?\n        *   Within the general Shinjuku ward?\n    *   **Action:** Make a mental note or mark areas on Google Maps that look promising.\n\n2.  **Initial Search on Booking Platforms:**\n    *   **Action:** Go to Booking.com or Agoda.\n    *   **Input:**\n        *   **Destination:** Shinjuku, Tokyo\n        *   **Check-in:** March 10\n        *   **Check-out:** March 20\n        *   **Guests:** 1 (adjust if needed)\n    *   **Action:** Click \"Search.\"\n\n3.  **Refine Search with Filters:**\n    *   **Location Filter:** Use the map view to zoom in on Shinjuku and surrounding areas. Look for hotels within a reasonable radius of Shinjuku Station.\n    *   **Price Filter:** Set a daily budget or a total budget for the 10 nights. Since flight budget is $1500, a hotel budget of $100-$250 per night would be reasonable, depending on your priorities.\n    *   **Star Rating:** Consider 3-star and 4-star hotels for a good balance of comfort and price.\n    *   **Guest Rating:** Aim for hotels with a rating of 8.0/10 or higher.\n    *   **Amenities:** Filter for essential amenities like Free Wi-Fi, Air Conditioning, potentially breakfast if desired.\n\n4.  **Analyze Hotel Results:**\n    *   **Proximity to Shinjuku Station:** This is paramount. Check the hotel's listed distance or walking time to Shinjuku Station on the booking site. Use Google Maps to verify.\n    *   **Reviews:** **Crucially, read recent reviews.** Pay attention to comments about:\n        *   Cleanliness\n        *   Comfort of beds\n        *   Noise levels\n        *   Staff helpfulness\n        *   Actual distance to Shinjuku Station\n        *   Value for money\n    *   **Room Size:** Japanese hotel rooms can be smaller than Western standards. Check photos and descriptions.\n    *   **Transportation:** How easy is it to access other parts of Tokyo from the hotel? Is it close to subway lines?\n\n5.  **Explore Different Booking Sites:**\n    *   **Action:** Repeat the refined search on Agoda and/or Hotels.com.\n    *   **Action:** Compare prices for the same hotels across different platforms.\n\n6.  **Consider Hotel Types:**\n    *   **Business Hotels:** Often clean, compact, and well-located, offering good value.\n    *   **Capsule Hotels:** Very budget-friendly, but offer minimal privacy. Might be an option for a night or two if budget is extremely tight.\n    *   **Ryokans:** Traditional Japanese inns. Can be more expensive and might not be located directly in Shinjuku.\n    *   **Hostels:** If you're traveling solo and on a very tight budget, hostels can be an option.\n\n7.  **Check for Package Deals (Optional):**\n    *   **Action:** If you haven't booked your flight yet, you can check sites like Expedia or Kayak for flight + hotel packages. Sometimes these offer savings, but often booking separately yields better results.\n\n8.  **Book the Hotel:**\n    *   **Action:** Once you've found a hotel that meets your criteria for location, price, and reviews, book it!\n    *   **Tip:** Look for \"free cancellation\" options if you want flexibility, but be aware these might be slightly more expensive.\n\n---\n\n### **Post-Search & Booking Checklist:**\n\n*   **Confirm All Details:** Double-check flight dates, times, airports, passenger names, and hotel check-in/out dates, guest names, and room type.\n*   **Payment:** Ensure your payment method is valid and has sufficient funds.\n*   **Confirmation Emails:** Save all confirmation emails for both flights and hotels.\n*   **Travel Insurance:** Consider purchasing travel insurance for peace of mind.\n*   **Visa Requirements:** (If applicable for your nationality) Ensure you have the necessary visa.\n*   **Airport Transfer:** Research how you will get from the airport to your hotel in Shinjuku (e.g., Narita Express, Limousine Bus, Keisei Skyliner, local trains).\n\n---\n\n**Remember to fill in your specific departure city!** This plan provides a structured approach to efficiently find your Tokyo flight and hotel within your budget. Good luck with your search!",
-      "tokens_in": 41,
-      "tokens_out": 2437,
-      "cost": 0.000979,
-      "latency_ms": 7372,
-      "created_at": "2026-02-04T16:15:28.333767+00:00"
+      "response": "Here's a comprehensive search plan to find your flight and hotel to Tokyo within your budget and preferences.\n\n## Search Plan: Tokyo Flight & Hotel (March 10-20, Under $1500)\n\n**Objective:** Find a round-trip flight to Tokyo (March 10-20) for under $1500 and a hotel near Shinjuku for the same dates.\n\n**Key Information:**\n\n*   **Destination:** Tokyo, Japan (likely NRT - Narita International Airport or HND - Haneda Airport)\n*   **Travel Dates:** March 10th (departure) - March 20th (return)\n*   **Flight Budget:** Under $1500 (round-trip, per person)\n*   **Hotel Location:** Near Shinjuku Station\n*   **Number of Travelers:** 1 person\n\n### Phase 1: Flight Search\n\n1. Use Google Flights, Skyscanner, and Kayak\n2. Search from major US airports to Tokyo (NRT/HND)\n3. Filter by price < $1500\n4. Consider layover options\n5. Compare direct vs. connecting flights\n\n### Phase 2: Hotel Search\n\n1. Use Booking.com, Agoda, Hotels.com\n2. Search for hotels within 1km of Shinjuku Station\n3. Filter by 3-4 star rating\n4. Check guest reviews (8.0+ rating)\n5. Compare prices across platforms",
+      "tokens_in": 45,
+      "tokens_out": 850,
+      "cost": 0.85,
+      "latency_ms": 8200,
+      "created_at": "2026-02-05T13:00:00.000000+00:00"
     },
     {
-      "run_id": "019c2b27-6927-7912-b249-6394f1b21ff1",
-      "workflow_id": "188dd750-3334-4f8f-8685-9623c880623b",
-      "parent_run_id": null,
+      "run_id": "travel_2",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_1",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Filter these flights for < $1500: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)"
+          "content": "Validate that the budget of $1500 is a positive number greater than zero."
         }
       ],
-      "response": "Here are the flights filtered for less than $1500:\n\n*   **Flight A: $1200 (ANA)**\n*   **Flight B: $1400 (JAL)**",
-      "tokens_in": 46,
-      "tokens_out": 45,
-      "cost": 2.3e-05,
-      "latency_ms": 525,
-      "created_at": "2026-02-04T16:15:29.592182+00:00"
+      "response": "Yes, $1500 is a positive number greater than zero.",
+      "tokens_in": 18,
+      "tokens_out": 12,
+      "cost": 1.20,
+      "latency_ms": 1200,
+      "created_at": "2026-02-05T13:01:00.000000+00:00"
     },
     {
-      "run_id": "019c2b27-6c67-7bb2-9f45-6153c873890d",
-      "workflow_id": "188dd750-3334-4f8f-8685-9623c880623b",
-      "parent_run_id": null,
+      "run_id": "travel_3",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_1",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gemini-2.0-flash-exp",
       "prompt": [
         {
           "type": "human",
-          "content": "Verify that 'March 10-20' are valid dates in 2026"
+          "content": "Search for flights from LAX to Tokyo (NRT or HND) for March 10-20, 2026. Budget: under $1500."
         }
       ],
-      "response": "To verify if \"March 10-20\" are valid dates in 2026, we need to consider two things:\n\n1.  **The month of March:** March always has 31 days.\n2.  **The specific days:** The range is from the 10th to the 20th.\n\nLet's break it down:\n\n*   **March 10th, 2026:** This is a valid day in March.\n*   **March 11th, 2026:** This is a valid day in March.\n*   **...**\n*   **March 19th, 2026:** This is a valid day in March.\n*   **March 20th, 2026:** This is a valid day in March.\n\nSince March has 31 days, any date from the 1st to the 31st of March is a valid date. The range \"10-20\" falls entirely within this valid range.\n\n**Therefore, yes, March 10-20 are valid dates in 2026.**",
+      "response": "Here are available flights:\n\nFlight A: $1200 (ANA) - Direct, 11h 30m\nFlight B: $1400 (JAL) - Direct, 11h 45m  \nFlight C: $1600 (United) - 1 stop, 15h 20m\nFlight D: $980 (China Eastern) - 2 stops, 22h 10m\nFlight E: $1350 (Korean Air) - 1 stop, 14h 30m",
+      "tokens_in": 32,
+      "tokens_out": 120,
+      "cost": 0.12,
+      "latency_ms": 3500,
+      "created_at": "2026-02-05T13:02:30.000000+00:00"
+    },
+    {
+      "run_id": "travel_4",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_3",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Filter these flights for < $1500: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)"
+        }
+      ],
+      "response": "Flights under $1500:\n\n* Flight A: $1200 (ANA)\n* Flight B: $1400 (JAL)\n* Flight D: $980 (China Eastern)\n* Flight E: $1350 (Korean Air)",
+      "tokens_in": 52,
+      "tokens_out": 58,
+      "cost": 0.058,
+      "latency_ms": 1800,
+      "created_at": "2026-02-05T13:03:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_5",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_4",
+      "event_type": "llm_call",
+      "model": "gemini-1.5-pro-002",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Is 1200 less than 1500? Please perform this mathematical comparison."
+        }
+      ],
+      "response": "Yes, 1200 is less than 1500.\n\n1200 < 1500\n\nThe difference is 300.",
+      "tokens_in": 18,
+      "tokens_out": 28,
+      "cost": 1.40,
+      "latency_ms": 2100,
+      "created_at": "2026-02-05T13:04:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_6",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_1",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Verify that 'March 10-20, 2026' are valid calendar dates."
+        }
+      ],
+      "response": "Yes, March 10-20, 2026 are valid calendar dates. March has 31 days, so dates from March 1st to March 31st are all valid. The range March 10-20 falls entirely within this valid range.",
       "tokens_in": 21,
-      "tokens_out": 250,
-      "cost": 0.000102,
-      "latency_ms": 2990,
-      "created_at": "2026-02-04T16:15:32.887925+00:00"
+      "tokens_out": 52,
+      "cost": 0.052,
+      "latency_ms": 1500,
+      "created_at": "2026-02-05T13:05:00.000000+00:00"
     },
     {
-      "run_id": "019c2b27-7918-7f22-b71a-058da868197a",
-      "workflow_id": "188dd750-3334-4f8f-8685-9623c880623b",
-      "parent_run_id": null,
+      "run_id": "travel_7",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_6",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash-lite",
+      "model": "gpt-4o",
       "prompt": [
         {
           "type": "human",
-          "content": "Context: Confirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\nConfirmed Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United)\n\nFind hotels in Shinjuku"
+          "content": "Verify that 'March 10-20, 2026' are valid calendar dates."
         }
       ],
-      "response": "To find hotels in Shinjuku, I need a bit more information. Please tell me:\n\n*   **Your travel dates:** When are you planning to stay in Shinjuku?\n*   **Your budget per night:** What is the maximum you'd like to spend per night?\n*   **Your preferred hotel star rating:** Are you looking for a 3-star, 4-star, 5-star, or something else?\n*   **Any specific amenities you're looking for?** (e.g., free Wi-Fi, breakfast included, gym, pool, pet-friendly)\n*   **How many people will be staying?**\n\nOnce I have this information, I can help you find suitable hotels in Shinjuku.",
-      "tokens_in": 770,
-      "tokens_out": 160,
-      "cost": 0.000141,
-      "latency_ms": 947,
-      "created_at": "2026-02-04T16:15:34.096777+00:00"
+      "response": "Yes, March 20th, 2026 is a valid date in the calendar.",
+      "tokens_in": 19,
+      "tokens_out": 15,
+      "cost": 1.35,
+      "latency_ms": 1100,
+      "created_at": "2026-02-05T13:06:00.000000+00:00"
     },
     {
-      "run_id": "019c2b27-7da4-7690-a4cd-17cfe257069b",
-      "workflow_id": "188dd750-3334-4f8f-8685-9623c880623b",
-      "parent_run_id": null,
+      "run_id": "travel_8",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_4",
       "event_type": "llm_call",
-      "model": "gemini-2.5-flash",
+      "model": "gemini-2.0-flash-exp",
       "prompt": [
         {
           "type": "human",
-          "content": "Draft a polite email sending this itinerary to the user."
+          "content": "Context: Available Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\nAvailable Flights: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)\n\nFind hotels in Shinjuku, Tokyo for March 10-20."
         }
       ],
-      "response": "Subject: Your Upcoming Travel Itinerary - [Destination/Dates - Optional: Booking Ref #]\n\nDear [User Name],\n\nI hope this email finds you well.\n\nI am pleased to send over your detailed itinerary for your upcoming trip. Please find all the arrangements outlined below/attached for your review.\n\n---\n**[** Please choose ONE of the following options for placing the itinerary: **]**\n\n**Option 1: If the itinerary is short and fits well directly in the email:**\n---\n**[INSERT YOUR ITINERARY DETAILS HERE]**\n*Example Structure:*\n**Trip Dates:** [Start Date] - [End Date]\n**Destination(s):** [City, Country]\n\n**Day 1: [Date]**\n*   [Time]: [Activity/Flight Details - e.g., Flight [Flight Number] from [Origin] to [Destination]]\n*   [Time]: [Accommodation - e.g., Check-in at [Hotel Name]]\n*   [Activity]\n\n**Day 2: [Date]**\n*   [Activity]\n*   [Activity]\n\n**...and so on for subsequent days.**\n\n**Accommodation Details:**\n*   **[Hotel Name]:** [Check-in Date] - [Check-out Date]\n*   **Address:** [Hotel Address]\n*   **Confirmation #:** [Confirmation Number]\n*   **Contact:** [Hotel Phone Number]\n\n**Flight Details:**\n*   **Outbound Flight:** [Airline] - [Flight Number]\n    *   [Departure City] ([Airport Code]) to [Arrival City] ([Airport Code])\n    *   Departure: [Date], [Time]\n    *   Arrival: [Date], [Time]\n    *   Confirmation #: [Confirmation Number]\n*   **Return Flight:** [Airline] - [Flight Number]\n    *   [Departure City] ([Airport Code]) to [Arrival City] ([Airport Code])\n    *   Departure: [Date], [Time]\n    *   Arrival: [Date], [Time]\n    *   Confirmation #: [Confirmation Number]\n\n**Other Reservations (Car Rental, Tours, etc.):**\n*   **[Service Type]:** [Details]\n*   **Confirmation #:** [Confirmation Number]\n---\n\n**Option 2: If the itinerary is long or in a separate document:**\n---\nPlease find your complete itinerary attached to this email as a [PDF/Word Document]. It contains all the confirmed details for your flights, accommodation, and any other booked services.\n---\n\nPlease take a moment to review all the details carefully to ensure everything is accurate and meets your expectations.\n\nShould you have any questions, require any adjustments, or need further assistance with anything at all, please do not hesitate to reach out. I am here to help make your trip as smooth and enjoyable as possible.\n\nWe look forward to hearing from you and hope you have a wonderful trip!\n\nBest regards,\n\n[Your Name]\n[Your Title/Company Name]\n[Your Phone Number]\n[Your Email Address]\n[Your Website (Optional)]",
-      "tokens_in": 12,
-      "tokens_out": 1732,
-      "cost": 0.004334,
-      "latency_ms": 8335,
-      "created_at": "2026-02-04T16:15:42.646005+00:00"
+      "response": "Here are hotels in Shinjuku for March 10-20:\n\nHotel 1: Shinjuku Granbell Hotel - $180/night\nHotel 2: Hotel Sunroute Plaza Shinjuku - $150/night\nHotel 3: Keio Plaza Hotel - $220/night\nHotel 4: Citadines Shinjuku - $165/night\nHotel 5: APA Hotel Shinjuku - $95/night",
+      "tokens_in": 520,
+      "tokens_out": 95,
+      "cost": 0.095,
+      "latency_ms": 2800,
+      "created_at": "2026-02-05T13:07:30.000000+00:00"
+    },
+    {
+      "run_id": "travel_9",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_3",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Search for flights from LAX to Tokyo for March 10-20. Budget: $1500 max."
+        }
+      ],
+      "response": "Here are available flights:\n\nFlight A: $1200 (ANA) - Direct\nFlight B: $1400 (JAL) - Direct\nFlight C: $1600 (United) - 1 stop\nFlight D: $980 (China Eastern) - 2 stops\nFlight E: $1350 (Korean Air) - 1 stop",
+      "tokens_in": 28,
+      "tokens_out": 75,
+      "cost": 0.075,
+      "latency_ms": 2200,
+      "created_at": "2026-02-05T13:09:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_10",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_9",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Format this flight list as bullet points:\nFlight A: $1200 (ANA)\nFlight B: $1400 (JAL)\nFlight D: $980 (China Eastern)\nFlight E: $1350 (Korean Air)"
+        }
+      ],
+      "response": "• Flight A: $1200 (ANA)\n• Flight B: $1400 (JAL)\n• Flight D: $980 (China Eastern)\n• Flight E: $1350 (Korean Air)",
+      "tokens_in": 48,
+      "tokens_out": 52,
+      "cost": 2.80,
+      "latency_ms": 1400,
+      "created_at": "2026-02-05T13:10:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_11",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_5",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Confirm: Is $1200 within the budget of $1500?"
+        }
+      ],
+      "response": "Yes, $1200 is within the budget of $1500. It is $300 under budget.",
+      "tokens_in": 18,
+      "tokens_out": 22,
+      "cost": 0.022,
+      "latency_ms": 900,
+      "created_at": "2026-02-05T13:11:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_12",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_8",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Context: Trip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\nTrip Details: Tokyo March 10-20, Budget $1500, Shinjuku hotel needed\n\nSearch for hotels near Shinjuku Station."
+        }
+      ],
+      "response": "Hotels near Shinjuku Station:\n\n1. Shinjuku Granbell Hotel - $180/night\n2. Hotel Sunroute Plaza - $150/night\n3. Keio Plaza Hotel - $220/night\n4. Citadines Shinjuku - $165/night\n5. APA Hotel - $95/night",
+      "tokens_in": 380,
+      "tokens_out": 78,
+      "cost": 0.078,
+      "latency_ms": 2400,
+      "created_at": "2026-02-05T13:13:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_13",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_12",
+      "event_type": "llm_call",
+      "model": "gemini-1.5-pro-002",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Extract the name of the first hotel from this list: Shinjuku Granbell Hotel - $180/night"
+        }
+      ],
+      "response": "Shinjuku Granbell Hotel",
+      "tokens_in": 22,
+      "tokens_out": 5,
+      "cost": 1.10,
+      "latency_ms": 800,
+      "created_at": "2026-02-05T13:14:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_14",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_7",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Verify one more time: Are the dates March 10-20, 2026 valid?"
+        }
+      ],
+      "response": "Yes, March 10-20, 2026 are valid dates. March has 31 days.",
+      "tokens_in": 20,
+      "tokens_out": 18,
+      "cost": 0.018,
+      "latency_ms": 850,
+      "created_at": "2026-02-05T13:15:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_15",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_12",
+      "event_type": "llm_call",
+      "model": "gpt-4o",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Count how many hotels are in this list:\n1. Shinjuku Granbell Hotel\n2. Hotel Sunroute Plaza\n3. Keio Plaza Hotel\n4. Citadines Shinjuku\n5. APA Hotel"
+        }
+      ],
+      "response": "There are 5 hotels in this list.",
+      "tokens_in": 45,
+      "tokens_out": 8,
+      "cost": 2.12,
+      "latency_ms": 950,
+      "created_at": "2026-02-05T13:16:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_16",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_10",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Context: Full Itinerary Planning Context:\n\nUser Request: Tokyo trip March 10-20, under $1500 budget, hotel near Shinjuku\n\nFlight Options Available:\n- Flight A: $1200 (ANA) - Direct flight, 11h 30m\n- Flight B: $1400 (JAL) - Direct flight, 11h 45m\n- Flight C: $1600 (United) - 1 stop, 15h 20m (OVER BUDGET)\n- Flight D: $980 (China Eastern) - 2 stops, 22h 10m\n- Flight E: $1350 (Korean Air) - 1 stop, 14h 30m\n\nHotel Options in Shinjuku:\n- Shinjuku Granbell Hotel - $180/night, 4-star, excellent reviews\n- Hotel Sunroute Plaza Shinjuku - $150/night, 3-star, good location\n- Keio Plaza Hotel - $220/night, 5-star, luxury option\n- Citadines Shinjuku - $165/night, 4-star, serviced apartments\n- APA Hotel Shinjuku - $95/night, 3-star, budget option\n\nTravel Dates: March 10 (departure) to March 20 (return) = 10 nights\nBudget Constraint: $1500 maximum for flights\nLocation Requirement: Near Shinjuku Station for easy access to Tokyo attractions\n\nPrevious Analysis:\n- Confirmed March 10-20, 2026 are valid calendar dates\n- Verified $1500 is a positive budget amount\n- Filtered flights to exclude options over $1500\n- Identified 4 flights within budget (A, B, D, E)\n- Located 5 hotels in Shinjuku area\n- Confirmed Flight A ($1200) is within budget\n\nNow compare Flight A ($1200, ANA, direct) vs Flight B ($1400, JAL, direct) and recommend the best option."
+        }
+      ],
+      "response": "**Recommendation: Flight A ($1200, ANA, direct)**\n\n**Reasoning:**\n\nBoth Flight A and Flight B are excellent direct flight options with similar flight times (11h 30m vs 11h 45m). The key differentiator is price:\n\n- Flight A: $1200 (saves $200)\n- Flight B: $1400\n\nBoth ANA and JAL are highly reputable Japanese carriers with excellent service, safety records, and comfort. The 15-minute difference in flight time is negligible.\n\n**Cost Analysis:**\nBy choosing Flight A, you save $200 which can be allocated to:\n- Better hotel accommodation (upgrade from APA Hotel to Citadines or Granbell)\n- Activities and dining in Tokyo\n- Transportation (JR Pass, airport transfers)\n\n**Final Recommendation:**\nBook Flight A ($1200, ANA) and use the $200 savings to enhance your Tokyo experience with a better hotel or additional activities.",
+      "tokens_in": 420,
+      "tokens_out": 210,
+      "cost": 0.21,
+      "latency_ms": 6500,
+      "created_at": "2026-02-05T13:18:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_17",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_9",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Filter flights under $1500: Flight A: $1200 (ANA), Flight B: $1400 (JAL), Flight C: $1600 (United), Flight D: $980 (China Eastern), Flight E: $1350 (Korean Air)"
+        }
+      ],
+      "response": "Flights under $1500:\n- Flight A: $1200 (ANA)\n- Flight B: $1400 (JAL)\n- Flight D: $980 (China Eastern)\n- Flight E: $1350 (Korean Air)",
+      "tokens_in": 52,
+      "tokens_out": 55,
+      "cost": 0.055,
+      "latency_ms": 1700,
+      "created_at": "2026-02-05T13:20:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_18",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_16",
+      "event_type": "llm_call",
+      "model": "gemini-1.5-pro-002",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Concatenate these two strings: 'Flight A: ' and '$1200 (ANA)'"
+        }
+      ],
+      "response": "Flight A: $1200 (ANA)",
+      "tokens_in": 20,
+      "tokens_out": 10,
+      "cost": 1.25,
+      "latency_ms": 750,
+      "created_at": "2026-02-05T13:21:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_19",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_11",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Final check: Is the selected flight ($1200) within our budget ($1500)?"
+        }
+      ],
+      "response": "Yes, $1200 is within the $1500 budget. You have $300 remaining.",
+      "tokens_in": 22,
+      "tokens_out": 18,
+      "cost": 0.018,
+      "latency_ms": 800,
+      "created_at": "2026-02-05T13:22:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_20",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_13",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Calculate the total hotel cost: $180 per night for 10 nights"
+        }
+      ],
+      "response": "$180 × 10 nights = $1,800 total hotel cost",
+      "tokens_in": 18,
+      "tokens_out": 16,
+      "cost": 0.016,
+      "latency_ms": 750,
+      "created_at": "2026-02-05T13:23:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_21",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_20",
+      "event_type": "llm_call",
+      "model": "gemini-2.0-flash-exp",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Create a summary of the booked itinerary:\n\nFlight: Flight A - $1200 (ANA), Direct flight LAX to Tokyo\nDates: March 10-20, 2026 (10 nights)\nHotel: Shinjuku Granbell Hotel - $180/night ($1,800 total)\nTotal Cost: $3,000"
+        }
+      ],
+      "response": "**Tokyo Trip Summary**\n\n**Flight Details:**\n- Airline: ANA (All Nippon Airways)\n- Route: Los Angeles (LAX) → Tokyo (NRT/HND)\n- Type: Direct flight\n- Cost: $1,200\n\n**Accommodation:**\n- Hotel: Shinjuku Granbell Hotel\n- Location: Shinjuku, Tokyo\n- Duration: 10 nights (March 10-20, 2026)\n- Rate: $180 per night\n- Total Hotel Cost: $1,800\n\n**Trip Dates:**\n- Departure: March 10, 2026\n- Return: March 20, 2026\n- Duration: 10 days/10 nights\n\n**Total Trip Cost:** $3,000\n(Flight: $1,200 + Hotel: $1,800)",
+      "tokens_in": 68,
+      "tokens_out": 185,
+      "cost": 0.185,
+      "latency_ms": 5200,
+      "created_at": "2026-02-05T13:25:00.000000+00:00"
+    },
+    {
+      "run_id": "travel_22",
+      "workflow_id": "workflow-travel-bloated-v1",
+      "parent_run_id": "travel_21",
+      "event_type": "llm_call",
+      "model": "gemini-1.5-pro-002",
+      "prompt": [
+        {
+          "type": "human",
+          "content": "Draft a professional email to send this itinerary to the customer."
+        }
+      ],
+      "response": "Subject: Your Tokyo Trip Itinerary - March 10-20, 2026\n\nDear Valued Customer,\n\nThank you for choosing our travel planning service. I'm pleased to present your complete itinerary for your upcoming trip to Tokyo.\n\n**Flight Details:**\n- Airline: ANA (All Nippon Airways)\n- Route: Los Angeles (LAX) → Tokyo\n- Flight Type: Direct\n- Departure: March 10, 2026\n- Return: March 20, 2026\n- Cost: $1,200\n\n**Accommodation:**\n- Hotel: Shinjuku Granbell Hotel\n- Location: Shinjuku District, Tokyo\n- Check-in: March 10, 2026\n- Check-out: March 20, 2026\n- Duration: 10 nights\n- Rate: $180 per night\n- Total Hotel Cost: $1,800\n\n**Total Trip Cost:** $3,000\n\nYour flight is within your specified budget of $1,500, and the Shinjuku Granbell Hotel offers excellent access to Tokyo's main attractions, shopping, and dining areas.\n\nPlease review these details carefully. If you have any questions or would like to make any changes, please don't hesitate to contact me.\n\nWe hope you have a wonderful trip to Tokyo!\n\nBest regards,\nTravel Planning Team",
+      "tokens_in": 15,
+      "tokens_out": 285,
+      "cost": 3.50,
+      "latency_ms": 8500,
+      "created_at": "2026-02-05T13:27:00.000000+00:00"
     }
   ],
   "analyses": [],
-  "exported_at": "2026-02-04T16:15:43.310310"
+  "call_edges": [
+    {
+      "source_id": "travel_1",
+      "target_id": "travel_2"
+    },
+    {
+      "source_id": "travel_1",
+      "target_id": "travel_3"
+    },
+    {
+      "source_id": "travel_1",
+      "target_id": "travel_6"
+    },
+    {
+      "source_id": "travel_3",
+      "target_id": "travel_4"
+    },
+    {
+      "source_id": "travel_3",
+      "target_id": "travel_9"
+    },
+    {
+      "source_id": "travel_4",
+      "target_id": "travel_5"
+    },
+    {
+      "source_id": "travel_4",
+      "target_id": "travel_8"
+    },
+    {
+      "source_id": "travel_5",
+      "target_id": "travel_11"
+    },
+    {
+      "source_id": "travel_6",
+      "target_id": "travel_7"
+    },
+    {
+      "source_id": "travel_7",
+      "target_id": "travel_14"
+    },
+    {
+      "source_id": "travel_8",
+      "target_id": "travel_12"
+    },
+    {
+      "source_id": "travel_9",
+      "target_id": "travel_10"
+    },
+    {
+      "source_id": "travel_9",
+      "target_id": "travel_17"
+    },
+    {
+      "source_id": "travel_10",
+      "target_id": "travel_16"
+    },
+    {
+      "source_id": "travel_11",
+      "target_id": "travel_19"
+    },
+    {
+      "source_id": "travel_12",
+      "target_id": "travel_13"
+    },
+    {
+      "source_id": "travel_12",
+      "target_id": "travel_15"
+    },
+    {
+      "source_id": "travel_13",
+      "target_id": "travel_20"
+    },
+    {
+      "source_id": "travel_16",
+      "target_id": "travel_18"
+    },
+    {
+      "source_id": "travel_20",
+      "target_id": "travel_21"
+    },
+    {
+      "source_id": "travel_21",
+      "target_id": "travel_22"
+    }
+  ],
+  "exported_at": "2026-02-05T13:30:00.000000"
 }
