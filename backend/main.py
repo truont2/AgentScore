@@ -212,7 +212,7 @@ async def analyze_workflow(id: str):
             
             yield f"data: {json.dumps({'progress': 10, 'status': 'Fetching workflow events...'})}\n\n"
 
-            events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
+            events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").order("run_id").execute()
             events = events_response.data
             
             if not events:
@@ -225,13 +225,24 @@ async def analyze_workflow(id: str):
             events_str = ""
             calculated_total_cost = 0.0
             for idx, e in enumerate(events, start=1):
-                role = e.get('event_type', 'unknown')
                 prompt_data = e.get('prompt', '')
                 response_data = e.get('response', '')
+                
+                # Deterministic content formatting
+                if isinstance(prompt_data, (dict, list)):
+                    prompt_str = json.dumps(prompt_data, sort_keys=True)
+                else:
+                    prompt_str = str(prompt_data)
+                    
+                if isinstance(response_data, (dict, list)):
+                    response_str = json.dumps(response_data, sort_keys=True)
+                else:
+                    response_str = str(response_data)
+
                 model = e.get('model', 'unknown')
                 cost = e.get('cost', 0)
                 calculated_total_cost += cost
-                events_str += f"\\n---\\nID: call_{idx}\\nEvent Type: [{role}]\\nModel: {model}\\nCost: ${cost}\\nInput: {prompt_data}\\nOutput: {response_data}\\n"
+                events_str += f"\\n---\\nID: call_{idx}\\nEvent Type: [{role}]\\nModel: {model}\\nCost: ${cost}\\nInput: {prompt_str}\\nOutput: {response_str}\\n"
 
             prompt = ANALYSIS_PROMPT + "\\n\\n## WORKFLOW CALLS\\n" + events_str
             prompt += "\\n\\n**IMPORTANT: In your response, ALWAYS use the provided ID (e.g., 'call_1', 'call_2') as the call_id.**"
@@ -239,15 +250,27 @@ async def analyze_workflow(id: str):
             # 3. Call Gemini
             yield f"data: {json.dumps({'progress': 30, 'status': 'Sending data to Gemini (this may take 30s)...'})}\n\n"
             
+            print(f"\n--- DEBUG: PROMPT SENT TO GEMINI ({len(prompt)} chars) ---\n")
+            print(prompt[:500] + "...")
+            print("\n------------------------------------------------------------\n")
+
             # Using stream=True (optional, but we can't easily parse partial JSON)
             # For now, we'll just wait for the result but keep the connection open
-            response = gemini_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
+            try:
+                response = gemini_client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.0,
+                        seed=42
+                    )
                 )
-            )
+                print(f"\n--- DEBUG: RAW GEMINI RESPONSE ---\n{response.text}\n------------------------------\n")
+            except Exception as e:
+                print(f"Gemini API Error: {e}")
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                return
             
             yield f"data: {json.dumps({'progress': 80, 'status': 'Processing AI insights...'})}\n\n"
             
@@ -263,8 +286,8 @@ async def analyze_workflow(id: str):
             
             analysis_entry = {
                 "workflow_id": id,
-                "original_cost": score_data.get("breakdown", {}).get("total_cost") or calculated_total_cost,
-                "optimized_cost": score_data.get("optimized_score") if score_data.get("optimized_score") == 100 and score_data.get("breakdown", {}).get("optimized_cost") is None else score_data.get("breakdown", {}).get("optimized_cost"),
+                "original_cost": calculated_total_cost,
+                "optimized_cost": max(0, calculated_total_cost - score_data["savings_breakdown"]["total_savings"]),
                 "redundancies": {"items": analysis_json.get("redundancies") or analysis_json.get("redundant_calls") or []},
                 "model_overkill": {"items": analysis_json.get("model_overkill") or []},
                 "prompt_bloat": {"items": analysis_json.get("prompt_bloat") or []},

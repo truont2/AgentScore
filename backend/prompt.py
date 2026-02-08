@@ -273,6 +273,8 @@ Return ONLY valid JSON. No markdown, no explanation text.
 6. For model_overkill, recommend a specific real model from the tier lists
 7. For prompt_bloat, estimate how many tokens were actually necessary
 8. analysis_summary.top_issues should be actionable one-liners
+9. STRICTLY follow the severity examples. Do not inflate severity.
+10. If a finding is borderline, pick the LOWER severity.
 
 ---
 
@@ -282,6 +284,30 @@ Return ONLY valid JSON. No markdown, no explanation text.
 - 0.80-0.89: High confidence (strong indicators)
 - 0.70-0.79: Moderate confidence (reasonable case)
 - Below 0.70: Don't include
+
+---
+
+## FEW-SHOT SEVERITY EXAMPLES
+
+### Redundant Calls
+- **HIGH**: "What is the capital of France?" followed by "What is the capital city of France?" (Exact semantic match)
+- **MEDIUM**: "Summarize this article" followed by "What are the key points of this article?" (Significant overlap but slightly different intent)
+- **LOW**: "Check weather in NY" followed by "Check weather in London" (Same tool/intent, different parameters - likely NOT redundant, but if flagged, LOW)
+
+### Model Overkill
+- **HIGH**: Using GPT-4/Claude-Opus to "Extract name from this string" or "Classify email as Spam/Not Spam".
+- **MEDIUM**: Using GPT-4 for "Write a polite email response" (could be done by smaller model, but requires tone)
+- **LOW**: Using GPT-4o for "Summarize complex legal contract" (borderline, maybe justified)
+
+### Prompt Bloat
+- **HIGH**: Sending 50 messages of history for a "Hello" response. (99% waste)
+- **MEDIUM**: Sending entire user profile object (50 fields) when only 'first_name' is used.
+- **LOW**: Sending a few extra paragraphs of context "just in case".
+
+---
+
+## TIE-BREAKER RULE
+If you are strictly undecided between two severity levels (e.g., MEDIUM vs HIGH), ALWAYS choose the **LOWER** severity to be conservative.
 
 ---
 

@@ -113,7 +113,7 @@ export function FindingsAccordion({ redundancyFindings, modelOverkillFindings, c
     },
     {
       id: 'context',
-      title: 'Context Bloat',
+      title: 'Prompt Bloat',
       icon: <Package className="w-4 h-4" />,
       findings: contextBloatFindings,
       type: 'context' as const,
