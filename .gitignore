@@ -13,3 +13,6 @@ venv/
 .env
 .DS_Store
 
+# Database Tools
+backend/reset_db.py
+
