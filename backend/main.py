@@ -259,7 +259,7 @@ async def analyze_workflow(id: str):
             # For now, we'll just wait for the result but keep the connection open
             try:
                 response = gemini_client.models.generate_content(
-                    model="gemini-1.5-flash-001",
+                    model="gemini-2.5-flash",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
