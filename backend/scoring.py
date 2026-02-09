@@ -279,64 +279,7 @@ def calculate_savings_breakdown(analysis_results: dict, events: List[Dict]) -> d
 
     
     # 2. Model fit savings: difference between current and recommended model costs
-    overkill = analysis_results.get("model_overkill") or []
-    if isinstance(overkill, dict):
-        overkill = overkill.get("items", [])
-    
-    for finding in overkill:
-        current_model = finding.get("current_model", "")
-        recommended_model = finding.get("recommended_model", "")
-        confidence = finding.get("confidence", 0.8)
-        
-        if current_model and recommended_model:
-            call_id = finding.get("call_id", "")
-            event = match_call_id_to_event(call_id, events)
-            
-            if event:
-                tokens_in = event.get("tokens_in", 0)
-                tokens_out = event.get("tokens_out", 0)
-                
-                # Use the event's actual model string (which might have -demo suffix)
-                # This ensures we trigger the cost multiplier if applicable.
-                real_current_model = event.get("model", "") or current_model
-                
-                # Calculate cost difference
-                current_cost = calculate_cost(real_current_model, tokens_in, tokens_out)
-                recommended_cost = calculate_cost(recommended_model, tokens_in, tokens_out)
-                savings = max(0, current_cost - recommended_cost)
-                
-                # Weight by confidence for total
-                model_fit_savings += savings * confidence
-                
-                # Inject savings into the finding item for frontend display
-                finding["savings"] = f"${savings:.2f}"
-    
-    # 3. Context efficiency savings: cost of unnecessary tokens
-    bloat_items = analysis_results.get("prompt_bloat") or []
-    if isinstance(bloat_items, dict):
-        bloat_items = bloat_items.get("items", [])
-    
-    for item in bloat_items:
-        call_id = item.get("call_id", "")
-        current_tokens = item.get("current_tokens", 0)
-        necessary_tokens = item.get("estimated_necessary_tokens", 0)
-        confidence = item.get("confidence", 0.8)
-        
-        if current_tokens > necessary_tokens:
-            event = match_call_id_to_event(call_id, events)
-            
-            if event:
-                model = event.get("model", "")
-                if model:
-                    wasted_tokens = current_tokens - necessary_tokens
-                    # Use central pricing logic (handles -demo multiplier automatically)
-                    savings = calculate_cost(model, wasted_tokens, 0)
-                    
-                    # Weight by confidence for total
-                    context_efficiency_savings += savings * confidence
-                    
-                    # Inject savings into the finding item
-                    item["savings"] = f"${savings:.4f}"
+
     
     return {
         "redundancy_savings": round(redundancy_savings, 6),

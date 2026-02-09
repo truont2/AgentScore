@@ -212,7 +212,7 @@ async def analyze_workflow(id: str):
             
             yield f"data: {json.dumps({'progress': 10, 'status': 'Fetching workflow events...'})}\n\n"
 
-            events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").order("run_id").execute()
+            events_response = supabase.table("events").select("*").eq("workflow_id", id).order("created_at").execute()
             events = events_response.data
             
             if not events:
@@ -225,6 +225,7 @@ async def analyze_workflow(id: str):
             events_str = ""
             calculated_total_cost = 0.0
             for idx, e in enumerate(events, start=1):
+                role = e.get('event_type', 'unknown')
                 prompt_data = e.get('prompt', '')
                 response_data = e.get('response', '')
                 
@@ -258,7 +259,7 @@ async def analyze_workflow(id: str):
             # For now, we'll just wait for the result but keep the connection open
             try:
                 response = gemini_client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-1.5-flash-001",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
