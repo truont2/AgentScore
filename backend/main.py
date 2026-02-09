@@ -243,7 +243,7 @@ async def analyze_workflow(id: str):
                 model = e.get('model', 'unknown')
                 cost = e.get('cost', 0)
                 calculated_total_cost += cost
-                events_str += f"\\n---\\nID: call_{idx}\\nEvent Type: [{role}]\\nModel: {model}\\nCost: ${cost}\\nInput: {prompt_str}\\nOutput: {response_str}\\n"
+                events_str += f"\\n---\\nID: call_{idx}\\nEvent Type: [{e.get('event_type')}]\\nModel: {model}\\nCost: ${cost}\\nInput: {prompt_str}\\nOutput: {response_str}\\n"
 
             prompt = ANALYSIS_PROMPT + "\\n\\n## WORKFLOW CALLS\\n" + events_str
             prompt += "\\n\\n**IMPORTANT: In your response, ALWAYS use the provided ID (e.g., 'call_1', 'call_2') as the call_id.**"
