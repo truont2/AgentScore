@@ -222,7 +222,7 @@ Built by a 3-developer team in 4 weeks for the Google Gemini 3 Hackathon.
 
 ## License
 
-MIT
+Apache-2.0 license
 
 ---
 
